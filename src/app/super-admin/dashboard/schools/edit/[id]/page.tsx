@@ -96,6 +96,7 @@ export default function EditSchoolPage({ params }: { params: { id: string } }) {
                     <CardContent>
                         <form action={dispatch} className="space-y-6">
                             <input type="hidden" name="schoolId" value={school.schoolId} />
+                             <input type="hidden" name="enabled" value="true" />
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="school-name">School Name</Label>
@@ -144,8 +145,25 @@ export default function EditSchoolPage({ params }: { params: { id: string } }) {
                                     <Input id="school-id" name="schoolId" value={school.schoolId} readOnly className="bg-muted"/>
                                 </div>
                             </div>
+
+                            <div className="border-t pt-6">
+                                <h3 className="text-lg font-medium">Update Password</h3>
+                                <p className="text-sm text-muted-foreground mb-4">Leave these fields blank to keep the current password.</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="password">New Password</Label>
+                                        <Input id="password" name="password" type="password" />
+                                        {state.errors?.password && <p className="text-sm text-destructive">{state.errors.password}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="confirm-password">Confirm New Password</Label>
+                                        <Input id="confirm-password" name="confirmPassword" type="password" />
+                                        {state.errors?.confirmPassword && <p className="text-sm text-destructive">{state.errors.confirmPassword}</p>}
+                                    </div>
+                                </div>
+                            </div>
                             
-                            {state.message && !state.errors && <p className="text-sm text-destructive">{state.message}</p>}
+                            {state.message && !state.errors && <p className="text-sm text-destructive text-center mt-4">{state.message}</p>}
 
                             <div className="pt-4">
                                 <SubmitButton />
