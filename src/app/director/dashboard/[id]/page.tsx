@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, BarChart2, Building2, Banknote, Settings, Megaphone, BookOpen, UserPlus, Briefcase, Users, UserCheck, DollarSign, Calendar, Shield, FileText, Bus, Library, BedDouble, MessageSquare } from "lucide-react";
+import { ArrowRight, BarChart2, Building2, Banknote, Settings, Megaphone, BookOpen, UserPlus, Briefcase, Users, UserCheck, DollarSign, Calendar, Shield, FileText, Bus, Library, BedDouble, MessageSquare, GraduationCap, ArrowLeftRight, Search, BookMarked, Wallet, Truck, Home, Gate, Info } from "lucide-react";
 
 const kpiData = [
   { title: "Total Students", value: "1,250", icon: <Users className="h-6 w-6 text-muted-foreground" /> },
@@ -14,73 +14,52 @@ const kpiData = [
 export default function DirectorDashboard({ params }: { params: { id: string } }) {
   const schoolId = params.id;
 
-  const featureCards = [
-    { 
-        title: "User Management", 
-        description: "Create Principal accounts and manage all user roles.", 
-        icon: <UserPlus className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/principal`
+  const featureSections = [
+    {
+      title: "Academics",
+      features: [
+        { title: "Classes & Sections", description: "Manage academic classes and sections.", icon: <Building2 className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/classes` },
+        { title: "Admissions", description: "Handle new student admission processes.", icon: <UserPlus className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/admissions` },
+        { title: "Students", description: "View and manage all student records.", icon: <Users className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/students` },
+        { title: "Promote Students", description: "Promote students to the next class.", icon: <GraduationCap className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/promote` },
+        { title: "Attendance", description: "Monitor student and staff attendance.", icon: <UserCheck className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/attendance` },
+        { title: "Timetable", description: "Create and manage class schedules.", icon: <Calendar className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/timetable` },
+        { title: "Exams", description: "Oversee exam schedules and results.", icon: <BarChart2 className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/exams` },
+        { title: "Reports", description: "Generate academic reports.", icon: <FileText className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/reports` },
+        { title: "E-learning", description: "Manage online learning resources.", icon: <BookOpen className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/elearning` },
+      ]
     },
-    { 
-        title: "School Profile", 
-        description: "Update school info, logo, and academic year settings.", 
-        icon: <Building2 className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/profile`
+    {
+      title: "HR",
+      features: [
+        { title: "Staff Directory", description: "Browse and manage staff profiles.", icon: <Users className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/hr/directory` },
+        { title: "Staff Attendance", description: "Track attendance for all staff members.", icon: <UserCheck className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/hr/attendance` },
+        { title: "Payroll", description: "Manage staff payroll and salaries.", icon: <Banknote className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/hr/payroll` },
+        { title: "Staff Salary", description: "Set and manage salary structures.", icon: <DollarSign className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/hr/salary` },
+        { title: "User Management", description: "Create Principal accounts and manage roles.", icon: <UserPlus className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/principal`},
+      ]
     },
-    { 
-        title: "Academic Management", 
-        description: "Manage classes, subjects, student admissions, and records.", 
-        icon: <BookOpen className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/academics`
+    {
+      title: "Administration",
+      features: [
+        { title: "Fees", description: "Track fee collections and invoices.", icon: <Wallet className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/fees` },
+        { title: "Fee Structure", description: "Define fee structures for different classes.", icon: <FileText className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/fee-structure` },
+        { title: "Inventory", description: "Manage school assets and inventory.", icon: <Briefcase className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/inventory` },
+        { title: "Transport", description: "Oversee transportation routes and vehicles.", icon: <Bus className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/transport` },
+        { title: "Library", description: "Manage library books and members.", icon: <Library className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/library` },
+        { title: "Hostel", description: "Manage hostel facilities and residents.", icon: <BedDouble className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/hostel` },
+        { title: "Gate Pass", description: "Manage entry and exit with gate passes.", icon: <Gate className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/gate-pass` },
+        { title: "School Info", description: "Update school profile and general settings.", icon: <Info className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/profile` },
+      ]
     },
-     { 
-        title: "Attendance & Discipline", 
-        description: "Monitor student and staff attendance and track incidents.", 
-        icon: <UserCheck className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/attendance`
-    },
-    { 
-        title: "Exams & Performance", 
-        description: "Oversee exam schedules, results, and performance analytics.", 
-        icon: <BarChart2 className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/exams`
-    },
-    { 
-        title: "HR & Payroll", 
-        description: "Oversee staff management, attendance, and payroll.", 
-        icon: <Briefcase className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/hr`
-    },
-     { 
-        title: "Financials & Fees", 
-        description: "Track fee collections, invoices, and manage school finances.", 
-        icon: <Banknote className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/financials`
-    },
-    { 
-        title: "Communication", 
-        description: "Send notices, manage events, and handle communications.", 
-        icon: <Megaphone className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/communication`
-    },
-     { 
-        title: "Administration", 
-        description: "Manage transport, library, and other school facilities.", 
-        icon: <Settings className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/admin`
-    },
-    { 
-        title: "Reports & Analytics", 
-        description: "View detailed reports on all school operations.", 
-        icon: <FileText className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/reports`
-    },
-    { 
-        title: "Security & Logs", 
-        description: "Manage security settings and view activity audit logs.", 
-        icon: <Shield className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/security`
-    },
+    {
+      title: "Communication",
+      features: [
+        { title: "Notices", description: "Send out notices and announcements.", icon: <Megaphone className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/communication/notices` },
+        { title: "Calendar", description: "Manage the school's event calendar.", icon: <Calendar className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/communication/calendar` },
+        { title: "Messaging", description: "Communicate with staff and parents.", icon: <MessageSquare className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/communication/messaging` },
+      ]
+    }
   ];
 
   return (
@@ -107,28 +86,32 @@ export default function DirectorDashboard({ params }: { params: { id: string } }
         </div>
         
         {/* Feature Grid */}
-        <div>
-            <h2 className="text-2xl font-bold tracking-tight mb-4">Management Modules</h2>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {featureCards.map((feature) => (
-                    <Card key={feature.title} className="flex flex-col">
-                        <CardHeader>
-                            <div className="flex items-center gap-4">
-                                {feature.icon}
-                                <CardTitle>{feature.title}</CardTitle>
-                            </div>
-                            <CardDescription className="pt-2">{feature.description}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="mt-auto">
-                             <Link href={feature.href} passHref>
-                                <Button className="w-full">
-                                    Manage <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
-                            </Link>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
+        <div className="space-y-8">
+            {featureSections.map(section => (
+                 <div key={section.title}>
+                    <h2 className="text-2xl font-bold tracking-tight mb-4">{section.title}</h2>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {section.features.map((feature) => (
+                            <Card key={feature.title} className="flex flex-col">
+                                <CardHeader>
+                                    <div className="flex items-center gap-4">
+                                        {feature.icon}
+                                        <CardTitle>{feature.title}</CardTitle>
+                                    </div>
+                                    <CardDescription className="pt-2">{feature.description}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="mt-auto">
+                                    <Link href={feature.href} passHref>
+                                        <Button className="w-full">
+                                            Manage <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            ))}
         </div>
     </div>
   );
