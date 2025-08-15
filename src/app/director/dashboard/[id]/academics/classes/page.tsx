@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -29,7 +28,7 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
       const result = await getClasses(schoolId);
       if (result.error) {
         setError(result.error);
-      } else {
+      } else if (result.classes) {
         setClasses(result.classes as Class[]);
       }
       setLoading(false);
