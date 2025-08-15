@@ -2,26 +2,36 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, School } from "lucide-react";
+import { Menu, School, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import React from "react";
+import React, { useState } from "react";
 
 type NavItem = {
     title: string;
     href?: string;
     icon?: React.ReactNode;
-    isSection?: boolean;
+};
+
+type NavSection = {
+    section: string;
+    icon?: React.ReactNode;
+    items: NavItem[];
 };
 
 type MobileSidebarProps = {
-  navItems: NavItem[];
+  navItems: NavSection[];
 };
 
 export function MobileSidebar({ navItems }: MobileSidebarProps) {
     const pathname = usePathname();
+    const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+
+    const toggleSection = (section: string) => {
+        setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
 
     return (
         <Sheet>
@@ -40,27 +50,40 @@ export function MobileSidebar({ navItems }: MobileSidebarProps) {
                         <School className="h-6 w-6 text-primary" />
                         <span className="">WG Campus</span>
                     </Link>
-                    {navItems.map((item, index) =>
-                        item.isSection ? (
-                             <h2 key={index} className="px-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase mt-4 mb-1">
-                                {item.title}
-                            </h2>
-                        ) : (
-                           item.href && (
-                            <Link
-                                key={index}
-                                href={item.href}
-                                className={cn(
-                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                                    pathname === item.href && "bg-muted text-primary"
-                                )}
-                            >
-                                {item.icon}
-                                {item.title}
-                            </Link>
-                           )
-                        )
-                    )}
+                    {navItems.map((section, index) => (
+                        <div key={index} className="space-y-1">
+                             <Button
+                                variant="ghost"
+                                className="w-full justify-between items-center px-3 py-2 text-base font-semibold"
+                                onClick={() => toggleSection(section.section)}
+                                >
+                                <div className="flex items-center gap-3">
+                                    {section.icon}
+                                    <span>{section.section}</span>
+                                </div>
+                                <ChevronDown className={cn("h-5 w-5 transition-transform", openSections[section.section] ? 'rotate-180' : '')} />
+                            </Button>
+                            {openSections[section.section] && (
+                                <div className="pl-8 space-y-1">
+                                    {section.items.map((item, itemIndex) =>
+                                        item.href && (
+                                            <Link
+                                                key={itemIndex}
+                                                href={item.href}
+                                                className={cn(
+                                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm",
+                                                    pathname === item.href && "bg-muted text-primary"
+                                                )}
+                                            >
+                                                {item.icon}
+                                                {item.title}
+                                            </Link>
+                                        )
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </nav>
             </SheetContent>
         </Sheet>
