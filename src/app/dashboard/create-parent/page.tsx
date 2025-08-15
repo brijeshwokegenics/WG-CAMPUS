@@ -62,7 +62,7 @@ export default function CreateParentPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 max-w-4xl mx-auto">
       <div>
         <Button variant="outline" size="sm" asChild className="mb-4">
           <Link href="/dashboard"><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Link>
