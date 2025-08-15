@@ -34,7 +34,6 @@ export default function CreateSchoolPage() {
 
    useEffect(() => {
     if (state?.message === "School created successfully!") {
-        // Optionally, show a success toast/message here instead of an alert
         window.location.href = '/super-admin/dashboard/schools';
     }
   }, [state]);
@@ -116,7 +115,11 @@ export default function CreateSchoolPage() {
                       </div>
                     </div>
                     
-                    {state.message && !state.errors && !state.data && <p className="text-sm text-destructive text-center">{state.message}</p>}
+                    {state.message && (
+                        <p className="text-sm text-destructive text-center">
+                            {state.message}
+                        </p>
+                    )}
 
                     <div className="pt-4">
                         <SubmitButton />
