@@ -19,12 +19,20 @@ const BaseSchoolSchema = z.object({
   enabled: z.boolean().default(true),
 });
 
-const SchoolSchema = BaseSchoolSchema.extend({
-    password: z.string().min(6, { message: "Password must be at least 6 characters long." }),
-    confirmPassword: z.string(),
-}).refine(data => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
+const SchoolSchema = z.object({
+  schoolName: z.string().min(2, "School name must be at least 2 characters."),
+  contactEmail: z.string().email("Please provide a valid email address."),
+  address: z.string().min(5, "Address must be at least 5 characters."),
+  city: z.string().min(2, "City is required."),
+  state: z.string().min(2, "State is required."),
+  zipcode: z.string().min(3, "Zip code is required."),
+  phone: z.string().min(6, "Phone number is required."),
+  schoolId: z.string().min(3, "School ID is required."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
+  confirmPassword: z.string().min(6, "Confirm Password must be at least 6 characters."),
+}).refine((data) => data.password === data.confirmPassword, {
+  path: ["confirmPassword"],
+  message: "Passwords do not match.",
 });
 
 
@@ -40,19 +48,8 @@ const UpdatePasswordSchema = z.object({
 
 
 export type State = {
-  errors?: {
-    [key: string]: string[] | undefined;
-     schoolName?: string[];
-    contactEmail?: string[];
-    address?: string[];
-    city?: string[];
-    state?: string[];
-    zipcode?: string[];
-    phone?: string[];
-    password?: string[];
-    confirmPassword?: string[];
-  };
-  message?: string | null;
+  message: string | null;
+  errors?: Record<string, string[]>;
   data?: {
     schoolId: string;
   } | null;
@@ -89,19 +86,25 @@ export async function getSchool(id: string) {
 
 
 export async function createSchool(prevState: State, formData: FormData): Promise<State> {
-  const formDataObj = Object.fromEntries(formData.entries());
-  formDataObj.enabled = 'true';
-  
-  const validatedFields = SchoolSchema.safeParse(formDataObj);
+  const raw = Object.fromEntries(formData.entries());
+  // Manually add 'enabled' since it's not in the form
+  const rawWithDefaults = { ...raw, enabled: true };
+  const parsed = SchoolSchema.safeParse(rawWithDefaults);
 
-  if (!validatedFields.success) {
+  if (!parsed.success) {
+    const errors: Record<string, string[]> = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0]?.toString() || "form";
+      errors[key] = errors[key] || [];
+      errors[key].push(issue.message);
+    }
     return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Validation failed. Please check the fields.',
+      message: "Please fix the highlighted fields and try again.",
+      errors,
     };
   }
 
-  const { confirmPassword, ...schoolData } = validatedFields.data;
+  const { confirmPassword, ...schoolData } = parsed.data;
 
   try {
     const schoolsRef = collection(db, 'schools');
@@ -109,17 +112,28 @@ export async function createSchool(prevState: State, formData: FormData): Promis
     const querySnapshot = await getDocs(q);
     
     if (!querySnapshot.empty) {
-        return { message: 'This email is already registered.' };
+        return { message: 'This email is already registered.', errors: { contactEmail: ["This email is already in use."] } };
+    }
+
+    const schoolIdQuery = query(schoolsRef, where("schoolId", "==", schoolData.schoolId));
+    const schoolIdSnapshot = await getDocs(schoolIdQuery);
+
+    if (!schoolIdSnapshot.empty) {
+      return {
+        message: "A school with this School ID already exists.",
+        errors: { schoolId: ["This School ID is already in use."] },
+      };
     }
 
     await addDoc(collection(db, 'schools'), schoolData);
     
     revalidatePath('/super-admin/dashboard/schools');
-    return { message: 'School created successfully!', data: { schoolId: schoolData.schoolId } };
+    return { message: 'School created successfully!', errors: {} };
 
   } catch (e: any) {
     return {
-      message: `Database error: ${e.message}`,
+      message: `Something went wrong while creating the school. Please try again later.`,
+      errors: {},
     };
   }
 }
@@ -127,7 +141,6 @@ export async function createSchool(prevState: State, formData: FormData): Promis
 export async function updateSchool(id: string, prevState: State, formData: FormData): Promise<State> {
     const formDataObj = Object.fromEntries(formData.entries());
     
-    // Convert 'enabled' from string to boolean for validation
     if (typeof formDataObj.enabled === 'string') {
         formDataObj.enabled = formDataObj.enabled === 'true';
     }
