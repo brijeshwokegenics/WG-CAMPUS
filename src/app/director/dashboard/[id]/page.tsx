@@ -1,4 +1,6 @@
 
+'use client';
+
 export default function DirectorDashboard({ params }: { params: { id: string } }) {
   const schoolId = params.id;
 
@@ -11,3 +13,5 @@ export default function DirectorDashboard({ params }: { params: { id: string } }
     </div>
   );
 }
+
+    

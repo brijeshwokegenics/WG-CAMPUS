@@ -54,7 +54,7 @@ export function MobileSidebar({ navItems }: MobileSidebarProps) {
                         <div key={index} className="space-y-1">
                              <Button
                                 variant="ghost"
-                                className="w-full justify-between items-center px-3 py-2 text-base font-semibold"
+                                className="w-full justify-between items-center px-3 py-2 text-base font-semibold text-foreground hover:bg-muted"
                                 onClick={() => toggleSection(section.section)}
                                 >
                                 <div className="flex items-center gap-3">
@@ -89,3 +89,5 @@ export function MobileSidebar({ navItems }: MobileSidebarProps) {
         </Sheet>
     );
 }
+
+    

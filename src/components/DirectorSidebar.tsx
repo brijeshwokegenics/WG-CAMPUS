@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { 
     School, 
     LayoutDashboard, 
@@ -42,7 +42,6 @@ import {
     History,
     PanelLeftClose,
     PanelRightClose,
-    ShieldCheck,
     UserCheck,
     Smartphone,
     UserPlus,
@@ -60,7 +59,8 @@ import {
     User,
     Award,
     BookOpen,
-    ChevronDown
+    ChevronDown,
+    ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
@@ -159,7 +159,7 @@ export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarP
   const { schoolId } = useSchool();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
-  const navItems = React.useMemo(() => {
+  const navItems = useMemo(() => {
     if (!schoolId) return [];
     return directorSidebarNavItems(schoolId);
   }, [schoolId]);
@@ -268,3 +268,5 @@ export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarP
     </div>
   );
 }
+
+    
