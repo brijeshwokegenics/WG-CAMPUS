@@ -22,6 +22,7 @@ type SchoolData = {
     zipcode: string;
     phone: string;
     schoolId: string;
+    enabled: boolean;
 } | null;
 
 function SubmitButton() {
@@ -95,7 +96,7 @@ export default function EditSchoolPage({ params }: { params: { id: string } }) {
                     <CardContent>
                         <form action={dispatch} className="space-y-6">
                             <input type="hidden" name="schoolId" value={school.schoolId} />
-                             <input type="hidden" name="enabled" value="true" />
+                            <input type="hidden" name="enabled" value={String(school.enabled)} />
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="school-name">School Name</Label>

@@ -127,6 +127,11 @@ export async function createSchool(prevState: State, formData: FormData): Promis
 export async function updateSchool(id: string, prevState: State, formData: FormData): Promise<State> {
     const formDataObj = Object.fromEntries(formData.entries());
     
+    // Convert 'enabled' from string to boolean for validation
+    if (typeof formDataObj.enabled === 'string') {
+        formDataObj.enabled = formDataObj.enabled === 'true';
+    }
+
     const validatedFields = UpdateSchoolSchema.safeParse(formDataObj);
     
     if (!validatedFields.success) {
