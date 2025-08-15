@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { School } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -17,9 +18,11 @@ export default function Home() {
           <p className="mb-6 text-muted-foreground">
             Please select your login portal to continue.
           </p>
-          <Button size="lg" className="w-full">
-            Super Admin Login
-          </Button>
+          <Link href="/super-admin/login" passHref>
+            <Button size="lg" className="w-full">
+              Super Admin Login
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     </div>
