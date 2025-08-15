@@ -1,4 +1,15 @@
-
 {
-  "schools": []
+  "schools": [
+    {
+      "schoolName": "WG school",
+      "contactEmail": "userbrijesh@gmail.com",
+      "address": "B101 second floor, Awas Vikas Colony Near Geeta Vatika",
+      "city": "gorakphur",
+      "state": "Uttar Pradesh",
+      "zipcode": "273006",
+      "phone": "07460042306",
+      "schoolId": "SCH-1755268393074-DPTX9",
+      "password": "school123"
+    }
+  ]
 }

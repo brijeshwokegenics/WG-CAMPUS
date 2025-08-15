@@ -27,6 +27,15 @@ const SchoolSchema = z.object({
 export type State = {
   errors?: {
     [key: string]: string[] | undefined;
+     schoolName?: string[];
+    contactEmail?: string[];
+    address?: string[];
+    city?: string[];
+    state?: string[];
+    zipcode?: string[];
+    phone?: string[];
+    password?: string[];
+    confirmPassword?: string[];
   };
   message?: string | null;
   data?: {
@@ -72,10 +81,6 @@ export async function createSchool(prevState: State, formData: FormData): Promis
     const db = await readDb();
     
     // 3. Check if schoolId or email already exists
-    const existingSchoolById = db.schools.find((s: any) => s.schoolId === schoolData.schoolId);
-    if (existingSchoolById) {
-      return { message: 'This School ID is already in use.' };
-    }
     const existingSchoolByEmail = db.schools.find((s: any) => s.contactEmail === schoolData.contactEmail);
     if (existingSchoolByEmail) {
       return { message: 'This email is already registered.' };
