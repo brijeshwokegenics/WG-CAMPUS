@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { School, LayoutDashboard, Building, UserPlus } from "lucide-react";
+import { School, LayoutDashboard, Building } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const sidebarNavItems = [
@@ -12,11 +12,7 @@ const sidebarNavItems = [
     href: "/super-admin/dashboard",
     icon: <LayoutDashboard className="h-5 w-5" />,
   },
-  {
-    title: "Create School",
-    href: "/super-admin/dashboard/create-school",
-    icon: <Building className="h-5 w-5" />,
-  },
+  // Removed "Create School" from here to make it a primary action from the dashboard
 ];
 
 export function Sidebar() {
