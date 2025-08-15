@@ -84,10 +84,10 @@ export const directorSidebarNavItems = (schoolId: string) => [
     
     {
       isSection: true,
-      title: "Academics"
+      title: "Academic Oversight"
     },
     { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes`, icon: <BookMarked className="h-5 w-5" /> },
-    { title: "Subjects", href: `/director/dashboard/${schoolId}/academics/subjects`, icon: <BookCopy className="h-5 w-5" /> },
+    { title: "Subject Allocation", href: `/director/dashboard/${schoolId}/academics/subjects`, icon: <BookCopy className="h-5 w-5" /> },
     { title: "Academic Calendar", href: `/director/dashboard/${schoolId}/academics/calendar`, icon: <CalendarCheck className="h-5 w-5" /> },
     { title: "Lesson Plan Progress", href: `/director/dashboard/${schoolId}/academics/lesson-plans`, icon: <GanttChartSquare className="h-5 w-5" /> },
 
@@ -109,7 +109,7 @@ export const directorSidebarNavItems = (schoolId: string) => [
     
     {
       isSection: true,
-      title: "Finance"
+      title: "Financial & Fee Monitoring"
     },
     { title: "Fee Collection", href: `/director/dashboard/${schoolId}/finance/fees`, icon: <Wallet className="h-5 w-5" /> },
     { title: "Scholarships", href: `/director/dashboard/${schoolId}/finance/scholarships`, icon: <GraduationCap className="h-5 w-5" /> },
@@ -118,7 +118,7 @@ export const directorSidebarNavItems = (schoolId: string) => [
 
     {
       isSection: true,
-      title: "Communication"
+      title: "Communication & Notifications"
     },
     { title: "Send Announcements", href: `/director/dashboard/${schoolId}/communication/announce`, icon: <Megaphone className="h-5 w-5" /> },
     { title: "Communications Log", href: `/director/dashboard/${schoolId}/communication/log`, icon: <Mail className="h-5 w-5" /> },
@@ -127,14 +127,14 @@ export const directorSidebarNavItems = (schoolId: string) => [
     
     {
       isSection: true,
-      title: "Events"
+      title: "Events & Activities"
     },
     { title: "Event Calendar", href: `/director/dashboard/${schoolId}/events`, icon: <CalendarCheck className="h-5 w-5" /> },
     { title: "Student Participation", href: `/director/dashboard/${schoolId}/events/participation`, icon: <Presentation className="h-5 w-5" /> },
 
     {
         isSection: true,
-        title: "Reports"
+        title: "Reports & Analytics"
     },
     { title: "Enrollment Reports", href: `/director/dashboard/${schoolId}/reports/enrollment`, icon: <FileText className="h-5 w-5" /> },
     { title: "Performance Reports", href: `/director/dashboard/${schoolId}/reports/performance`, icon: <BarChart2 className="h-5 w-5" /> },
@@ -151,7 +151,7 @@ export const directorSidebarNavItems = (schoolId: string) => [
 
     {
         isSection: true,
-        title: "Documents & Certificates"
+        title: "Document & Certificate Approval"
     },
     { title: "Approve Certificates", href: `/director/dashboard/${schoolId}/documents/approve`, icon: <CheckCircle className="h-5 w-5" /> },
     
@@ -218,17 +218,19 @@ export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarP
           <span className="sr-only">Toggle sidebar</span>
         </Button>
       </div>
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item, index) =>
-          item.isSection ? (
-            <h2 key={index} className={cn("px-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase", isCollapsed ? 'hidden' : 'mb-1 mt-3')}>
-                {item.title}
-            </h2>
-          ) : (
-            <NavLink key={item.href} item={item} />
-          )
-        )}
-      </nav>
+      <div className="flex-1 overflow-y-auto">
+        <nav className="grid items-start px-2 py-4 text-sm font-medium">
+            {navItems.map((item, index) =>
+              item.isSection ? (
+                 <h2 key={index} className={cn("px-3 mt-4 mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase", isCollapsed ? 'hidden' : 'block')}>
+                    {item.title}
+                </h2>
+              ) : (
+                <NavLink key={item.href} item={item} />
+              )
+            )}
+        </nav>
+      </div>
       <div className="mt-auto p-4 space-y-4 border-t">
          <ThemeToggle isCollapsed={isCollapsed} />
          <TooltipProvider delayDuration={0}>
