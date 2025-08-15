@@ -138,11 +138,15 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Direct
         "hidden md:flex flex-col bg-card border-r transition-all duration-300",
         isCollapsed ? 'w-[72px]' : 'w-64'
       )}>
-      <div className="flex h-16 items-center border-b px-4 lg:px-6 justify-center">
+      <div className={cn("flex h-16 items-center border-b", isCollapsed ? "justify-center px-2" : "justify-between px-4")}>
          <Link href={`/director/dashboard/${schoolId}`} className="flex items-center gap-2 font-semibold">
           <School className="h-6 w-6 text-primary" />
           <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>WG Campus</span>
         </Link>
+         <Button variant="ghost" size="icon" className="w-8 h-8" onClick={toggleSidebar}>
+          {isCollapsed ? <PanelRightClose className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+          <span className="sr-only">Toggle sidebar</span>
+        </Button>
       </div>
       <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item, index) =>
@@ -156,10 +160,6 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Direct
         )}
       </nav>
       <div className="mt-auto p-4 space-y-4 border-t">
-        <Button variant="outline" size="icon" className="w-full" onClick={toggleSidebar}>
-          {isCollapsed ? <PanelRightClose className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
-          <span className="sr-only">Toggle sidebar</span>
-        </Button>
          <ThemeToggle isCollapsed={isCollapsed} />
          <TooltipProvider delayDuration={0}>
             <Tooltip>
