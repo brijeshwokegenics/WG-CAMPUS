@@ -100,12 +100,7 @@ export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarP
   const pathname = usePathname();
   const { schoolId } = useSchool();
   
-  if (!schoolId) {
-    // You can render a loading state or null while the schoolId is not available
-    return null; 
-  }
-
-  const navItems = directorSidebarNavItems(schoolId);
+  const navItems = schoolId ? directorSidebarNavItems(schoolId) : [];
 
   const NavLink = ({ item }: { item: any }) => (
     <TooltipProvider delayDuration={0}>
@@ -134,7 +129,7 @@ export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarP
         isCollapsed ? 'w-[72px]' : 'w-64'
       )}>
       <div className={cn("flex h-16 items-center border-b", isCollapsed ? "justify-center px-2" : "justify-between px-4")}>
-         <Link href={`/director/dashboard/${schoolId}`} className="flex items-center gap-2 font-semibold">
+         <Link href={schoolId ? `/director/dashboard/${schoolId}` : '#'} className="flex items-center gap-2 font-semibold">
           <School className="h-6 w-6 text-primary" />
           <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>WG Campus</span>
         </Link>
