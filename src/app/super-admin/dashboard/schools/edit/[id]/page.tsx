@@ -102,36 +102,36 @@ export default function EditSchoolPage({ params }: { params: { id: string } }) {
                                 <div className="space-y-2">
                                     <Label htmlFor="school-name">School Name</Label>
                                     <Input id="school-name" name="schoolName" defaultValue={school.schoolName} required />
-                                    {state.errors?.schoolName && <p className="text-sm text-destructive">{state.errors.schoolName}</p>}
+                                    {state.errors?.schoolName && <p className="text-sm text-destructive">{state.errors.schoolName.join(', ')}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="contact-email">Contact Email</Label>
                                     <Input id="contact-email" name="contactEmail" type="email" defaultValue={school.contactEmail} required />
-                                     {state.errors?.contactEmail && <p className="text-sm text-destructive">{state.errors.contactEmail}</p>}
+                                     {state.errors?.contactEmail && <p className="text-sm text-destructive">{state.errors.contactEmail.join(', ')}</p>}
                                 </div>
                             </div>
 
                             <div className="space-y-2">
                                 <Label htmlFor="address">Address</Label>
                                 <Input id="address" name="address" defaultValue={school.address} required />
-                                {state.errors?.address && <p className="text-sm text-destructive">{state.errors.address}</p>}
+                                {state.errors?.address && <p className="text-sm text-destructive">{state.errors.address.join(', ')}</p>}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="city">City</Label>
                                     <Input id="city" name="city" defaultValue={school.city} required />
-                                    {state.errors?.city && <p className="text-sm text-destructive">{state.errors.city}</p>}
+                                    {state.errors?.city && <p className="text-sm text-destructive">{state.errors.city.join(', ')}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="state">State</Label>
                                     <Input id="state" name="state" defaultValue={school.state} required />
-                                     {state.errors?.state && <p className="text-sm text-destructive">{state.errors.state}</p>}
+                                     {state.errors?.state && <p className="text-sm text-destructive">{state.errors.state.join(', ')}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="zipcode">Zip Code</Label>
                                     <Input id="zipcode" name="zipcode" defaultValue={school.zipcode} required />
-                                    {state.errors?.zipcode && <p className="text-sm text-destructive">{state.errors.zipcode}</p>}
+                                    {state.errors?.zipcode && <p className="text-sm text-destructive">{state.errors.zipcode.join(', ')}</p>}
                                 </div>
                             </div>
                             
@@ -139,7 +139,7 @@ export default function EditSchoolPage({ params }: { params: { id: string } }) {
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">Phone Number</Label>
                                     <Input id="phone" name="phone" type="tel" defaultValue={school.phone} required />
-                                     {state.errors?.phone && <p className="text-sm text-destructive">{state.errors.phone}</p>}
+                                     {state.errors?.phone && <p className="text-sm text-destructive">{state.errors.phone.join(', ')}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="school-id">School ID</Label>
@@ -154,12 +154,12 @@ export default function EditSchoolPage({ params }: { params: { id: string } }) {
                                     <div className="space-y-2">
                                         <Label htmlFor="password">New Password</Label>
                                         <Input id="password" name="password" type="password" />
-                                        {state.errors?.password && <p className="text-sm text-destructive">{state.errors.password}</p>}
+                                        {state.errors?.password && <p className="text-sm text-destructive">{state.errors.password.join(', ')}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="confirm-password">Confirm New Password</Label>
                                         <Input id="confirm-password" name="confirmPassword" type="password" />
-                                        {state.errors?.confirmPassword && <p className="text-sm text-destructive">{state.errors.confirmPassword}</p>}
+                                        {state.errors?.confirmPassword && <p className="text-sm text-destructive">{state.errors.confirmPassword.join(', ')}</p>}
                                     </div>
                                 </div>
                             </div>
@@ -180,4 +180,3 @@ export default function EditSchoolPage({ params }: { params: { id: string } }) {
         </div>
     );
 }
-

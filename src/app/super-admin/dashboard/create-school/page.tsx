@@ -36,7 +36,7 @@ export default function CreateSchoolPage() {
     if (state?.message === "School created successfully!") {
         alert(`School created successfully!`);
         window.location.href = '/super-admin/dashboard/schools';
-    } else if (state?.message && state.message !== "School created successfully!") {
+    } else if (state?.message && !state.data) {
         alert(`Error: ${state.message}`);
     }
   }, [state]);
@@ -60,36 +60,36 @@ export default function CreateSchoolPage() {
                       <div className="space-y-2">
                           <Label htmlFor="school-name">School Name</Label>
                           <Input id="school-name" name="schoolName" placeholder="e.g., Northwood High School" required />
-                          {state.errors?.schoolName && <p className="text-sm text-destructive">{state.errors.schoolName}</p>}
+                          {state.errors?.schoolName && <p className="text-sm text-destructive">{state.errors.schoolName.join(', ')}</p>}
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="contact-email">Contact Email</Label>
                           <Input id="contact-email" name="contactEmail" type="email" placeholder="e.g., contact@northwoodhigh.edu" required />
-                          {state.errors?.contactEmail && <p className="text-sm text-destructive">{state.errors.contactEmail}</p>}
+                          {state.errors?.contactEmail && <p className="text-sm text-destructive">{state.errors.contactEmail.join(', ')}</p>}
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="address">Address</Label>
                       <Input id="address" name="address" placeholder="e.g., 123 Education Lane" required />
-                      {state.errors?.address && <p className="text-sm text-destructive">{state.errors.address}</p>}
+                      {state.errors?.address && <p className="text-sm text-destructive">{state.errors.address.join(', ')}</p>}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
                           <Label htmlFor="city">City</Label>
                           <Input id="city" name="city" placeholder="e.g., Springfield" required />
-                          {state.errors?.city && <p className="text-sm text-destructive">{state.errors.city}</p>}
+                          {state.errors?.city && <p className="text-sm text-destructive">{state.errors.city.join(', ')}</p>}
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="state">State</Label>
                           <Input id="state" name="state" placeholder="e.g., Illinois" required />
-                          {state.errors?.state && <p className="text-sm text-destructive">{state.errors.state}</p>}
+                          {state.errors?.state && <p className="text-sm text-destructive">{state.errors.state.join(', ')}</p>}
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="zipcode">Zip Code</Label>
                           <Input id="zipcode" name="zipcode" placeholder="e.g., 62704" required />
-                          {state.errors?.zipcode && <p className="text-sm text-destructive">{state.errors.zipcode}</p>}
+                          {state.errors?.zipcode && <p className="text-sm text-destructive">{state.errors.zipcode.join(', ')}</p>}
                       </div>
                     </div>
                     
@@ -97,7 +97,7 @@ export default function CreateSchoolPage() {
                         <div className="space-y-2">
                             <Label htmlFor="phone">Phone Number</Label>
                             <Input id="phone" name="phone" type="tel" placeholder="e.g., (555) 123-4567" required />
-                            {state.errors?.phone && <p className="text-sm text-destructive">{state.errors.phone}</p>}
+                            {state.errors?.phone && <p className="text-sm text-destructive">{state.errors.phone.join(', ')}</p>}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="school-id">Generated School ID</Label>
@@ -109,12 +109,12 @@ export default function CreateSchoolPage() {
                       <div className="space-y-2">
                           <Label htmlFor="password">Set Password</Label>
                           <Input id="password" name="password" type="password" required />
-                          {state.errors?.password && <p className="text-sm text-destructive">{state.errors.password}</p>}
+                          {state.errors?.password && <p className="text-sm text-destructive">{state.errors.password.join(', ')}</p>}
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="confirm-password">Confirm Password</Label>
                           <Input id="confirm-password" name="confirmPassword" type="password" required />
-                          {state.errors?.confirmPassword && <p className="text-sm text-destructive">{state.errors.confirmPassword}</p>}
+                          {state.errors?.confirmPassword && <p className="text-sm text-destructive">{state.errors.confirmPassword.join(', ')}</p>}
                       </div>
                     </div>
                     

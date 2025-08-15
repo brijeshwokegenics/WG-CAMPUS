@@ -47,12 +47,12 @@ export default function SchoolLoginPage() {
             <div className="space-y-2">
               <Label htmlFor="school-id">School ID</Label>
               <Input id="school-id" name="schoolId" placeholder="Enter your School ID" required />
-               {state.errors?.schoolId && <p className="text-sm text-destructive">{state.errors.schoolId}</p>}
+               {state.errors?.schoolId && <p className="text-sm text-destructive">{state.errors.schoolId.join(', ')}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" required />
-              {state.errors?.password && <p className="text-sm text-destructive">{state.errors.password}</p>}
+              {state.errors?.password && <p className="text-sm text-destructive">{state.errors.password.join(', ')}</p>}
             </div>
             {state.message && !state.errors && <p className="text-sm text-destructive text-center">{state.message}</p>}
             <SubmitButton />
