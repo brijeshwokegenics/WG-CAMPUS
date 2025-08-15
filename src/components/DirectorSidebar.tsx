@@ -136,10 +136,10 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Direct
           <span className="sr-only">Toggle sidebar</span>
         </Button>
       </div>
-      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item, index) =>
           item.isSection ? (
-            <h2 key={index} className={cn("mb-2 mt-2 px-3 text-lg font-semibold tracking-tight", isCollapsed && "hidden")}>
+            <h2 key={index} className={cn("mb-1 mt-2 px-3 text-sm font-semibold tracking-tight text-muted-foreground", isCollapsed && "hidden")}>
                 {item.title}
             </h2>
           ) : (
