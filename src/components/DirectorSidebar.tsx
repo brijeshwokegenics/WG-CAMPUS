@@ -30,7 +30,8 @@ import {
     HomeIcon,
     DoorOpen,
     Info,
-    BookMark
+    BookMark,
+    BookCopy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
@@ -50,6 +51,7 @@ export const directorSidebarNavItems = (schoolId: string) => [
       title: "Academics"
     },
     { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes`, icon: <Building2 className="h-5 w-5" /> },
+    { title: "Subjects", href: `/director/dashboard/${schoolId}/academics/subjects`, icon: <BookCopy className="h-5 w-5" /> },
     { title: "Admissions", href: `/director/dashboard/${schoolId}/academics/admissions`, icon: <UserPlus className="h-5 w-5" /> },
     { title: "Students", href: `/director/dashboard/${schoolId}/academics/students`, icon: <Users className="h-5 w-5" /> },
     { title: "Promote Students", href: `/director/dashboard/${schoolId}/academics/promote`, icon: <GraduationCap className="h-5 w-5" /> },
@@ -172,3 +174,5 @@ export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarP
     </div>
   );
 }
+
+    

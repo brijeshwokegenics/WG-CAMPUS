@@ -3,29 +3,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { 
-    ArrowRight, 
-    BarChart2, 
-    Building2, 
-    Banknote, 
-    Megaphone, 
-    BookOpen, 
-    UserPlus, 
-    Briefcase, 
-    Users, 
-    UserCheck, 
-    DollarSign, 
-    Calendar, 
-    Shield, 
-    FileText, 
-    Bus, 
-    Library, 
-    BedDouble, 
-    MessageSquare, 
-    GraduationCap, 
+    ArrowRight,
+    Building,
+    Users,
+    Briefcase,
+    GraduationCap,
+    UserCheck,
+    BarChart2,
     Wallet,
-    HomeIcon,
-    DoorOpen,
-    Info
+    Megaphone,
+    CalendarCheck,
+    FileText,
+    Bus,
+    FileBadge,
+    Smartphone,
+    ShieldCheck,
+    Users2,
+    BookCopy,
+    BookMarked,
+    AreaChart,
+    PieChart,
+    BellDot,
+    CalendarClock,
+    GanttChartSquare,
+    ClipboardCheck,
+    CircleDollarSign,
+    Receipt,
+    ListFilter,
+    MessageCircle,
+    Mail,
+    Presentation,
+    LineChart,
+    FileCog,
+    Map,
+    ShieldAlert,
+    CheckCircle,
+    SmartphoneNfc,
+    KeyRound,
+    History
 } from "lucide-react";
 
 
@@ -36,55 +51,114 @@ export default function DirectorDashboard({ params }: { params: { id: string } }
         { title: "Total Students", value: "1,250", icon: <Users className="h-6 w-6 text-muted-foreground" /> },
         { title: "Total Staff", value: "85", icon: <Briefcase className="h-6 w-6 text-muted-foreground" /> },
         { title: "Attendance Rate", value: "95.8%", icon: <UserCheck className="h-6 w-6 text-muted-foreground" /> },
-        { title: "Fees Collected", value: "$75,430", icon: <DollarSign className="h-6 w-6 text-muted-foreground" /> },
+        { title: "Fees Collected", value: "$75,430", icon: <CircleDollarSign className="h-6 w-6 text-muted-foreground" /> },
     ];
 
   const featureSections = [
     {
-      title: "Academics",
+      title: "School Profile & General Settings",
       features: [
-        { title: "Classes & Sections", description: "Manage academic classes and sections.", icon: <Building2 className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/classes` },
-        { title: "Admissions", description: "Handle new student admission processes.", icon: <UserPlus className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/admissions` },
-        { title: "Students", description: "View and manage all student records.", icon: <Users className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/students` },
-        { title: "Promote Students", description: "Promote students to the next class.", icon: <GraduationCap className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/promote` },
-        { title: "Attendance", description: "Monitor student and staff attendance.", icon: <UserCheck className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/attendance` },
-        { title: "Timetable", description: "Create and manage class schedules.", icon: <Calendar className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/timetable` },
-        { title: "Exams", description: "Oversee exam schedules and results.", icon: <BarChart2 className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/exams` },
-        { title: "Reports", description: "Generate academic reports.", icon: <FileText className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/reports` },
-        { title: "E-learning", description: "Manage online learning resources.", icon: <BookOpen className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/elearning` },
+        { title: "School Profile", description: "Name, logo, address, contact info.", icon: <Building className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/profile` },
+        { title: "Academic Year Setup", description: "Manage academic sessions and dates.", icon: <CalendarClock className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/settings/academic-year` },
+        { title: "Subscription Details", description: "View plan type and expiry date.", icon: <FileBadge className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/settings/subscription` },
       ]
     },
     {
-      title: "HR",
+      title: "User Management",
       features: [
-        { title: "Staff Directory", description: "Browse and manage staff profiles.", icon: <Users className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/hr/directory` },
-        { title: "Staff Attendance", description: "Track attendance for all staff members.", icon: <UserCheck className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/hr/attendance` },
-        { title: "Payroll", description: "Manage staff payroll and salaries.", icon: <Banknote className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/hr/payroll` },
-        { title: "Staff Salary", description: "Set and manage salary structures.", icon: <DollarSign className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/hr/salary` },
-        { title: "User Management", description: "Create Principal accounts and manage roles.", icon: <UserPlus className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/principal`},
+        { title: "Manage Principal", description: "Create/manage Principal credentials.", icon: <Users2 className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/principal` },
+        { title: "View All Users", description: "Browse all users in the school.", icon: <Users className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/users` },
+        { title: "User Activity Logs", description: "Track role-wise counts & logs.", icon: <History className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/users/logs` },
       ]
     },
     {
-      title: "Administration",
+      title: "Staff Management",
       features: [
-        { title: "Fees", description: "Track fee collections and invoices.", icon: <Wallet className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/fees` },
-        { title: "Fee Structure", description: "Define fee structures for different classes.", icon: <FileText className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/fee-structure` },
-        { title: "Inventory", description: "Manage school assets and inventory.", icon: <Briefcase className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/inventory` },
-        { title: "Transport", description: "Oversee transportation routes and vehicles.", icon: <Bus className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/transport` },
-        { title: "Library", description: "Manage library books and members.", icon: <Library className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/library` },
-        { title: "Hostel", description: "Manage hostel facilities and residents.", icon: <BedDouble className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/hostel` },
-        { title: "Gate Pass", description: "Manage entry and exit with gate passes.", icon: <DoorOpen className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/gate-pass` },
-        { title: "School Info", description: "Update school profile and general settings.", icon: <Info className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/profile` },
+        { title: "Teacher & Staff Profiles", description: "View staff details and performance.", icon: <Briefcase className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/staff` },
+        { title: "Leave Request Approval", description: "Approve or deny staff leave.", icon: <ClipboardCheck className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/staff/leave` },
       ]
     },
     {
-      title: "Communication",
+      title: "Academic Oversight",
       features: [
-        { title: "Notices", description: "Send out notices and announcements.", icon: <Megaphone className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/communication/notices` },
-        { title: "Calendar", description: "Manage the school's event calendar.", icon: <Calendar className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/communication/calendar` },
-        { title: "Messaging", description: "Communicate with staff and parents.", icon: <MessageSquare className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/communication/messaging` },
+        { title: "Class & Section Overview", description: "View all classes and sections.", icon: <BookMarked className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/classes` },
+        { title: "Subject Allocation", description: "Manage subject assignments.", icon: <BookCopy className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/subjects` },
+        { title: "Academic Calendar", description: "Approve school events and holidays.", icon: <CalendarCheck className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/calendar` },
+        { title: "Lesson Plan Progress", description: "Track syllabus completion status.", icon: <GanttChartSquare className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/academics/lesson-plans` },
       ]
-    }
+    },
+    {
+      title: "Attendance & Discipline",
+      features: [
+        { title: "Student Attendance", description: "Monitor student attendance summaries.", icon: <UserCheck className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/attendance/student` },
+        { title: "Staff Attendance", description: "Monitor staff attendance summaries.", icon: <ClipboardCheck className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/attendance/staff` },
+        { title: "Disciplinary Reports", description: "Track and view incident reports.", icon: <ShieldAlert className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/discipline` },
+      ]
+    },
+     {
+      title: "Examinations & Performance",
+      features: [
+        { title: "Exam Schedule", description: "View and approve exam schedules.", icon: <CalendarClock className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/exams/schedule` },
+        { title: "Result Analysis", description: "Analyze results, pass %, and toppers.", icon: <PieChart className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/exams/results` },
+        { title: "Performance Trends", description: "View year-on-year academic trends.", icon: <AreaChart className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/exams/trends` },
+      ]
+    },
+    {
+      title: "Financial & Fee Monitoring",
+      features: [
+        { title: "Fee Collection", description: "Track collected, pending, overdue fees.", icon: <Wallet className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/finance/fees` },
+        { title: "Scholarships", description: "Manage scholarships and concessions.", icon: <GraduationCap className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/finance/scholarships` },
+        { title: "Outstanding Fees", description: "View lists of students with due fees.", icon: <ListFilter className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/finance/outstanding` },
+        { title: "Expense Overview", description: "Monitor payroll, utilities, and costs.", icon: <Receipt className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/finance/expenses` },
+      ]
+    },
+    {
+      title: "Communication & Notifications",
+      features: [
+        { title: "Send Announcements", description: "Broadcast messages to users.", icon: <Megaphone className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/communication/announce` },
+        { title: "Communications Log", description: "View sent and received messages.", icon: <Mail className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/communication/log` },
+        { title: "Parent Meetings", description: "Oversee parent-teacher meetings.", icon: <MessageCircle className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/communication/meetings` },
+        { title: "Emergency Alerts", description: "Send urgent notifications.", icon: <BellDot className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/communication/emergency` },
+      ]
+    },
+    {
+      title: "Events & Activities",
+      features: [
+        { title: "Event Calendar", description: "View and approve upcoming events.", icon: <CalendarCheck className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/events` },
+        { title: "Student Participation", description: "Track student involvement in events.", icon: <Presentation className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/events/participation` },
+      ]
+    },
+    {
+      title: "Reports & Analytics",
+      features: [
+        { title: "Enrollment Reports", description: "View admission and withdrawal data.", icon: <FileText className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/reports/enrollment` },
+        { title: "Performance Reports", description: "Generate academic performance reports.", icon: <BarChart2 className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/reports/performance` },
+        { title: "Financial Reports", description: "Generate fee and finance reports.", icon: <LineChart className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/reports/financial` },
+        { title: "Custom Report Builder", description: "Create and save custom reports.", icon: <FileCog className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/reports/custom` },
+      ]
+    },
+    {
+      title: "Transport & Safety",
+      features: [
+        { title: "Transport Overview", description: "Manage routes, vehicles, driver details.", icon: <Bus className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/transport` },
+        { title: "GPS Tracking", description: "View real-time location of buses.", icon: <Map className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/transport/tracking` },
+        { title: "Safety Incidents", description: "Report and track safety incidents.", icon: <ShieldAlert className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/transport/safety` },
+      ]
+    },
+    {
+      title: "Document & Certificate Approval",
+      features: [
+        { title: "Approve Certificates", description: "Approve TCs and other certificates.", icon: <CheckCircle className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/documents/approve` },
+      ]
+    },
+     {
+      title: "Security & Compliance",
+      features: [
+        { title: "Two-Factor Auth", description: "Enable/disable 2FA for your account.", icon: <KeyRound className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/security/2fa` },
+        { title: "Audit Logs", description: "Track all actions performed in the ERP.", icon: <History className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/security/audit` },
+        { title: "Data Privacy", description: "Manage data access restrictions.", icon: <ShieldCheck className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/security/privacy` },
+      ]
+    },
   ];
 
   return (
@@ -141,3 +215,5 @@ export default function DirectorDashboard({ params }: { params: { id: string } }
     </div>
   );
 }
+
+    
