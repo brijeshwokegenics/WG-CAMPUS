@@ -36,7 +36,8 @@ import {
     KeyRound,
     History,
     PanelLeftClose,
-    PanelRightClose
+    PanelRightClose,
+    ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
