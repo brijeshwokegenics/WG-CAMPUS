@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, BookUser, ShieldCheck, UserCog, Users } from "lucide-react"
+import { ArrowRight, BookUser, School, ShieldCheck, UserCog, Users } from "lucide-react"
 
 import {
   Card,
@@ -9,6 +9,34 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+
+const stats = [
+  {
+    title: "Total Schools",
+    value: "12",
+    icon: <School className="w-6 h-6 text-primary" />,
+    change: "+2 this month",
+  },
+  {
+    title: "Total Principals",
+    value: "10",
+    icon: <UserCog className="w-6 h-6 text-primary" />,
+    change: "+1 this month",
+  },
+  {
+    title: "Total Staff",
+    value: "150+",
+    icon: <Users className="w-6 h-6 text-primary" />,
+    change: "+15 this month",
+  },
+  {
+    title: "Total Students",
+    value: "2,500+",
+    icon: <BookUser className="w-6 h-6 text-primary" />,
+    change: "+120 this month",
+  },
+];
+
 
 const actions = [
   {
@@ -49,7 +77,29 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Welcome, Super Admin!</h1>
+        <p className="text-muted-foreground">
+          Here's an overview of the entire campus ecosystem.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <Card key={stat.title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              {stat.icon}
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className="text-xs text-muted-foreground">{stat.change}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Quick Actions</h2>
         <p className="text-muted-foreground">
           Select an action based on your role to manage the campus.
         </p>
