@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle, Building } from "lucide-react";
 import Link from "next/link";
-import { readDb } from "@/app/actions/school";
+import { getSchools } from "@/app/actions/school";
 import {
   Table,
   TableBody,
@@ -28,8 +28,8 @@ export default function SuperAdminDashboard() {
 
    useEffect(() => {
     async function fetchSchools() {
-      const { schools: fetchedSchools } = await readDb();
-      setSchools(fetchedSchools || []);
+      const { schools: fetchedSchools } = await getSchools();
+      setSchools(fetchedSchools as School[] || []);
     }
     fetchSchools();
   }, []);

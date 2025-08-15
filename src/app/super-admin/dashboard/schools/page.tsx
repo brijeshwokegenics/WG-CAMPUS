@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
-import { readDb, toggleSchoolStatus } from "@/app/actions/school";
+import { getSchools, toggleSchoolStatus } from "@/app/actions/school";
 import {
   Table,
   TableBody,
@@ -23,9 +23,10 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal } from "lucide-react"
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 type School = {
+  id: string;
   schoolId: string;
   schoolName: string;
   contactEmail: string;
@@ -34,26 +35,30 @@ type School = {
 
 export default function ManageSchoolsPage() {
   const [schools, setSchools] = useState<School[]>([]);
+  const [isPending, startTransition] = useTransition();
+
+  const fetchSchools = async () => {
+    const { schools: fetchedSchools } = await getSchools();
+    setSchools(fetchedSchools as School[] || []);
+  };
 
   useEffect(() => {
-    async function fetchSchools() {
-      const { schools: fetchedSchools } = await readDb();
-      setSchools(fetchedSchools || []);
-    }
     fetchSchools();
   }, []);
 
-  const handleToggleStatus = async (schoolId: string, currentStatus: boolean) => {
-    // Optimistically update the UI
-    setSchools(schools.map(s => s.schoolId === schoolId ? { ...s, enabled: !currentStatus } : s));
+  const handleToggleStatus = (schoolId: string, currentStatus: boolean) => {
+    startTransition(async () => {
+        // Optimistically update the UI
+        setSchools(schools.map(s => s.schoolId === schoolId ? { ...s, enabled: !currentStatus } : s));
 
-    const result = await toggleSchoolStatus(schoolId, !currentStatus);
+        const result = await toggleSchoolStatus(schoolId, !currentStatus);
 
-    if (!result.success) {
-        // Revert the UI change if the server action fails
-        setSchools(schools.map(s => s.schoolId === schoolId ? { ...s, enabled: currentStatus } : s));
-        alert(`Error: ${result.message}`);
-    }
+        if (!result.success) {
+            // Revert the UI change if the server action fails
+            setSchools(schools.map(s => s.schoolId === schoolId ? { ...s, enabled: currentStatus } : s));
+            alert(`Error: ${result.message}`);
+        }
+    });
   };
 
   return (
@@ -92,7 +97,7 @@ export default function ManageSchoolsPage() {
               </TableHeader>
               <TableBody>
                 {schools.map((school) => (
-                  <TableRow key={school.schoolId}>
+                  <TableRow key={school.id}>
                     <TableCell className="font-medium">{school.schoolName}</TableCell>
                     <TableCell>{school.schoolId}</TableCell>
                     <TableCell>{school.contactEmail}</TableCell>
@@ -104,7 +109,7 @@ export default function ManageSchoolsPage() {
                      <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
+                            <Button variant="ghost" className="h-8 w-8 p-0" disabled={isPending}>
                               <span className="sr-only">Open menu</span>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
@@ -118,7 +123,7 @@ export default function ManageSchoolsPage() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem>View/Edit School</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleToggleStatus(school.schoolId, school.enabled)}>
+                            <DropdownMenuItem onClick={() => handleToggleStatus(school.schoolId, school.enabled)} disabled={isPending}>
                                 {school.enabled ? 'Disable' : 'Enable'} School
                             </DropdownMenuItem>
                           </DropdownMenuContent>

@@ -2,10 +2,9 @@
 'use server';
 
 import { z } from 'zod';
-import fs from 'fs/promises';
-import path from 'path';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
-const dbPath = path.join(process.cwd(), 'db.json');
 
 const SchoolSchema = z.object({
   schoolName: z.string().min(3, { message: "School name must be at least 3 characters long." }),
@@ -45,30 +44,22 @@ export type State = {
 };
 
 
-export async function readDb() {
+export async function getSchools() {
   try {
-    const data = await fs.readFile(dbPath, 'utf8');
-    return JSON.parse(data);
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
-      // File doesn't exist, which is fine for the first run.
-      return { schools: [] };
-    }
-    throw error;
+    const schoolsCol = collection(db, 'schools');
+    const schoolSnapshot = await getDocs(schoolsCol);
+    const schoolsList = schoolSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return { schools: schoolsList };
+  } catch (error) {
+    console.error("Error fetching schools:", error);
+    return { schools: [] };
   }
 }
 
-async function writeDb(data: any) {
-  await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf8');
-}
-
-
 export async function createSchool(prevState: State, formData: FormData): Promise<State> {
-  // 1. Validate form data
-   const validatedFields = SchoolSchema.safeParse(Object.fromEntries(formData.entries()));
+  const validatedFields = SchoolSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {
-    console.log(validatedFields.error.flatten().fieldErrors);
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: 'Validation failed. Please check the fields.',
@@ -78,22 +69,16 @@ export async function createSchool(prevState: State, formData: FormData): Promis
   const { confirmPassword, ...schoolData } = validatedFields.data;
 
   try {
-    // 2. Read existing schools
-    const db = await readDb();
+    const schoolsRef = collection(db, 'schools');
+    const q = query(schoolsRef, where("contactEmail", "==", schoolData.contactEmail));
+    const querySnapshot = await getDocs(q);
     
-    // 3. Check if schoolId or email already exists
-    const existingSchoolByEmail = db.schools.find((s: any) => s.contactEmail === schoolData.contactEmail);
-    if (existingSchoolByEmail) {
-      return { message: 'This email is already registered.' };
+    if (!querySnapshot.empty) {
+        return { message: 'This email is already registered.' };
     }
 
-    // 4. Add new school (in a real app, hash the password here!)
-    db.schools.push(schoolData);
-
-    // 5. Write back to the database
-    await writeDb(db);
-
-    // 6. Return success state
+    await addDoc(collection(db, 'schools'), schoolData);
+    
     return { message: 'School created successfully!', data: { schoolId: schoolData.schoolId } };
 
   } catch (e: any) {
@@ -104,20 +89,24 @@ export async function createSchool(prevState: State, formData: FormData): Promis
 }
 
 export async function toggleSchoolStatus(schoolId: string, newStatus: boolean) {
-  try {
-    const db = await readDb();
-    const schoolIndex = db.schools.findIndex((s: any) => s.schoolId === schoolId);
+    try {
+        const schoolsRef = collection(db, 'schools');
+        const q = query(schoolsRef, where("schoolId", "==", schoolId));
+        const querySnapshot = await getDocs(q);
 
-    if (schoolIndex === -1) {
-      throw new Error("School not found.");
+        if (querySnapshot.empty) {
+            throw new Error("School not found.");
+        }
+        
+        const schoolDocRef = querySnapshot.docs[0].ref;
+
+        await updateDoc(schoolDocRef, {
+            enabled: newStatus
+        });
+
+        return { success: true, message: `School status updated successfully.` };
+    } catch (e: any) {
+        console.error("Error toggling school status:", e);
+        return { success: false, message: `Database error: ${e.message}` };
     }
-
-    db.schools[schoolIndex].enabled = newStatus;
-
-    await writeDb(db);
-
-    return { success: true, message: `School status updated successfully.` };
-  } catch (e: any) {
-    return { success: false, message: `Database error: ${e.message}` };
-  }
 }

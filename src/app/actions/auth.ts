@@ -2,8 +2,10 @@
 'use server';
 
 import { z } from 'zod';
-import { readDb } from './school';
 import { redirect } from 'next/navigation';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
 
 const LoginSchema = z.object({
   schoolId: z.string().trim().min(1, { message: "School ID is required." }),
@@ -31,12 +33,16 @@ export async function loginSchool(prevState: LoginState, formData: FormData): Pr
   const { schoolId, password } = validatedFields.data;
 
   try {
-    const db = await readDb();
-    const school = db.schools.find((s: any) => s.schoolId === schoolId);
+    const schoolsRef = collection(db, 'schools');
+    const q = query(schoolsRef, where("schoolId", "==", schoolId));
+    const querySnapshot = await getDocs(q);
 
-    if (!school) {
-      return { message: 'Invalid School ID or password.' };
+    if (querySnapshot.empty) {
+        return { message: 'Invalid School ID or password.' };
     }
+    
+    const schoolDoc = querySnapshot.docs[0];
+    const school = schoolDoc.data();
 
     if (school.password !== password) {
       return { message: 'Invalid School ID or password.' };
