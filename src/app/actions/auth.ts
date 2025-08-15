@@ -61,7 +61,5 @@ export async function loginSchool(prevState: LoginState, formData: FormData): Pr
     };
   }
 
-  // Redirect is removed as the target dashboard is deleted.
-  // A success message can be shown instead.
-  return { message: "Login successful. Dashboard under construction." };
+  redirect(`/director/dashboard/${schoolDocId}`);
 }

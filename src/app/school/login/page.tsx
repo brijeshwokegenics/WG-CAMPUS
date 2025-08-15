@@ -26,7 +26,7 @@ export default function SchoolLoginPage() {
   const [state, dispatch] = useFormState(loginSchool, initialState);
   
    useEffect(() => {
-    if (state?.message && (state.message.startsWith('This school account has been disabled') || state.message.startsWith('Login successful'))) {
+    if (state?.message && state.message.startsWith('This school account has been disabled')) {
         alert(`${state.message}`);
     }
   }, [state]);
@@ -54,7 +54,7 @@ export default function SchoolLoginPage() {
               <Input id="password" name="password" type="password" required />
               {state.errors?.password && <p className="text-sm text-destructive">{state.errors.password.join(', ')}</p>}
             </div>
-            {state.message && !state.errors && <p className="text-sm text-center" >{state.message}</p>}
+            {state.message && !state.errors && <p className="text-sm text-destructive text-center" >{state.message}</p>}
             <SubmitButton />
           </form>
           <div className="mt-4 text-center text-sm">
