@@ -32,6 +32,8 @@ export async function loginSchool(prevState: LoginState, formData: FormData): Pr
 
   const { schoolId, password } = validatedFields.data;
 
+  let schoolDocId: string;
+
   try {
     const schoolsRef = collection(db, 'schools');
     const q = query(schoolsRef, where("schoolId", "==", schoolId));
@@ -43,6 +45,7 @@ export async function loginSchool(prevState: LoginState, formData: FormData): Pr
     
     const schoolDoc = querySnapshot.docs[0];
     const school = schoolDoc.data();
+    schoolDocId = schoolDoc.id;
 
     if (school.password !== password) {
       return { message: 'Invalid School ID or password.' };
@@ -62,5 +65,5 @@ export async function loginSchool(prevState: LoginState, formData: FormData): Pr
   }
   
   // If we reach here, login is successful.
-  redirect('/director/dashboard');
+  redirect(`/director/dashboard/${schoolDocId}`);
 }

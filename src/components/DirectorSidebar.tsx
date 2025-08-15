@@ -19,56 +19,57 @@ import {
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
 
-const sidebarNavItems = [
-  {
-    title: "Dashboard",
-    href: "/director/dashboard",
-    icon: <LayoutDashboard className="h-5 w-5" />,
-  },
-  {
-    title: "User Management",
-    href: "/director/dashboard/principal",
-    icon: <UserPlus className="h-5 w-5" />,
-  },
-  {
-    title: "School Profile",
-    href: "/director/dashboard/profile",
-    icon: <Building2 className="h-5 w-5" />,
-  },
-  {
-    title: "Academics",
-    href: "/director/dashboard/academics",
-    icon: <BookOpen className="h-5 w-5" />,
-  },
-  {
-    title: "HR & Payroll",
-    href: "/director/dashboard/hr",
-    icon: <Briefcase className="h-5 w-5" />,
-  },
-  {
-    title: "Financials",
-    href: "/director/dashboard/financials",
-    icon: <Banknote className="h-5 w-5" />,
-  },
-    {
-    title: "Administration",
-    href: "/director/dashboard/admin",
-    icon: <Settings className="h-5 w-5" />,
-  },
-  {
-    title: "Communication",
-    href: "/director/dashboard/communication",
-    icon: <Megaphone className="h-5 w-5" />,
-  },
-  {
-    title: "Reports",
-    href: "/director/dashboard/reports",
-    icon: <BarChart2 className="h-5 w-5" />,
-  },
-];
-
-export function DirectorSidebar() {
+export function DirectorSidebar({ schoolId }: { schoolId: string }) {
   const pathname = usePathname();
+
+  const sidebarNavItems = [
+    {
+      title: "Dashboard",
+      href: `/director/dashboard/${schoolId}`,
+      icon: <LayoutDashboard className="h-5 w-5" />,
+    },
+    {
+      title: "User Management",
+      href: `/director/dashboard/${schoolId}/principal`,
+      icon: <UserPlus className="h-5 w-5" />,
+    },
+    {
+      title: "School Profile",
+      href: `/director/dashboard/${schoolId}/profile`,
+      icon: <Building2 className="h-5 w-5" />,
+    },
+    {
+      title: "Academics",
+      href: `/director/dashboard/${schoolId}/academics`,
+      icon: <BookOpen className="h-5 w-5" />,
+    },
+    {
+      title: "HR & Payroll",
+      href: `/director/dashboard/${schoolId}/hr`,
+      icon: <Briefcase className="h-5 w-5" />,
+    },
+    {
+      title: "Financials",
+      href: `/director/dashboard/${schoolId}/financials`,
+      icon: <Banknote className="h-5 w-5" />,
+    },
+      {
+      title: "Administration",
+      href: `/director/dashboard/${schoolId}/admin`,
+      icon: <Settings className="h-5 w-5" />,
+    },
+    {
+      title: "Communication",
+      href: `/director/dashboard/${schoolId}/communication`,
+      icon: <Megaphone className="h-5 w-5" />,
+    },
+    {
+      title: "Reports",
+      href: `/director/dashboard/${schoolId}/reports`,
+      icon: <BarChart2 className="h-5 w-5" />,
+    },
+  ];
+
 
   return (
     <div className="hidden md:flex flex-col w-64 bg-card border-r">
@@ -83,7 +84,7 @@ export function DirectorSidebar() {
             href={item.href}
             className={cn(
               "flex items-center px-3 py-2 text-sm font-medium rounded-md",
-              pathname.startsWith(item.href)
+              pathname === item.href
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted"
             )}
@@ -108,4 +109,3 @@ export function DirectorSidebar() {
     </div>
   );
 }
-
