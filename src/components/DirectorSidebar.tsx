@@ -12,7 +12,6 @@ import {
     BookOpen, 
     Briefcase, 
     Banknote, 
-    Settings, 
     Megaphone, 
     BarChart2,
     UserCheck,
