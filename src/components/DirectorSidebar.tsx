@@ -17,7 +17,6 @@ import {
     CalendarCheck,
     FileText,
     Bus,
-    FileBadge,
     Users2,
     BookCopy,
     BookMarked,
@@ -30,7 +29,7 @@ import {
     CircleDollarSign,
     Receipt,
     ListFilter,
-    MessageCircle,
+    MessageSquare,
     Mail,
     Presentation,
     LineChart,
@@ -44,7 +43,22 @@ import {
     PanelRightClose,
     ShieldCheck,
     UserCheck,
-    Smartphone
+    Smartphone,
+    UserPlus,
+    TrendingUp,
+    CalendarDays,
+    MonitorPlay,
+    Contact,
+    Banknote,
+    FileStack,
+    Boxes,
+    Library,
+    BedDouble,
+    Ticket,
+    Calendar,
+    User,
+    Award,
+    BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
@@ -55,120 +69,75 @@ import { useSchool } from "@/context/SchoolProvider";
 
 export const directorSidebarNavItems = (schoolId: string) => [
     {
-      title: "Dashboard",
-      href: `/director/dashboard/${schoolId}`,
-      icon: <LayoutDashboard className="h-5 w-5" />,
-    },
-    {
       isSection: true,
-      title: "General Settings"
-    },
-    { title: "School Profile", href: `/director/dashboard/${schoolId}/profile`, icon: <Building className="h-5 w-5" /> },
-    { title: "Academic Year Setup", href: `/director/dashboard/${schoolId}/settings/academic-year`, icon: <CalendarClock className="h-5 w-5" /> },
-    { title: "Subscription Details", href: `/director/dashboard/${schoolId}/settings/subscription`, icon: <FileBadge className="h-5 w-5" /> },
-
-    {
-      isSection: true,
-      title: "User Management"
-    },
-    { title: "Manage Principal", href: `/director/dashboard/${schoolId}/principal`, icon: <Users2 className="h-5 w-5" />},
-    { title: "View All Users", href: `/director/dashboard/${schoolId}/users`, icon: <Users className="h-5 w-5" /> },
-    { title: "User Activity Logs", href: `/director/dashboard/${schoolId}/users/logs`, icon: <History className="h-5 w-5" /> },
-
-    {
-      isSection: true,
-      title: "Staff Management"
-    },
-    { title: "Teacher & Staff Profiles", href: `/director/dashboard/${schoolId}/staff`, icon: <Briefcase className="h-5 w-5" /> },
-    { title: "Leave Request Approval", href: `/director/dashboard/${schoolId}/staff/leave`, icon: <ClipboardCheck className="h-5 w-5" /> },
-    
-    {
-      isSection: true,
-      title: "Academic Oversight"
+      title: "Academics"
     },
     { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes`, icon: <BookMarked className="h-5 w-5" /> },
-    { title: "Subject Allocation", href: `/director/dashboard/${schoolId}/academics/subjects`, icon: <BookCopy className="h-5 w-5" /> },
-    { title: "Academic Calendar", href: `/director/dashboard/${schoolId}/academics/calendar`, icon: <CalendarCheck className="h-5 w-5" /> },
-    { title: "Lesson Plan Progress", href: `/director/dashboard/${schoolId}/academics/lesson-plans`, icon: <GanttChartSquare className="h-5 w-5" /> },
-
-    {
-      isSection: true,
-      title: "Attendance & Discipline"
-    },
-    { title: "Student Attendance", href: `/director/dashboard/${schoolId}/attendance/student`, icon: <UserCheck className="h-5 w-5" /> },
-    { title: "Staff Attendance", href: `/director/dashboard/${schoolId}/attendance/staff`, icon: <ClipboardCheck className="h-5 w-5" /> },
-    { title: "Disciplinary Reports", href: `/director/dashboard/${schoolId}/discipline`, icon: <ShieldAlert className="h-5 w-5" /> },
-
-    {
-      isSection: true,
-      title: "Examinations & Performance"
-    },
-    { title: "Exam Schedule", href: `/director/dashboard/${schoolId}/exams/schedule`, icon: <CalendarClock className="h-5 w-5" /> },
-    { title: "Result Analysis", href: `/director/dashboard/${schoolId}/exams/results`, icon: <PieChart className="h-5 w-5" /> },
-    { title: "Performance Trends", href: `/director/dashboard/${schoolId}/exams/trends`, icon: <AreaChart className="h-5 w-5" /> },
+    { title: "Admissions", href: `/director/dashboard/${schoolId}/academics/admissions`, icon: <UserPlus className="h-5 w-5" /> },
+    { title: "Students", href: `/director/dashboard/${schoolId}/academics/students`, icon: <Users className="h-5 w-5" /> },
+    { title: "Promote Students", href: `/director/dashboard/${schoolId}/academics/promote`, icon: <TrendingUp className="h-5 w-5" /> },
+    { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance`, icon: <UserCheck className="h-5 w-5" /> },
+    { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable`, icon: <CalendarDays className="h-5 w-5" /> },
+    { title: "Exams", href: `/director/dashboard/${schoolId}/academics/exams`, icon: <FileText className="h-5 w-5" /> },
+    { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports`, icon: <BarChart2 className="h-5 w-5" /> },
+    { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/e-learning`, icon: <MonitorPlay className="h-5 w-5" /> },
     
     {
       isSection: true,
-      title: "Financial & Fee Monitoring"
+      title: "HR"
     },
-    { title: "Fee Collection", href: `/director/dashboard/${schoolId}/finance/fees`, icon: <Wallet className="h-5 w-5" /> },
-    { title: "Scholarships", href: `/director/dashboard/${schoolId}/finance/scholarships`, icon: <GraduationCap className="h-5 w-5" /> },
-    { title: "Outstanding Fees", href: `/director/dashboard/${schoolId}/finance/outstanding`, icon: <ListFilter className="h-5 w-5" /> },
-    { title: "Expense Overview", href: `/director/dashboard/${schoolId}/finance/expenses`, icon: <Receipt className="h-5 w-5" /> },
+    { title: "Staff Directory", href: `/director/dashboard/${schoolId}/hr/directory`, icon: <Contact className="h-5 w-5" /> },
+    { title: "Staff Attendance", href: `/director/dashboard/${schoolId}/hr/attendance`, icon: <ClipboardCheck className="h-5 w-5" /> },
+    { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-5 w-5" /> },
+    { title: "Staff Salary", href: `/director/dashboard/${schoolId}/hr/salary`, icon: <Banknote className="h-5 w-5" /> },
 
     {
       isSection: true,
-      title: "Communication & Notifications"
+      title: "Administration"
     },
-    { title: "Send Announcements", href: `/director/dashboard/${schoolId}/communication/announce`, icon: <Megaphone className="h-5 w-5" /> },
-    { title: "Communications Log", href: `/director/dashboard/${schoolId}/communication/log`, icon: <Mail className="h-5 w-5" /> },
-    { title: "Parent Meetings", href: `/director/dashboard/${schoolId}/communication/meetings`, icon: <MessageCircle className="h-5 w-5" /> },
-    { title: "Emergency Alerts", href: `/director/dashboard/${schoolId}/communication/emergency`, icon: <BellDot className="h-5 w-5" /> },
+    { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users`, icon: <Users2 className="h-5 w-5" /> },
+    { title: "Fees", href: `/director/dashboard/${schoolId}/admin/fees`, icon: <CircleDollarSign className="h-5 w-5" /> },
+    { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure`, icon: <FileStack className="h-5 w-5" /> },
+    { title: "Inventory", href: `/director/dashboard/${schoolId}/admin/inventory`, icon: <Boxes className="h-5 w-5" /> },
+    { title: "Transport", href: `/director/dashboard/${schoolId}/admin/transport`, icon: <Bus className="h-5 w-5" /> },
+    { title: "Library", href: `/director/dashboard/${schoolId}/admin/library`, icon: <Library className="h-5 w-5" /> },
+    { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel`, icon: <BedDouble className="h-5 w-5" /> },
+    { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass`, icon: <Ticket className="h-5 w-5" /> },
+    { title: "School Info", href: `/director/dashboard/${schoolId}/profile`, icon: <Building className="h-5 w-5" /> },
     
     {
       isSection: true,
-      title: "Events & Activities"
+      title: "Communication"
     },
-    { title: "Event Calendar", href: `/director/dashboard/${schoolId}/events`, icon: <CalendarCheck className="h-5 w-5" /> },
-    { title: "Student Participation", href: `/director/dashboard/${schoolId}/events/participation`, icon: <Presentation className="h-5 w-5" /> },
+    { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices`, icon: <Megaphone className="h-5 w-5" /> },
+    { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar`, icon: <Calendar className="h-5 w-5" /> },
+    { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging`, icon: <MessageSquare className="h-5 w-5" /> },
 
     {
         isSection: true,
-        title: "Reports & Analytics"
+        title: "Accountant Menu"
     },
-    { title: "Enrollment Reports", href: `/director/dashboard/${schoolId}/reports/enrollment`, icon: <FileText className="h-5 w-5" /> },
-    { title: "Performance Reports", href: `/director/dashboard/${schoolId}/reports/performance`, icon: <BarChart2 className="h-5 w-5" /> },
-    { title: "Financial Reports", href: `/director/dashboard/${schoolId}/reports/financial`, icon: <LineChart className="h-5 w-5" /> },
-    { title: "Custom Report Builder", href: `/director/dashboard/${schoolId}/reports/custom`, icon: <FileCog className="h-5 w-5" /> },
-
-    {
-        isSection: true,
-        title: "Transport & Safety"
-    },
-    { title: "Transport Overview", href: `/director/dashboard/${schoolId}/transport`, icon: <Bus className="h-5 w-5" /> },
-    { title: "GPS Tracking", href: `/director/dashboard/${schoolId}/transport/tracking`, icon: <Map className="h-5 w-5" /> },
-    { title: "Safety Incidents", href: `/director/dashboard/${schoolId}/transport/safety`, icon: <ShieldAlert className="h-5 w-5" /> },
-
-    {
-        isSection: true,
-        title: "Document & Certificate Approval"
-    },
-    { title: "Approve Certificates", href: `/director/dashboard/${schoolId}/documents/approve`, icon: <CheckCircle className="h-5 w-5" /> },
+    { title: "Fees Management", href: `/director/dashboard/${schoolId}/accountant/fees`, icon: <Wallet className="h-5 w-5" /> },
+    { title: "Fee Structure", href: `/director/dashboard/${schoolId}/accountant/fee-structure`, icon: <FileStack className="h-5 w-5" /> },
+    { title: "Payroll Processing", href: `/director/dashboard/${schoolId}/accountant/payroll`, icon: <Receipt className="h-5 w-5" /> },
     
     {
         isSection: true,
-        title: "Mobile & Accessibility"
+        title: "Parent Menu"
     },
-    { title: "Mobile Dashboard", href: `/director/dashboard/${schoolId}/mobile`, icon: <Smartphone className="h-5 w-5" /> },
-
-
+    { title: "Dashboard", href: `/director/dashboard/${schoolId}/parent/dashboard`, icon: <LayoutDashboard className="h-5 w-5" /> },
+    { title: "Child's Profile", href: `/director/dashboard/${schoolId}/parent/child-profile`, icon: <User className="h-5 w-5" /> },
+    { title: "Attendance", href: `/director/dashboard/${schoolId}/parent/attendance`, icon: <UserCheck className="h-5 w-5" /> },
+    { title: "Fees", href: `/director/dashboard/${schoolId}/parent/fees`, icon: <CircleDollarSign className="h-5 w-5" /> },
+    { title: "Report Cards", href: `/director/dashboard/${schoolId}/parent/reports`, icon: <Award className="h-5 w-5" /> },
+    { title: "E-learning", href: `/director/dashboard/${schoolId}/parent/e-learning`, icon: <MonitorPlay className="h-5 w-5" /> },
+    { title: "School Calendar", href: `/director/dashboard/${schoolId}/parent/calendar`, icon: <Calendar className="h-5 w-5" /> },
+    
     {
         isSection: true,
-        title: "Security & Compliance"
+        title: "Librarian Menu"
     },
-    { title: "Two-Factor Auth", href: `/director/dashboard/${schoolId}/security/2fa`, icon: <KeyRound className="h-5 w-5" /> },
-    { title: "Audit Logs", href: `/director/dashboard/${schoolId}/security/audit`, icon: <History className="h-5 w-5" /> },
-    { title: "Data Privacy", href: `/director/dashboard/${schoolId}/security/privacy`, icon: <ShieldCheck className="h-5 w-5" /> },
+    { title: "Library Management", href: `/director/dashboard/${schoolId}/librarian/management`, icon: <BookOpen className="h-5 w-5" /> },
 ];
 
 type DirectorSidebarProps = {
@@ -226,7 +195,7 @@ export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarP
                     {item.title}
                 </h2>
               ) : (
-                <NavLink key={item.href} item={item} />
+                item.href && <NavLink key={item.href} item={item} />
               )
             )}
         </nav>
