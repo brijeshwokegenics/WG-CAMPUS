@@ -91,13 +91,14 @@ export const directorSidebarNavItems = (schoolId: string) => [
 ];
 
 type DirectorSidebarProps = {
-  schoolId: string;
+  params: { id: string };
   isCollapsed: boolean;
   toggleSidebar: () => void;
 };
 
-export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: DirectorSidebarProps) {
+export function DirectorSidebar({ params, isCollapsed, toggleSidebar }: DirectorSidebarProps) {
   const pathname = usePathname();
+  const schoolId = params.id;
   const navItems = directorSidebarNavItems(schoolId);
 
   const NavLink = ({ item }: { item: any }) => (

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -14,8 +13,7 @@ export default function DirectorDashboardLayout({
   params: { id: string };
 }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const schoolId = params.id;
-
+  
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
@@ -23,13 +21,13 @@ export default function DirectorDashboardLayout({
   return (
     <div className="flex min-h-screen">
       <DirectorSidebar 
-        schoolId={schoolId} 
+        params={params}
         isCollapsed={isSidebarCollapsed}
         toggleSidebar={toggleSidebar}
       />
       <div className={`flex flex-col flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
         <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 md:hidden">
-          <MobileSidebar navItems={directorSidebarNavItems(schoolId)} />
+          <MobileSidebar navItems={directorSidebarNavItems(params.id)} />
         </header>
         <main className="flex-1 p-6 bg-background">
           {children}
