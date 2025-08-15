@@ -43,7 +43,8 @@ import {
     PanelLeftClose,
     PanelRightClose,
     ShieldCheck,
-    UserCheck
+    UserCheck,
+    Smartphone
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
@@ -60,7 +61,7 @@ export const directorSidebarNavItems = (schoolId: string) => [
     },
     {
       isSection: true,
-      title: "School & General Settings"
+      title: "General Settings"
     },
     { title: "School Profile", href: `/director/dashboard/${schoolId}/profile`, icon: <Building className="h-5 w-5" /> },
     { title: "Academic Year Setup", href: `/director/dashboard/${schoolId}/settings/academic-year`, icon: <CalendarClock className="h-5 w-5" /> },
@@ -83,10 +84,10 @@ export const directorSidebarNavItems = (schoolId: string) => [
     
     {
       isSection: true,
-      title: "Academic Oversight"
+      title: "Academics"
     },
-    { title: "Class & Section Overview", href: `/director/dashboard/${schoolId}/academics/classes`, icon: <BookMarked className="h-5 w-5" /> },
-    { title: "Subject Allocation", href: `/director/dashboard/${schoolId}/academics/subjects`, icon: <BookCopy className="h-5 w-5" /> },
+    { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes`, icon: <BookMarked className="h-5 w-5" /> },
+    { title: "Subjects", href: `/director/dashboard/${schoolId}/academics/subjects`, icon: <BookCopy className="h-5 w-5" /> },
     { title: "Academic Calendar", href: `/director/dashboard/${schoolId}/academics/calendar`, icon: <CalendarCheck className="h-5 w-5" /> },
     { title: "Lesson Plan Progress", href: `/director/dashboard/${schoolId}/academics/lesson-plans`, icon: <GanttChartSquare className="h-5 w-5" /> },
 
@@ -108,7 +109,7 @@ export const directorSidebarNavItems = (schoolId: string) => [
     
     {
       isSection: true,
-      title: "Financial & Fee Monitoring"
+      title: "Finance"
     },
     { title: "Fee Collection", href: `/director/dashboard/${schoolId}/finance/fees`, icon: <Wallet className="h-5 w-5" /> },
     { title: "Scholarships", href: `/director/dashboard/${schoolId}/finance/scholarships`, icon: <GraduationCap className="h-5 w-5" /> },
@@ -117,7 +118,7 @@ export const directorSidebarNavItems = (schoolId: string) => [
 
     {
       isSection: true,
-      title: "Communication & Notifications"
+      title: "Communication"
     },
     { title: "Send Announcements", href: `/director/dashboard/${schoolId}/communication/announce`, icon: <Megaphone className="h-5 w-5" /> },
     { title: "Communications Log", href: `/director/dashboard/${schoolId}/communication/log`, icon: <Mail className="h-5 w-5" /> },
@@ -126,14 +127,14 @@ export const directorSidebarNavItems = (schoolId: string) => [
     
     {
       isSection: true,
-      title: "Events & Activities"
+      title: "Events"
     },
     { title: "Event Calendar", href: `/director/dashboard/${schoolId}/events`, icon: <CalendarCheck className="h-5 w-5" /> },
     { title: "Student Participation", href: `/director/dashboard/${schoolId}/events/participation`, icon: <Presentation className="h-5 w-5" /> },
 
     {
         isSection: true,
-        title: "Reports & Analytics"
+        title: "Reports"
     },
     { title: "Enrollment Reports", href: `/director/dashboard/${schoolId}/reports/enrollment`, icon: <FileText className="h-5 w-5" /> },
     { title: "Performance Reports", href: `/director/dashboard/${schoolId}/reports/performance`, icon: <BarChart2 className="h-5 w-5" /> },
@@ -150,9 +151,16 @@ export const directorSidebarNavItems = (schoolId: string) => [
 
     {
         isSection: true,
-        title: "Document & Certificate Approval"
+        title: "Documents & Certificates"
     },
     { title: "Approve Certificates", href: `/director/dashboard/${schoolId}/documents/approve`, icon: <CheckCircle className="h-5 w-5" /> },
+    
+    {
+        isSection: true,
+        title: "Mobile & Accessibility"
+    },
+    { title: "Mobile Dashboard", href: `/director/dashboard/${schoolId}/mobile`, icon: <Smartphone className="h-5 w-5" /> },
+
 
     {
         isSection: true,
@@ -213,7 +221,7 @@ export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarP
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item, index) =>
           item.isSection ? (
-            <h2 key={index} className={cn("px-3 text-sm font-semibold tracking-tight text-muted-foreground", isCollapsed ? 'hidden' : 'mb-1 mt-2')}>
+            <h2 key={index} className={cn("px-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase", isCollapsed ? 'hidden' : 'mb-1 mt-3')}>
                 {item.title}
             </h2>
           ) : (
