@@ -2,13 +2,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, BarChart2, Building2, Banknote, Settings, Megaphone, BookOpen, UserPlus, Briefcase, Users, UserCheck, DollarSign } from "lucide-react";
+import { ArrowRight, BarChart2, Building2, Banknote, Settings, Megaphone, BookOpen, UserPlus, Briefcase, Users, UserCheck, DollarSign, Calendar, Shield, FileText, Bus, Library, BedDouble, MessageSquare } from "lucide-react";
 
 const kpiData = [
   { title: "Total Students", value: "1,250", icon: <Users className="h-6 w-6 text-muted-foreground" /> },
   { title: "Total Staff", value: "85", icon: <Briefcase className="h-6 w-6 text-muted-foreground" /> },
   { title: "Attendance Rate", value: "95.8%", icon: <UserCheck className="h-6 w-6 text-muted-foreground" /> },
-  { title: "Revenue This Month", value: "$75,430", icon: <DollarSign className="h-6 w-6 text-muted-foreground" /> },
+  { title: "Fees Collected", value: "$75,430", icon: <DollarSign className="h-6 w-6 text-muted-foreground" /> },
 ];
 
 export default function DirectorDashboard({ params }: { params: { id: string } }) {
@@ -17,13 +17,13 @@ export default function DirectorDashboard({ params }: { params: { id: string } }
   const featureCards = [
     { 
         title: "User Management", 
-        description: "Create and manage the Principal account for the school.", 
+        description: "Create Principal accounts and manage all user roles.", 
         icon: <UserPlus className="h-8 w-8 text-primary"/>,
         href: `/director/dashboard/${schoolId}/principal`
     },
     { 
         title: "School Profile", 
-        description: "Update school information, logo, and contact details.", 
+        description: "Update school info, logo, and academic year settings.", 
         icon: <Building2 className="h-8 w-8 text-primary"/>,
         href: `/director/dashboard/${schoolId}/profile`
     },
@@ -33,35 +33,53 @@ export default function DirectorDashboard({ params }: { params: { id: string } }
         icon: <BookOpen className="h-8 w-8 text-primary"/>,
         href: `/director/dashboard/${schoolId}/academics`
     },
+     { 
+        title: "Attendance & Discipline", 
+        description: "Monitor student and staff attendance and track incidents.", 
+        icon: <UserCheck className="h-8 w-8 text-primary"/>,
+        href: `/director/dashboard/${schoolId}/attendance`
+    },
+    { 
+        title: "Exams & Performance", 
+        description: "Oversee exam schedules, results, and performance analytics.", 
+        icon: <BarChart2 className="h-8 w-8 text-primary"/>,
+        href: `/director/dashboard/${schoolId}/exams`
+    },
     { 
         title: "HR & Payroll", 
-        description: "Oversee staff management, attendance, and payroll processes.", 
+        description: "Oversee staff management, attendance, and payroll.", 
         icon: <Briefcase className="h-8 w-8 text-primary"/>,
         href: `/director/dashboard/${schoolId}/hr`
     },
      { 
-        title: "Financials", 
-        description: "Track fees, create invoices, and manage school finances.", 
+        title: "Financials & Fees", 
+        description: "Track fee collections, invoices, and manage school finances.", 
         icon: <Banknote className="h-8 w-8 text-primary"/>,
         href: `/director/dashboard/${schoolId}/financials`
     },
     { 
+        title: "Communication", 
+        description: "Send notices, manage events, and handle communications.", 
+        icon: <Megaphone className="h-8 w-8 text-primary"/>,
+        href: `/director/dashboard/${schoolId}/communication`
+    },
+     { 
         title: "Administration", 
-        description: "Manage inventory, transport, library, and hostel facilities.", 
+        description: "Manage transport, library, and other school facilities.", 
         icon: <Settings className="h-8 w-8 text-primary"/>,
         href: `/director/dashboard/${schoolId}/admin`
     },
     { 
-        title: "Communication", 
-        description: "Post notices, manage events, and send messages.", 
-        icon: <Megaphone className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/communication`
+        title: "Reports & Analytics", 
+        description: "View detailed reports on all school operations.", 
+        icon: <FileText className="h-8 w-8 text-primary"/>,
+        href: `/director/dashboard/${schoolId}/reports`
     },
     { 
-        title: "Analytics & Reports", 
-        description: "View detailed reports on all school operations.", 
-        icon: <BarChart2 className="h-8 w-8 text-primary"/>,
-        href: `/director/dashboard/${schoolId}/reports`
+        title: "Security & Logs", 
+        description: "Manage security settings and view activity audit logs.", 
+        icon: <Shield className="h-8 w-8 text-primary"/>,
+        href: `/director/dashboard/${schoolId}/security`
     },
   ];
 
@@ -69,7 +87,7 @@ export default function DirectorDashboard({ params }: { params: { id: string } }
     <div className="space-y-8">
         <div>
             <h1 className="text-3xl font-bold tracking-tight">Director Dashboard</h1>
-            <p className="text-muted-foreground">Welcome back! Here's an overview of your school.</p>
+            <p className="text-muted-foreground">Welcome back! Here's a complete overview of your school.</p>
         </div>
 
         {/* KPI Cards */}

@@ -14,7 +14,10 @@ import {
     Banknote, 
     Settings, 
     Megaphone, 
-    BarChart2 
+    BarChart2,
+    UserCheck,
+    FileText,
+    Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
@@ -44,6 +47,16 @@ export function DirectorSidebar({ schoolId }: { schoolId: string }) {
       icon: <BookOpen className="h-5 w-5" />,
     },
     {
+        title: "Attendance",
+        href: `/director/dashboard/${schoolId}/attendance`,
+        icon: <UserCheck className="h-5 w-5" />,
+    },
+    {
+        title: "Exams",
+        href: `/director/dashboard/${schoolId}/exams`,
+        icon: <BarChart2 className="h-5 w-5" />,
+    },
+    {
       title: "HR & Payroll",
       href: `/director/dashboard/${schoolId}/hr`,
       icon: <Briefcase className="h-5 w-5" />,
@@ -66,7 +79,12 @@ export function DirectorSidebar({ schoolId }: { schoolId: string }) {
     {
       title: "Reports",
       href: `/director/dashboard/${schoolId}/reports`,
-      icon: <BarChart2 className="h-5 w-5" />,
+      icon: <FileText className="h-5 w-5" />,
+    },
+    {
+      title: "Security",
+      href: `/director/dashboard/${schoolId}/security`,
+      icon: <Shield className="h-5 w-5" />,
     },
   ];
 
