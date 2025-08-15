@@ -4,6 +4,7 @@
 import { z } from 'zod';
 import { collection, addDoc, getDocs, query, where, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { revalidatePath } from 'next/cache';
 
 
 const SchoolSchema = z.object({
@@ -22,6 +23,8 @@ const SchoolSchema = z.object({
     message: "Passwords don't match",
     path: ["confirmPassword"],
 });
+
+const UpdateSchoolSchema = SchoolSchema.omit({ password: true, confirmPassword: true });
 
 
 export type State = {
@@ -56,6 +59,23 @@ export async function getSchools() {
   }
 }
 
+export async function getSchool(id: string) {
+    try {
+        const schoolDocRef = doc(db, 'schools', id);
+        const schoolDoc = await getDoc(schoolDocRef);
+
+        if (!schoolDoc.exists()) {
+            return { error: "School not found." };
+        }
+
+        return { school: { id: schoolDoc.id, ...schoolDoc.data() } };
+    } catch (e: any) {
+        console.error("Error fetching school:", e);
+        return { error: `Database error: ${e.message}` };
+    }
+}
+
+
 export async function createSchool(prevState: State, formData: FormData): Promise<State> {
   const validatedFields = SchoolSchema.safeParse(Object.fromEntries(formData.entries()));
 
@@ -79,6 +99,7 @@ export async function createSchool(prevState: State, formData: FormData): Promis
 
     await addDoc(collection(db, 'schools'), schoolData);
     
+    revalidatePath('/super-admin/dashboard/schools');
     return { message: 'School created successfully!', data: { schoolId: schoolData.schoolId } };
 
   } catch (e: any) {
@@ -87,6 +108,32 @@ export async function createSchool(prevState: State, formData: FormData): Promis
     };
   }
 }
+
+export async function updateSchool(id: string, prevState: State, formData: FormData): Promise<State> {
+    const validatedFields = UpdateSchoolSchema.safeParse(Object.fromEntries(formData.entries()));
+    
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: 'Validation failed. Please check the fields.',
+        };
+    }
+
+    const { ...schoolData } = validatedFields.data;
+
+    try {
+        const schoolDocRef = doc(db, 'schools', id);
+        await updateDoc(schoolDocRef, schoolData);
+        revalidatePath('/super-admin/dashboard/schools');
+        revalidatePath(`/super-admin/dashboard/schools/edit/${id}`);
+        return { message: 'School updated successfully!' };
+    } catch (e: any) {
+        return {
+            message: `Database error: ${e.message}`,
+        };
+    }
+}
+
 
 export async function toggleSchoolStatus(schoolId: string, newStatus: boolean) {
     try {
@@ -103,7 +150,8 @@ export async function toggleSchoolStatus(schoolId: string, newStatus: boolean) {
         await updateDoc(schoolDocRef, {
             enabled: newStatus
         });
-
+        
+        revalidatePath('/super-admin/dashboard/schools');
         return { success: true, message: `School status updated successfully.` };
     } catch (e: any) {
         console.error("Error toggling school status:", e);
