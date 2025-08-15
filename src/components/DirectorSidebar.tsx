@@ -183,8 +183,16 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
             {isCollapsed ? (
                 <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                        <TooltipTrigger className="w-full">
-                             <div className="flex justify-center items-center h-8 w-8">{section.icon}</div>
+                        <TooltipTrigger asChild>
+                           <Button
+                                variant="ghost"
+                                size="icon"
+                                className="w-full flex justify-center items-center"
+                                onClick={toggleSidebar}
+                            >
+                                {section.icon}
+                                <span className="sr-only">{section.section}</span>
+                            </Button>
                         </TooltipTrigger>
                         <TooltipContent side="right">{section.section}</TooltipContent>
                     </Tooltip>
