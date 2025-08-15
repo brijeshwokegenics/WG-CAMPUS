@@ -1,3 +1,6 @@
+
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
@@ -20,9 +23,25 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal } from "lucide-react"
+import { useEffect, useState } from "react";
 
-export default async function ManageSchoolsPage() {
-  const { schools } = await readDb();
+type School = {
+  schoolId: string;
+  schoolName: string;
+  contactEmail: string;
+  enabled: boolean;
+};
+
+export default function ManageSchoolsPage() {
+  const [schools, setSchools] = useState<School[]>([]);
+
+  useEffect(() => {
+    async function fetchSchools() {
+      const { schools: fetchedSchools } = await readDb();
+      setSchools(fetchedSchools || []);
+    }
+    fetchSchools();
+  }, []);
 
   return (
     <div>

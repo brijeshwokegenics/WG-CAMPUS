@@ -1,3 +1,6 @@
+
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle, Building } from "lucide-react";
@@ -11,9 +14,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useEffect, useState } from "react";
 
-export default async function SuperAdminDashboard() {
-  const { schools } = await readDb();
+type School = {
+  schoolId: string;
+  schoolName: string;
+  enabled: boolean;
+};
+
+
+export default function SuperAdminDashboard() {
+  const [schools, setSchools] = useState<School[]>([]);
+
+   useEffect(() => {
+    async function fetchSchools() {
+      const { schools: fetchedSchools } = await readDb();
+      setSchools(fetchedSchools || []);
+    }
+    fetchSchools();
+  }, []);
+
 
   return (
     <div>
