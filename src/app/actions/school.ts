@@ -33,8 +33,8 @@ const UpdateSchoolSchema = BaseSchoolSchema.extend({
     confirmPassword: z.string().optional(),
 }).refine(data => {
     // If password is provided, it must be at least 6 chars and confirmed
-    if (data.password) {
-        return data.password.length >= 6 && data.password === data.confirmPassword;
+    if (data.password || data.confirmPassword) {
+        return data.password && data.password.length >= 6 && data.password === data.confirmPassword;
     }
     return true; // If no password is provided, validation passes
 }, {
@@ -132,7 +132,7 @@ export async function createSchool(prevState: State, formData: FormData): Promis
 export async function updateSchool(id: string, prevState: State, formData: FormData): Promise<State> {
     const formDataObj = Object.fromEntries(formData.entries());
     
-    // Only include password fields if they are not empty
+    // Only include password fields for validation if they are not empty
     if (!formDataObj.password && !formDataObj.confirmPassword) {
       delete formDataObj.password;
       delete formDataObj.confirmPassword;
@@ -149,7 +149,7 @@ export async function updateSchool(id: string, prevState: State, formData: FormD
 
     const { confirmPassword, ...schoolData } = validatedFields.data;
 
-     // If the password field is empty/undefined, we don't want to update it.
+     // If the password field is empty/undefined, we don't want to update it in the database.
     if (!schoolData.password) {
         delete schoolData.password;
     }
