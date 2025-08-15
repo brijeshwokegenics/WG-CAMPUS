@@ -10,7 +10,6 @@ import { redirect } from 'next/navigation';
 const ClassSchema = z.object({
   name: z.string().min(1, { message: "Class name is required." }),
   section: z.string().min(1, { message: "Section is required." }),
-  teacher: z.string().min(1, { message: "Class teacher is required." }),
   studentCount: z.coerce.number().int().min(0, { message: "Student count must be a positive number." }),
 });
 
@@ -18,7 +17,6 @@ export type ClassState = {
   errors?: {
     name?: string[];
     section?: string[];
-    teacher?: string[];
     studentCount?: string[];
   };
   message?: string | null;

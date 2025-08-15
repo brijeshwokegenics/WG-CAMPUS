@@ -48,11 +48,6 @@ export default function NewClassPage({ params }: { params: { id: string } }) {
                         <Input id="section" name="section" placeholder="e.g., A, Blue Jays" required />
                         {state.errors?.section && <p className="text-sm text-destructive">{state.errors.section.join(', ')}</p>}
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="teacher">Class Teacher</Label>
-                        <Input id="teacher" name="teacher" placeholder="e.g., Mr. John Doe" required />
-                        {state.errors?.teacher && <p className="text-sm text-destructive">{state.errors.teacher.join(', ')}</p>}
-                    </div>
                      <div className="space-y-2">
                         <Label htmlFor="studentCount">Number of Students</Label>
                         <Input id="studentCount" name="studentCount" type="number" defaultValue="0" required />

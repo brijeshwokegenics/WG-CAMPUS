@@ -14,7 +14,6 @@ type Class = {
   id: string;
   name: string;
   section: string;
-  teacher: string;
   studentCount: number;
 };
 
@@ -75,7 +74,6 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
                 <TableRow>
                   <TableHead>Class Name</TableHead>
                   <TableHead>Section</TableHead>
-                  <TableHead>Class Teacher</TableHead>
                   <TableHead>No. of Students</TableHead>
                   <TableHead><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
@@ -85,7 +83,6 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
                   <TableRow key={cls.id}>
                     <TableCell className="font-medium">{cls.name}</TableCell>
                     <TableCell>{cls.section}</TableCell>
-                    <TableCell>{cls.teacher}</TableCell>
                     <TableCell>{cls.studentCount}</TableCell>
                     <TableCell>
                       <DropdownMenu>
