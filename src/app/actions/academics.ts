@@ -205,3 +205,64 @@ export async function admitStudent(prevState: any, formData: FormData) {
       return { success: false, error: 'An unexpected error occurred during admission.' };
   }
 }
+
+export async function getStudentsForSchool(schoolId: string, searchTerm: string) {
+    if (!schoolId) {
+        console.error("School ID is required.");
+        return [];
+    }
+    
+    try {
+        const studentsRef = collection(db, 'students');
+        let studentsQuery = query(studentsRef, where('schoolId', '==', schoolId));
+        
+        const studentsSnapshot = await getDocs(studentsQuery);
+
+        if (studentsSnapshot.empty) {
+            return [];
+        }
+
+        const classCache = new Map();
+        const getClassName = async (classId: string) => {
+            if (classCache.has(classId)) {
+                return classCache.get(classId);
+            }
+            const classDocRef = doc(db, 'classes', classId);
+            const classDoc = await getDoc(classDocRef);
+            if (classDoc.exists() && classDoc.data().schoolId === schoolId) {
+                const className = classDoc.data().name;
+                classCache.set(classId, className);
+                return className;
+            }
+            return 'N/A';
+        };
+        
+        let studentsData = await Promise.all(studentsSnapshot.docs.map(async (doc) => {
+            const data = doc.data();
+            const className = await getClassName(data.classId);
+            return {
+                id: doc.id,
+                studentName: data.studentName,
+                className: className,
+                section: data.section,
+                fatherName: data.fatherName,
+                parentMobile: data.parentMobile,
+            };
+        }));
+
+        if (searchTerm) {
+            const lowercasedTerm = searchTerm.toLowerCase();
+            studentsData = studentsData.filter(student =>
+                student.studentName.toLowerCase().includes(lowercasedTerm) ||
+                student.id.toLowerCase().includes(lowercasedTerm) ||
+                student.className.toLowerCase().includes(lowercasedTerm) ||
+                student.fatherName.toLowerCase().includes(lowercasedTerm)
+            );
+        }
+
+        return studentsData;
+    } catch (error) {
+        console.error("Error fetching students:", error);
+        return [];
+    }
+}
