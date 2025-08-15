@@ -102,3 +102,22 @@ export async function createSchool(prevState: State, formData: FormData): Promis
     };
   }
 }
+
+export async function toggleSchoolStatus(schoolId: string, newStatus: boolean) {
+  try {
+    const db = await readDb();
+    const schoolIndex = db.schools.findIndex((s: any) => s.schoolId === schoolId);
+
+    if (schoolIndex === -1) {
+      throw new Error("School not found.");
+    }
+
+    db.schools[schoolIndex].enabled = newStatus;
+
+    await writeDb(db);
+
+    return { success: true, message: `School status updated successfully.` };
+  } catch (e: any) {
+    return { success: false, message: `Database error: ${e.message}` };
+  }
+}

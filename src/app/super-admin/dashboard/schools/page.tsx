@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
-import { readDb } from "@/app/actions/school";
+import { readDb, toggleSchoolStatus } from "@/app/actions/school";
 import {
   Table,
   TableBody,
@@ -43,6 +43,19 @@ export default function ManageSchoolsPage() {
     fetchSchools();
   }, []);
 
+  const handleToggleStatus = async (schoolId: string, currentStatus: boolean) => {
+    // Optimistically update the UI
+    setSchools(schools.map(s => s.schoolId === schoolId ? { ...s, enabled: !currentStatus } : s));
+
+    const result = await toggleSchoolStatus(schoolId, !currentStatus);
+
+    if (!result.success) {
+        // Revert the UI change if the server action fails
+        setSchools(schools.map(s => s.schoolId === schoolId ? { ...s, enabled: currentStatus } : s));
+        alert(`Error: ${result.message}`);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
@@ -78,7 +91,7 @@ export default function ManageSchoolsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {schools.map((school: any) => (
+                {schools.map((school) => (
                   <TableRow key={school.schoolId}>
                     <TableCell className="font-medium">{school.schoolName}</TableCell>
                     <TableCell>{school.schoolId}</TableCell>
@@ -105,7 +118,9 @@ export default function ManageSchoolsPage() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem>View/Edit School</DropdownMenuItem>
-                            <DropdownMenuItem>{school.enabled ? 'Disable' : 'Enable'} School</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleToggleStatus(school.schoolId, school.enabled)}>
+                                {school.enabled ? 'Disable' : 'Enable'} School
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                     </TableCell>
