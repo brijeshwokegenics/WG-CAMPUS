@@ -61,7 +61,7 @@ export default function EditSchoolPage({ params }: { params: { id: string } }) {
     useEffect(() => {
         if (state?.message === 'School updated successfully!') {
             alert('School details updated successfully!');
-             window.location.href = '/super-admin/dashboard/schools';
+            window.location.href = '/super-admin/dashboard/schools';
         } else if (state?.message) {
             alert(`Error: ${state.message}`);
         }
