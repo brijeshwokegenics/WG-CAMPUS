@@ -60,10 +60,11 @@ export default function EditSchoolPage({ params }: { params: { id: string } }) {
 
     useEffect(() => {
         if (state?.message === 'School updated successfully!') {
-            alert('School details updated successfully!');
-            window.location.href = '/super-admin/dashboard/schools';
-        } else if (state?.message) {
-            alert(`Error: ${state.message}`);
+            // The success message will be displayed via the state.message check in the JSX
+            // and we can redirect after a short delay.
+            setTimeout(() => {
+                window.location.href = '/super-admin/dashboard/schools';
+            }, 2000); // Redirect after 2 seconds
         }
     }, [state]);
 
@@ -163,7 +164,11 @@ export default function EditSchoolPage({ params }: { params: { id: string } }) {
                                 </div>
                             </div>
                             
-                            {state.message && !state.errors && <p className="text-sm text-destructive text-center mt-4">{state.message}</p>}
+                            {state.message && (
+                                <p className={`text-sm text-center mt-4 ${state.errors ? 'text-destructive' : 'text-green-600'}`}>
+                                    {state.message}
+                                </p>
+                            )}
 
                             <div className="pt-4">
                                 <SubmitButton />
