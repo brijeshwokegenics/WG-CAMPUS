@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import React from "react";
 import { 
     School, 
     LayoutDashboard, 
@@ -149,7 +150,10 @@ export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarP
   const pathname = usePathname();
   const { schoolId } = useSchool();
   
-  const navItems = schoolId ? directorSidebarNavItems(schoolId) : [];
+  const navItems = React.useMemo(() => {
+    if (!schoolId) return [];
+    return directorSidebarNavItems(schoolId);
+  }, [schoolId]);
 
   const NavLink = ({ item }: { item: any }) => (
     <TooltipProvider delayDuration={0}>
@@ -195,7 +199,7 @@ export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarP
                     {item.title}
                 </h2>
               ) : (
-                item.href && <NavLink key={item.href} item={item} />
+                item.href && <NavLink key={index} item={item} />
               )
             )}
         </nav>

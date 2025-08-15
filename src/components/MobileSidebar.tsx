@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 type NavItem = {
     title: string;
@@ -31,7 +32,7 @@ export function MobileSidebar({ navItems }: MobileSidebarProps) {
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
-                <nav className="grid gap-2 text-lg font-medium">
+                <nav className="grid gap-2 text-lg font-medium overflow-y-auto">
                     <Link
                         href="#"
                         className="flex items-center gap-2 text-lg font-semibold mb-4"
@@ -45,9 +46,10 @@ export function MobileSidebar({ navItems }: MobileSidebarProps) {
                                 {item.title}
                             </h2>
                         ) : (
+                           item.href && (
                             <Link
-                                key={item.href}
-                                href={item.href!}
+                                key={index}
+                                href={item.href}
                                 className={cn(
                                     "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
                                     pathname === item.href && "bg-muted text-primary"
@@ -56,6 +58,7 @@ export function MobileSidebar({ navItems }: MobileSidebarProps) {
                                 {item.icon}
                                 {item.title}
                             </Link>
+                           )
                         )
                     )}
                 </nav>
