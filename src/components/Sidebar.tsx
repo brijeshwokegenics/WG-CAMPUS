@@ -3,15 +3,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { School, LayoutDashboard, Building, LogOut } from "lucide-react";
+import { School, LayoutDashboard, Building, LogOut, PanelLeftClose, PanelRightClose } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
+import { Button } from "./ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
-const sidebarNavItems = [
+
+export const sidebarNavItems = [
+  {
+    isSection: true,
+    title: "Overview"
+  },
   {
     title: "Dashboard",
     href: "/super-admin/dashboard",
     icon: <LayoutDashboard className="h-5 w-5" />,
+  },
+  {
+    isSection: true,
+    title: "Management"
   },
   {
     title: "Manage Schools",
@@ -20,43 +31,80 @@ const sidebarNavItems = [
   },
 ];
 
-export function Sidebar() {
+type SidebarProps = {
+  isCollapsed: boolean;
+  toggleSidebar: () => void;
+}
+
+export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
 
-  return (
-    <div className="hidden md:flex flex-col w-64 bg-card border-r">
-      <div className="flex items-center justify-center h-16 border-b">
-        <School className="h-8 w-8 text-primary" />
-        <h1 className="text-xl font-bold ml-2">WG Campus</h1>
-      </div>
-      <nav className="flex-1 px-4 py-4 space-y-2">
-        {sidebarNavItems.map((item) => (
+  const NavLink = ({ item }: { item: any }) => (
+     <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
           <Link
-            key={item.href}
             href={item.href}
             className={cn(
-              "flex items-center px-3 py-2 text-sm font-medium rounded-md",
-              pathname.startsWith(item.href) // Use startsWith for active state
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-muted"
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+              pathname.startsWith(item.href) && "bg-muted text-primary",
+              isCollapsed && "justify-center"
             )}
           >
             {item.icon}
-            <span className="ml-3">{item.title}</span>
+            <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>{item.title}</span>
           </Link>
-        ))}
+        </TooltipTrigger>
+        {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
+      </Tooltip>
+    </TooltipProvider>
+  );
+
+  return (
+    <div className={cn(
+        "hidden md:flex flex-col bg-card border-r transition-all duration-300",
+        isCollapsed ? 'w-[72px]' : 'w-64'
+      )}>
+      <div className="flex h-16 items-center border-b px-4 lg:px-6 justify-center">
+        <Link href="/super-admin/dashboard" className="flex items-center gap-2 font-semibold">
+          <School className="h-6 w-6 text-primary" />
+          <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>WG Campus</span>
+        </Link>
+      </div>
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+        {sidebarNavItems.map((item, index) =>
+          item.isSection ? (
+            <h2 key={index} className={cn("mb-2 mt-4 px-3 text-lg font-semibold tracking-tight", isCollapsed && "hidden")}>
+                {item.title}
+            </h2>
+          ) : (
+            <NavLink key={item.href} item={item} />
+          )
+        )}
       </nav>
-      <div className="mt-auto p-4 space-y-4">
-         <ThemeToggle />
-         <Link
-            href="/"
-            className={cn(
-              "flex items-center px-3 py-2 text-sm font-medium rounded-md text-muted-foreground hover:bg-muted"
-            )}
-          >
-            <LogOut className="h-5 w-5" />
-            <span className="ml-3">Logout</span>
-          </Link>
+      <div className="mt-auto p-4 space-y-4 border-t">
+        <Button variant="outline" size="icon" className="w-full" onClick={toggleSidebar}>
+          {isCollapsed ? <PanelRightClose className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+          <span className="sr-only">Toggle sidebar</span>
+        </Button>
+        <ThemeToggle isCollapsed={isCollapsed}/>
+         <TooltipProvider delayDuration={0}>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Link
+                        href="/"
+                        className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                        isCollapsed && "justify-center"
+                        )}
+                    >
+                        <LogOut className="h-5 w-5" />
+                        <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>Logout</span>
+                    </Link>
+                </TooltipTrigger>
+                {isCollapsed && <TooltipContent side="right">Logout</TooltipContent>}
+            </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );
