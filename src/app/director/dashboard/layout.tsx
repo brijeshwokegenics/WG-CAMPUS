@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -30,7 +29,7 @@ export default function DirectorDashboardLayout({
         <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 md:hidden">
           <MobileSidebar navItems={directorSidebarNavItems(params.id)} />
         </header>
-        <main className="flex-1 p-4 bg-background">
+        <main className="flex-1 p-6 bg-background">
           {children}
         </main>
       </div>

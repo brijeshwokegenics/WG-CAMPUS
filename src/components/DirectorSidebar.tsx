@@ -139,7 +139,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Direct
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item, index) =>
           item.isSection ? (
-            <h2 key={index} className={cn("mb-1 mt-2 px-3 text-sm font-semibold tracking-tight text-muted-foreground", isCollapsed && "hidden")}>
+            <h2 key={index} className={cn("px-3 text-sm font-semibold tracking-tight text-muted-foreground", isCollapsed ? 'hidden' : 'mb-1 mt-2')}>
                 {item.title}
             </h2>
           ) : (
