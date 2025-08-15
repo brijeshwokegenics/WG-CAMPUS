@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, BarChart2, Building2, Banknote, Settings, Megaphone, BookOpen, UserPlus, Briefcase, Users, UserCheck, DollarSign, Calendar, Shield, FileText, Bus, Library, BedDouble, MessageSquare, GraduationCap, Wallet, Home, Gate, Info } from "lucide-react";
+import { ArrowRight, BarChart2, Building2, Banknote, Megaphone, BookOpen, UserPlus, Briefcase, Users, UserCheck, DollarSign, Calendar, Shield, FileText, Bus, Library, BedDouble, MessageSquare, GraduationCap, Wallet, HomeIcon, DoorOpen, Info } from "lucide-react";
 
 const kpiData = [
   { title: "Total Students", value: "1,250", icon: <Users className="h-6 w-6 text-muted-foreground" /> },
@@ -48,7 +48,7 @@ export default function DirectorDashboard({ params }: { params: { id: string } }
         { title: "Transport", description: "Oversee transportation routes and vehicles.", icon: <Bus className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/transport` },
         { title: "Library", description: "Manage library books and members.", icon: <Library className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/library` },
         { title: "Hostel", description: "Manage hostel facilities and residents.", icon: <BedDouble className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/hostel` },
-        { title: "Gate Pass", description: "Manage entry and exit with gate passes.", icon: <Gate className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/gate-pass` },
+        { title: "Gate Pass", description: "Manage entry and exit with gate passes.", icon: <DoorOpen className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/admin/gate-pass` },
         { title: "School Info", description: "Update school profile and general settings.", icon: <Info className="h-8 w-8 text-primary"/>, href: `/director/dashboard/${schoolId}/profile` },
       ]
     },

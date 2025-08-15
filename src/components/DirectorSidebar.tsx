@@ -16,7 +16,6 @@ import {
     BarChart2,
     UserCheck,
     FileText,
-    Shield,
     PanelLeftClose,
     PanelRightClose,
     Users,
@@ -28,8 +27,8 @@ import {
     BedDouble,
     MessageSquare,
     Wallet,
-    Home,
-    Gate,
+    HomeIcon,
+    DoorOpen,
     Info,
     BookMark
 } from "lucide-react";
@@ -79,7 +78,7 @@ export const directorSidebarNavItems = (schoolId: string) => [
     { title: "Transport", href: `/director/dashboard/${schoolId}/admin/transport`, icon: <Bus className="h-5 w-5" /> },
     { title: "Library", href: `/director/dashboard/${schoolId}/admin/library`, icon: <Library className="h-5 w-5" /> },
     { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel`, icon: <BedDouble className="h-5 w-5" /> },
-    { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass`, icon: <Gate className="h-5 w-5" /> },
+    { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass`, icon: <DoorOpen className="h-5 w-5" /> },
     { title: "School Info", href: `/director/dashboard/${schoolId}/profile`, icon: <Info className="h-5 w-5" /> },
     
     {
