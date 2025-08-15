@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, School, ChevronDown, GraduationCap, Briefcase, Building, Megaphone, Wallet, Users, BookOpen, LayoutDashboard, UserCircle, Settings } from "lucide-react";
+import { Menu, School, ChevronDown, GraduationCap, Briefcase, Building, Megaphone, Wallet, Users, LayoutDashboard, UserCircle, Library, BookMarked, UserCheck, FileText, MonitorPlay, Contact, ClipboardCheck, Banknote, Users2, CircleDollarSign, FileStack, Boxes, Bus, BedDouble, Ticket, Settings, Calendar, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { usePathname } from "next/navigation";
@@ -65,6 +65,35 @@ export const directorSidebarNavItems = (schoolId: string) => [
         { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging` },
       ]
     },
+    {
+        section: "Accountant Menu",
+        icon: <Wallet className="h-5 w-5" />,
+        items: [
+          { title: "Fees Management", href: `/director/dashboard/${schoolId}/accountant/fees` },
+          { title: "Fee Structure", href: `/director/dashboard/${schoolId}/accountant/fee-structure` },
+          { title: "Payroll Processing", href: `/director/dashboard/${schoolId}/accountant/payroll` },
+        ],
+    },
+    {
+        section: "Parent Menu",
+        icon: <Users className="h-5 w-5" />,
+        items: [
+            { title: "Dashboard", href: `/director/dashboard/${schoolId}/parent/dashboard` },
+            { title: "Child's Profile", href: `/director/dashboard/${schoolId}/parent/profile` },
+            { title: "Attendance", href: `/director/dashboard/${schoolId}/parent/attendance` },
+            { title: "Fees", href: `/director/dashboard/${schoolId}/parent/fees` },
+            { title: "Report Cards", href: `/director/dashboard/${schoolId}/parent/reports` },
+            { title: "E-learning", href: `/director/dashboard/${schoolId}/parent/e-learning` },
+            { title: "School Calendar", href: `/director/dashboard/${schoolId}/parent/calendar` },
+        ],
+    },
+    {
+        section: "Librarian Menu",
+        icon: <Library className="h-5 w-5" />,
+        items: [
+            { title: "Library Management", href: `/director/dashboard/${schoolId}/librarian/management` },
+        ],
+    },
 ];
 
 type NavSection = {
@@ -75,9 +104,10 @@ type NavSection = {
 
 type MobileSidebarProps = {
   navItems: NavSection[];
+  schoolId: string | null;
 };
 
-export function MobileSidebar({ navItems }: MobileSidebarProps) {
+export function MobileSidebar({ navItems, schoolId }: MobileSidebarProps) {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true});
@@ -86,12 +116,13 @@ export function MobileSidebar({ navItems }: MobileSidebarProps) {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
 
-    const schoolId = pathname.split('/')[3];
-
-    const baseNavLinks = useMemo(() => [
-        { title: "Dashboard", href: `/director/dashboard/${schoolId}`, icon: <LayoutDashboard className="h-5 w-5" /> },
-        { title: "Profile", href: `/director/dashboard/${schoolId}/profile`, icon: <UserCircle className="h-5 w-5" /> },
-    ], [schoolId]);
+    const baseNavLinks = useMemo(() => {
+        if (!schoolId) return [];
+        return [
+            { title: "Dashboard", href: `/director/dashboard/${schoolId}`, icon: <LayoutDashboard className="h-5 w-5" /> },
+            { title: "Profile", href: `/director/dashboard/${schoolId}/profile`, icon: <UserCircle className="h-5 w-5" /> },
+        ]
+    }, [schoolId]);
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>

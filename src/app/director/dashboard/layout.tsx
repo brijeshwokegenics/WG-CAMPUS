@@ -5,11 +5,10 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { DirectorSidebar } from "@/components/DirectorSidebar";
 import { MobileSidebar, directorSidebarNavItems } from '@/components/MobileSidebar';
-import { SchoolProvider, useSchool } from '@/context/SchoolProvider';
+import { SchoolProvider } from '@/context/SchoolProvider';
 import { Button } from '@/components/ui/button';
-import { School, Sun, Moon, UserCog } from 'lucide-react';
+import { School, UserCog } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useTheme } from 'next-themes';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import {
   DropdownMenu,
@@ -57,7 +56,7 @@ function DashboardHeader({ schoolId }: { schoolId: string | null }) {
 
 function DashboardContent({ children, params }: { children: React.ReactNode; params: { id: string } }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const { schoolId } = useSchool();
+  const schoolId = params.id;
 
   const navItems = useMemo(() => {
     if (!schoolId) return [];
@@ -77,7 +76,7 @@ function DashboardContent({ children, params }: { children: React.ReactNode; par
       />
       <div className={`flex flex-col flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
         <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 md:hidden">
-          <MobileSidebar navItems={navItems} />
+          <MobileSidebar navItems={navItems} schoolId={schoolId} />
         </header>
         <DashboardHeader schoolId={schoolId} />
         <main className="flex-1 p-6 bg-muted/40">
