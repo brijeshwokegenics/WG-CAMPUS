@@ -32,11 +32,11 @@ const UpdateSchoolSchema = BaseSchoolSchema.extend({
     password: z.string().optional(),
     confirmPassword: z.string().optional(),
 }).refine(data => {
-    // If password is provided, it must be at least 6 chars and confirmed
+    // If password is provided (and not just an empty string), it must be at least 6 chars and confirmed
     if (data.password || data.confirmPassword) {
         return data.password && data.password.length >= 6 && data.password === data.confirmPassword;
     }
-    return true; // If no password is provided, validation passes
+    return true; // If no password is provided, validation passes for the password fields.
 }, {
     message: "Passwords must match and be at least 6 characters long.",
     path: ["confirmPassword"],
