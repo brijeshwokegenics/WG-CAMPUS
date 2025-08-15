@@ -40,8 +40,8 @@ import {
     CheckCircle,
     KeyRound,
     History,
-    PanelLeftClose,
-    PanelRightClose,
+    PanelLeft,
+    PanelRight,
     UserCheck,
     Smartphone,
     UserPlus,
@@ -60,15 +60,19 @@ import {
     Award,
     BookOpen,
     ChevronDown,
-    ShieldCheck
+    ShieldCheck,
+    Settings,
+    UserCircle,
+    PanelLeftClose,
+    PanelRightClose
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
-import { useSchool } from "@/context/SchoolProvider";
+import { Avatar, AvatarFallback } from "./ui/avatar";
 
-export const directorSidebarNavItems = (schoolId: string) => [
+
+const directorSidebarNavItems = (schoolId: string) => [
     {
       section: "Academics",
       icon: <GraduationCap className="h-5 w-5" />,
@@ -106,7 +110,7 @@ export const directorSidebarNavItems = (schoolId: string) => [
         { title: "Library", href: `/director/dashboard/${schoolId}/admin/library`, icon: <Library className="h-5 w-5" /> },
         { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel`, icon: <BedDouble className="h-5 w-5" /> },
         { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass`, icon: <Ticket className="h-5 w-5" /> },
-        { title: "School Info", href: `/director/dashboard/${schoolId}/profile`, icon: <Building className="h-5 w-5" /> },
+        { title: "School Info", href: `/director/dashboard/${schoolId}/profile`, icon: <Settings className="h-5 w-5" /> },
       ]
     },
     {
@@ -118,46 +122,43 @@ export const directorSidebarNavItems = (schoolId: string) => [
         { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging`, icon: <MessageSquare className="h-5 w-5" /> },
       ]
     },
-    {
-      section: "Accountant Menu",
-      icon: <Wallet className="h-5 w-5" />,
-      items: [
-        { title: "Fees Management", href: `/director/dashboard/${schoolId}/accountant/fees`, icon: <Wallet className="h-5 w-5" /> },
-        { title: "Fee Structure", href: `/director/dashboard/${schoolId}/accountant/fee-structure`, icon: <FileStack className="h-5 w-5" /> },
-        { title: "Payroll Processing", href: `/director/dashboard/${schoolId}/accountant/payroll`, icon: <Receipt className="h-5 w-5" /> },
-      ]
-    },
-    {
-      section: "Parent Menu",
-      icon: <Users className="h-5 w-5" />,
-      items: [
-        { title: "Dashboard", href: `/director/dashboard/${schoolId}/parent/dashboard`, icon: <LayoutDashboard className="h-5 w-5" /> },
-        { title: "Child's Profile", href: `/director/dashboard/${schoolId}/parent/child-profile`, icon: <User className="h-5 w-5" /> },
-        { title: "Attendance", href: `/director/dashboard/${schoolId}/parent/attendance`, icon: <UserCheck className="h-5 w-5" /> },
-        { title: "Fees", href: `/director/dashboard/${schoolId}/parent/fees`, icon: <CircleDollarSign className="h-5 w-5" /> },
-        { title: "Report Cards", href: `/director/dashboard/${schoolId}/parent/reports`, icon: <Award className="h-5 w-5" /> },
-        { title: "E-learning", href: `/director/dashboard/${schoolId}/parent/e-learning`, icon: <MonitorPlay className="h-5 w-5" /> },
-        { title: "School Calendar", href: `/director/dashboard/${schoolId}/parent/calendar`, icon: <Calendar className="h-5 w-5" /> },
-      ]
-    },
-    {
-      section: "Librarian Menu",
-      icon: <BookOpen className="h-5 w-5" />,
-      items: [
-          { title: "Library Management", href: `/director/dashboard/${schoolId}/librarian/management`, icon: <BookOpen className="h-5 w-5" /> },
-      ]
-    }
 ];
 
 type DirectorSidebarProps = {
   isCollapsed: boolean;
   toggleSidebar: () => void;
+  schoolId: string | null;
 };
 
-export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarProps) {
+const NavLink = ({ item, isCollapsed }: { item: any, isCollapsed: boolean }) => {
   const pathname = usePathname();
-  const { schoolId } = useSchool();
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            href={item.href}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+              pathname === item.href && "bg-muted text-primary font-semibold",
+              isCollapsed && "justify-center",
+            )}
+          >
+            {item.icon}
+            <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>{item.title}</span>
+          </Link>
+        </TooltipTrigger>
+        {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
+      </Tooltip>
+    </TooltipProvider>
+  )
+};
+
+export function DirectorSidebar({ isCollapsed, toggleSidebar, schoolId }: DirectorSidebarProps) {
+  const pathname = usePathname();
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    'Academics': true, // Default open
+  });
 
   const navItems = useMemo(() => {
     if (!schoolId) return [];
@@ -168,105 +169,78 @@ export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarP
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const NavLink = ({ item, isSubItem = false }: { item: any, isSubItem?: boolean }) => (
-    <TooltipProvider delayDuration={0}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-              pathname === item.href && "bg-muted text-primary",
-              isCollapsed && "justify-center",
-              isSubItem && "pl-8"
-            )}
-          >
-            {item.icon}
-            <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>{item.title}</span>
-          </Link>
-        </TooltipTrigger>
-        {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
-      </Tooltip>
-    </TooltipProvider>
-  );
+  const baseNavLinks = useMemo(() => [
+    { title: "Dashboard", href: `/director/dashboard/${schoolId}`, icon: <LayoutDashboard className="h-5 w-5" /> },
+    { title: "Profile", href: `/director/dashboard/${schoolId}/profile`, icon: <UserCircle className="h-5 w-5" /> },
+  ], [schoolId]);
+
+  if (!schoolId) {
+    return (
+       <div className={cn(
+        "hidden md:flex flex-col bg-card border-r",
+        isCollapsed ? 'w-[72px]' : 'w-64'
+      )}>
+        <div className="flex-1 flex items-center justify-center">
+            <p className={cn(isCollapsed && 'hidden')}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn(
-        "hidden md:flex flex-col bg-card border-r transition-all duration-300",
+        "hidden md:flex flex-col bg-card border-r",
         isCollapsed ? 'w-[72px]' : 'w-64'
       )}>
-      <div className={cn("flex h-16 items-center border-b", isCollapsed ? "justify-center px-2" : "justify-between px-4")}>
-         <Link href={schoolId ? `/director/dashboard/${schoolId}` : '#'} className="flex items-center gap-2 font-semibold">
-          <School className="h-6 w-6 text-primary" />
-          <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>WG Campus</span>
-        </Link>
-         <Button variant="ghost" size="icon" className="w-8 h-8" onClick={toggleSidebar}>
-          {isCollapsed ? <PanelRightClose className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
-          <span className="sr-only">Toggle sidebar</span>
-        </Button>
-      </div>
-      <div className="flex-1 overflow-y-auto">
-        <nav className="grid items-start px-2 py-4 text-sm font-medium">
-          {navItems.map((section, index) => (
-            <div key={index} className="space-y-1">
-              {isCollapsed ? (
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex justify-center items-center h-10 w-10">
-                        {section.icon}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">{section.section}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : (
-                <Button
-                  variant="ghost"
-                  className="w-full justify-between items-center px-3 py-2 text-base font-semibold text-foreground hover:bg-muted"
-                  onClick={() => toggleSection(section.section)}
-                >
-                  <div className="flex items-center gap-3">
-                    {section.icon}
-                    <span>{section.section}</span>
-                  </div>
-                  <ChevronDown className={cn("h-5 w-5 transition-transform", openSections[section.section] ? 'rotate-180' : '')} />
-                </Button>
-              )}
-              
-              {!isCollapsed && openSections[section.section] && (
-                <div className="pl-4 border-l-2 border-muted-foreground/20 ml-4">
-                  {section.items.map((item, itemIndex) => (
-                     item.href && <NavLink key={itemIndex} item={item} />
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </nav>
-      </div>
-      <div className="mt-auto p-4 space-y-4 border-t">
-         <ThemeToggle isCollapsed={isCollapsed} />
-         <TooltipProvider delayDuration={0}>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Link
-                        href="/school/login"
-                        className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                        isCollapsed && "justify-center"
+        <div className={cn("flex h-16 items-center border-b px-4")}>
+          <Link href={`/director/dashboard/${schoolId}`} className="flex items-center gap-2 font-semibold">
+            <School className="h-6 w-6 text-primary" />
+            <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>Campus Hub</span>
+          </Link>
+        </div>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            <nav className="flex flex-col gap-1 px-2 py-4 text-sm font-medium">
+                {baseNavLinks.map((item, index) => <NavLink key={index} item={item} isCollapsed={isCollapsed} />)}
+                <div className="my-2">
+                    {navItems.map((section, index) => (
+                    <div key={index} className="space-y-1">
+                        <Button
+                            variant="ghost"
+                            className={cn(
+                                "w-full justify-start items-center px-3 py-2 text-sm font-semibold text-muted-foreground",
+                                isCollapsed ? 'justify-center' : 'justify-between'
+                            )}
+                            onClick={() => !isCollapsed && toggleSection(section.section)}
+                            >
+                            <div className="flex items-center gap-3">
+                                {section.icon}
+                                <span className={cn(isCollapsed && 'hidden')}>{section.section}</span>
+                            </div>
+                           {!isCollapsed && <ChevronDown className={cn("h-4 w-4 transition-transform", openSections[section.section] ? 'rotate-180' : '')} />}
+                        </Button>
+                        
+                        {!isCollapsed && openSections[section.section] && (
+                            <div className="pl-6 flex flex-col gap-1">
+                                {section.items.map((item, itemIndex) => (
+                                    item.href && <NavLink key={itemIndex} item={item} isCollapsed={isCollapsed}/>
+                                ))}
+                            </div>
                         )}
-                    >
-                        <LogOut className="h-5 w-5" />
-                        <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>Logout</span>
-                    </Link>
-                </TooltipTrigger>
-                {isCollapsed && <TooltipContent side="right">Logout</TooltipContent>}
-            </Tooltip>
-        </TooltipProvider>
-      </div>
+                    </div>
+                ))}
+                </div>
+            </nav>
+        </div>
+        <div className="mt-auto border-t p-4">
+            <div className={cn("flex items-center gap-3", isCollapsed && 'justify-center')}>
+                <Avatar className="h-9 w-9">
+                    <AvatarFallback>N</AvatarFallback>
+                </Avatar>
+                <div className={cn("flex flex-col", isCollapsed && 'hidden')}>
+                    <span className="text-sm font-medium">© 2025 Campus Hub</span>
+                </div>
+            </div>
+        </div>
     </div>
   );
 }
-
-    
