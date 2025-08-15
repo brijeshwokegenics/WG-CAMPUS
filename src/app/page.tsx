@@ -98,8 +98,8 @@ export default function LoginPage() {
       
       <div className="flex flex-col items-center justify-center gap-4 mb-8">
         <Logo />
-        <h1 className="text-3xl font-bold text-center">WG CAMPUS</h1>
-        <p className="text-muted-foreground text-center">Your integrated school management solution.</p>
+        <h1 className="text-3xl font-bold text-center sm:text-4xl">WG CAMPUS</h1>
+        <p className="text-muted-foreground text-center max-w-sm sm:max-w-md">Your integrated school management solution.</p>
       </div>
 
       <Card className="w-full max-w-md shadow-lg">
