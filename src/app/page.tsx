@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { AtSign, KeyRound, Loader2, LogIn, School, User } from "lucide-react"
+import { AtSign, KeyRound, Loader2, LogIn, School, User, Shield } from "lucide-react"
+import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -33,8 +34,9 @@ import {
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { Logo } from "@/components/logo"
+import { Separator } from "@/components/ui/separator"
 
-type Role = "super-admin" | "director" | "principal" | "admin" | "teacher" | "staff" | "accountant" | "librarian" | "parent"
+type Role = "director" | "principal" | "admin" | "teacher" | "staff" | "accountant" | "librarian" | "parent"
 
 const formSchema = z.object({
   role: z.string().min(1, "Please select a role"),
@@ -125,7 +127,6 @@ export default function LoginPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="super-admin">Super Admin</SelectItem>
                         <SelectItem value="director">Director</SelectItem>
                         <SelectItem value="principal">Principal</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
@@ -183,6 +184,12 @@ export default function LoginPage() {
               )}
             </form>
           </Form>
+          <Separator className="my-6" />
+           <div className="text-center">
+              <Button variant="link" asChild>
+                <Link href="/super-admin-login"><Shield className="mr-2 h-4 w-4" />Super Admin Login</Link>
+              </Button>
+            </div>
         </CardContent>
       </Card>
       <footer className="mt-8 text-center text-sm text-muted-foreground">
