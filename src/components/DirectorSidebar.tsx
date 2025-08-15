@@ -32,7 +32,7 @@ import {
     Home,
     Gate,
     Info,
-    BookMarked
+    BookMark
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
