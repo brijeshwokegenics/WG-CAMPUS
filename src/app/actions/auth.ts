@@ -32,8 +32,6 @@ export async function loginSchool(prevState: LoginState, formData: FormData): Pr
 
   const { schoolId, password } = validatedFields.data;
 
-  let schoolDocId: string | null = null;
-
   try {
     const schoolsRef = collection(db, 'schools');
     const q = query(schoolsRef, where("schoolId", "==", schoolId));
@@ -45,7 +43,7 @@ export async function loginSchool(prevState: LoginState, formData: FormData): Pr
     
     const schoolDoc = querySnapshot.docs[0];
     const school = schoolDoc.data();
-    schoolDocId = schoolDoc.id;
+    const schoolDocId = schoolDoc.id;
 
     if (school.password !== password) {
       return { message: 'Invalid School ID or password.' };
@@ -55,19 +53,16 @@ export async function loginSchool(prevState: LoginState, formData: FormData): Pr
         return { message: 'This school account has been disabled. Please contact the administrator.' };
     }
 
-    // In a real app, you would set up a session here.
-    // For now, we'll just redirect.
+    if (schoolDocId) {
+        redirect(`/director/dashboard/${schoolDocId}`);
+    } else {
+        // This case should ideally not be reached if logic is correct, but it's a safeguard.
+        return { message: 'Could not retrieve school details for redirection.' };
+    }
 
   } catch (e: any) {
     return {
       message: `Database error: ${e.message}`,
     };
-  }
-  
-  if (schoolDocId) {
-    redirect(`/director/dashboard/${schoolDocId}`);
-  } else {
-    // This case should ideally not be reached if logic is correct, but it's a safeguard.
-    return { message: 'Could not retrieve school details for redirection.' };
   }
 }
