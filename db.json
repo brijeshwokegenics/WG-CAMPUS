@@ -9,7 +9,8 @@
       "zipcode": "273006",
       "phone": "07460042306",
       "schoolId": "SCH-1755268393074-DPTX9",
-      "password": "school123"
+      "password": "school123",
+      "enabled": true
     },
     {
       "schoolName": "WG school",
