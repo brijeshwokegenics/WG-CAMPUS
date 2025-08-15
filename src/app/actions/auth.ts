@@ -61,9 +61,7 @@ export async function loginSchool(prevState: LoginState, formData: FormData): Pr
     };
   }
 
-  if (schoolDocId) {
-    redirect(`/director/dashboard/${schoolDocId}`);
-  } else {
-    return { message: 'Could not retrieve school details for redirection.' };
-  }
+  // Redirect is removed as the target dashboard is deleted.
+  // A success message can be shown instead.
+  return { message: "Login successful. Dashboard under construction." };
 }
