@@ -3,8 +3,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { School, LayoutDashboard, Building } from "lucide-react";
+import { School, LayoutDashboard, Building, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./ThemeToggle";
 
 const sidebarNavItems = [
   {
@@ -45,6 +46,18 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
+      <div className="mt-auto p-4 space-y-4">
+         <ThemeToggle />
+         <Link
+            href="/"
+            className={cn(
+              "flex items-center px-3 py-2 text-sm font-medium rounded-md text-muted-foreground hover:bg-muted"
+            )}
+          >
+            <LogOut className="h-5 w-5" />
+            <span className="ml-3">Logout</span>
+          </Link>
+      </div>
     </div>
   );
 }
