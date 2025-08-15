@@ -25,19 +25,19 @@ import {
     Wallet,
     HomeIcon,
     DoorOpen,
-    Info,
-    Smartphone
+    Info
 } from "lucide-react";
 
-const kpiData = [
-  { title: "Total Students", value: "1,250", icon: <Users className="h-6 w-6 text-muted-foreground" /> },
-  { title: "Total Staff", value: "85", icon: <Briefcase className="h-6 w-6 text-muted-foreground" /> },
-  { title: "Attendance Rate", value: "95.8%", icon: <UserCheck className="h-6 w-6 text-muted-foreground" /> },
-  { title: "Fees Collected", value: "$75,430", icon: <DollarSign className="h-6 w-6 text-muted-foreground" /> },
-];
 
 export default function DirectorDashboard({ params }: { params: { id: string } }) {
   const schoolId = params.id;
+
+    const kpiData = [
+        { title: "Total Students", value: "1,250", icon: <Users className="h-6 w-6 text-muted-foreground" /> },
+        { title: "Total Staff", value: "85", icon: <Briefcase className="h-6 w-6 text-muted-foreground" /> },
+        { title: "Attendance Rate", value: "95.8%", icon: <UserCheck className="h-6 w-6 text-muted-foreground" /> },
+        { title: "Fees Collected", value: "$75,430", icon: <DollarSign className="h-6 w-6 text-muted-foreground" /> },
+    ];
 
   const featureSections = [
     {
@@ -94,41 +94,20 @@ export default function DirectorDashboard({ params }: { params: { id: string } }
             <p className="text-muted-foreground">Welcome back! Here's a complete overview of your school.</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Mobile App Preview */}
-            <Card className="lg:col-span-1">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Smartphone className="h-6 w-6" />
-                        Mobile App Preview
-                    </CardTitle>
-                    <CardDescription>Visualize the school app experience.</CardDescription>
-                </CardHeader>
-                <CardContent className="flex items-center justify-center p-4">
-                    <div className="relative h-[400px] w-[200px] bg-background border-8 border-foreground rounded-3xl overflow-hidden shadow-lg">
-                        <div className="absolute top-2.5 left-1/2 -translate-x-1/2 h-1.5 w-12 bg-foreground rounded-full"></div>
-                        <div className="p-2 bg-muted h-full">
-                            <p className="text-center text-xs text-muted-foreground mt-4">App content would appear here</p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* KPI Cards */}
-            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                {kpiData.map((kpi) => (
-                    <Card key={kpi.title}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-                            {kpi.icon}
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{kpi.value}</div>
-                            <p className="text-xs text-muted-foreground">+2.1% from last month</p>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {kpiData.map((kpi) => (
+                <Card key={kpi.title}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                        {kpi.icon}
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{kpi.value}</div>
+                        <p className="text-xs text-muted-foreground">+2.1% from last month</p>
+                    </CardContent>
+                </Card>
+            ))}
         </div>
         
         {/* Feature Grid */}
@@ -136,7 +115,7 @@ export default function DirectorDashboard({ params }: { params: { id: string } }
             {featureSections.map(section => (
                  <div key={section.title}>
                     <h2 className="text-2xl font-bold tracking-tight mb-4">{section.title}</h2>
-                    <div className="grid gap-6 md:grid-cols-2">
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {section.features.map((feature) => (
                             <Card key={feature.title} className="flex flex-col">
                                 <CardHeader>
@@ -162,6 +141,3 @@ export default function DirectorDashboard({ params }: { params: { id: string } }
     </div>
   );
 }
-
-
-    
