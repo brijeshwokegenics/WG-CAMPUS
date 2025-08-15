@@ -23,6 +23,10 @@ export type ClassState = {
 };
 
 export async function createClass(schoolId: string, prevState: ClassState, formData: FormData): Promise<ClassState> {
+  if (!schoolId) {
+    return { message: 'Database error: School ID is missing.' };
+  }
+  
   const validatedFields = ClassSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {
@@ -48,9 +52,11 @@ export async function createClass(schoolId: string, prevState: ClassState, formD
 
 export async function getClasses(schoolId: string) {
   try {
+     if (!schoolId) {
+        return { classes: [], error: "School ID is required to fetch classes." };
+    }
     const classesColRef = collection(db, 'schools', schoolId, 'classes');
-    const q = query(classesColRef);
-    const classSnapshot = await getDocs(q);
+    const classSnapshot = await getDocs(classesColRef);
     
     if (classSnapshot.empty) {
         return { classes: [] };
