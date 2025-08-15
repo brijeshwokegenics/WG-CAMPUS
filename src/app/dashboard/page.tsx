@@ -42,7 +42,7 @@ const actions = [
   {
     role: "Super Admin",
     title: "Create a New School",
-    description: "Generate a new School ID and Password for a director to get started.",
+    description: "Creates schools by generating a School ID & Password.",
     icon: <ShieldCheck className="w-8 h-8 text-primary" />,
     link: "/dashboard/create-school",
     cta: "Create School",
@@ -50,7 +50,7 @@ const actions = [
   {
     role: "Director",
     title: "Create Principal Account",
-    description: "Onboard a new principal for your school by creating their account.",
+    description: "Logs in using the School ID & Password created by the Super Admin.",
     icon: <UserCog className="w-8 h-8 text-primary" />,
     link: "/dashboard/create-principal",
     cta: "Create Principal",
@@ -58,7 +58,7 @@ const actions = [
   {
     role: "Principal",
     title: "Create Staff Accounts",
-    description: "Create accounts for Admins, Teachers, Staff, Accountants, and Librarians.",
+    description: "Creates accounts for: Admin, Teacher, Staff, Accountant, Librarian.",
     icon: <Users className="w-8 h-8 text-primary" />,
     link: "/dashboard/create-staff",
     cta: "Create Staff",
@@ -66,7 +66,7 @@ const actions = [
   {
     role: "Admin",
     title: "Create Parent Accounts",
-    description: "Enable parents to access the portal by creating their accounts.",
+    description: "Creates Parents’ accounts (login credentials for parents).",
     icon: <BookUser className="w-8 h-8 text-primary" />,
     link: "/dashboard/create-parent",
     cta: "Create Parent",

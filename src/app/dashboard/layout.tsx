@@ -77,7 +77,7 @@ export default function DashboardLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton href="/dashboard/create-parent">
-                <BookUser />
+                <UserPlus />
                 Create Parent
               </SidebarMenuButton>
             </SidebarMenuItem>
