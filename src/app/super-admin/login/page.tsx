@@ -27,9 +27,12 @@ export default function SuperAdminLoginPage() {
               <Input id="password" type="password" required />
             </div>
           </div>
-          <Button type="submit" className="w-full mt-6">
-            Login
-          </Button>
+          {/* This Link is temporary for navigation during development. It will be replaced with form handling logic. */}
+          <Link href="/super-admin/dashboard" passHref>
+            <Button type="submit" className="w-full mt-6">
+              Login
+            </Button>
+          </Link>
           <div className="mt-4 text-center text-sm">
             <Link href="/" className="underline">
               Back to main portal
