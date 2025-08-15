@@ -25,6 +25,7 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchClasses = async () => {
       setLoading(true);
+      setError(null);
       const result = await getClasses(schoolId);
       if (result.error) {
         setError(result.error);
@@ -34,7 +35,9 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
       setLoading(false);
     };
 
-    fetchClasses();
+    if (schoolId) {
+        fetchClasses();
+    }
   }, [schoolId]);
 
   return (
@@ -59,9 +62,9 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p>Loading classes...</p>
+            <p className="text-center py-12">Loading classes...</p>
           ) : error ? (
-            <p className="text-destructive">{error}</p>
+            <p className="text-destructive text-center py-12">{error}</p>
           ) : classes.length === 0 ? (
              <div className="text-center py-12 text-muted-foreground">
                 <p>No classes have been created yet.</p>
