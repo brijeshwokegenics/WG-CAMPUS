@@ -32,7 +32,7 @@ export async function loginSchool(prevState: LoginState, formData: FormData): Pr
 
   const { schoolId, password } = validatedFields.data;
 
-  let schoolDocId: string;
+  let schoolDocId: string | null = null;
 
   try {
     const schoolsRef = collection(db, 'schools');
@@ -64,6 +64,10 @@ export async function loginSchool(prevState: LoginState, formData: FormData): Pr
     };
   }
   
-  // If we reach here, login is successful.
-  redirect(`/director/dashboard/${schoolDocId}`);
+  if (schoolDocId) {
+    redirect(`/director/dashboard/${schoolDocId}`);
+  } else {
+    // This case should ideally not be reached if logic is correct, but it's a safeguard.
+    return { message: 'Could not retrieve school details for redirection.' };
+  }
 }
