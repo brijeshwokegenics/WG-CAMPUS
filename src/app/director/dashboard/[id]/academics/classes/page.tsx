@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { getClasses } from '@/app/actions/academics';
+import { useSchool } from '@/context/SchoolProvider';
 
 type Class = {
   id: string;
@@ -16,14 +17,20 @@ type Class = {
   studentCount: number;
 };
 
-export default function ClassesPage({ params }: { params: { id: string } }) {
-  const schoolId = params.id;
+export default function ClassesPage() {
+  const { schoolId } = useSchool();
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchClasses = async () => {
+      if (!schoolId) {
+        setLoading(false);
+        setError("School ID is not available.");
+        return;
+      }
+      
       setLoading(true);
       setError(null);
       const result = await getClasses(schoolId);
@@ -35,9 +42,7 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
       setLoading(false);
     };
 
-    if (schoolId) {
-        fetchClasses();
-    }
+    fetchClasses();
   }, [schoolId]);
 
   return (

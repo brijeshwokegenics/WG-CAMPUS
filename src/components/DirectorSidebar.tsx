@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { useSchool } from "@/context/SchoolProvider";
 
 
 export const directorSidebarNavItems = (schoolId: string) => [
@@ -91,14 +92,19 @@ export const directorSidebarNavItems = (schoolId: string) => [
 ];
 
 type DirectorSidebarProps = {
-  params: { id: string };
   isCollapsed: boolean;
   toggleSidebar: () => void;
 };
 
-export function DirectorSidebar({ params, isCollapsed, toggleSidebar }: DirectorSidebarProps) {
+export function DirectorSidebar({ isCollapsed, toggleSidebar }: DirectorSidebarProps) {
   const pathname = usePathname();
-  const schoolId = params.id;
+  const { schoolId } = useSchool();
+  
+  if (!schoolId) {
+    // You can render a loading state or null while the schoolId is not available
+    return null; 
+  }
+
   const navItems = directorSidebarNavItems(schoolId);
 
   const NavLink = ({ item }: { item: any }) => (
