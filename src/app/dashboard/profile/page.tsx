@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowLeft, Loader2, User } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -49,7 +49,7 @@ export default function ProfilePage() {
         <Button variant="outline" size="sm" asChild className="mb-4">
           <Link href="/dashboard"><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Link>
         </Button>
-        <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Super Admin Profile</h1>
         <p className="text-muted-foreground">
           Manage your account settings and personal information.
         </p>
