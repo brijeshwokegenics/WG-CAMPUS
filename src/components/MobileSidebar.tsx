@@ -41,7 +41,7 @@ export function MobileSidebar({ navItems }: MobileSidebarProps) {
                     </Link>
                     {navItems.map((item, index) =>
                         item.isSection ? (
-                             <h2 key={index} className="mb-2 mt-4 px-2 text-lg font-semibold tracking-tight">
+                             <h2 key={index} className="px-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase mt-4 mb-1">
                                 {item.title}
                             </h2>
                         ) : (
