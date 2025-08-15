@@ -67,7 +67,7 @@ export default function CreateSchoolPage() {
         </p>
       </div>
 
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>School Details</CardTitle>
           <CardDescription>Enter the school name to generate its credentials.</CardDescription>

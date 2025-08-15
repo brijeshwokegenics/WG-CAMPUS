@@ -71,7 +71,7 @@ export default function CreatePrincipalPage() {
         </p>
       </div>
 
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Principal's Information</CardTitle>
           <CardDescription>Fill out the form to create a new principal account.</CardDescription>

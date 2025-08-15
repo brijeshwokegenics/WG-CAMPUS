@@ -73,7 +73,7 @@ export default function CreateParentPage() {
         </p>
       </div>
 
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Parent/Guardian Information</CardTitle>
           <CardDescription>Fill out the form to create a new parent account.</CardDescription>

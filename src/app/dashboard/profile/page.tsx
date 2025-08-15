@@ -55,7 +55,7 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Personal Information</CardTitle>
           <CardDescription>Update your personal details here.</CardDescription>
