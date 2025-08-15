@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
 const ClassSchema = z.object({
@@ -14,6 +14,27 @@ const ClassSchema = z.object({
 
 // For updates, the schoolId is not part of the form, so we omit it from the update schema.
 const UpdateClassSchema = ClassSchema.omit({ schoolId: true });
+
+const StudentSchema = z.object({
+  schoolId: z.string().min(1, "School ID is required."),
+  classId: z.string().min(1, "Class is required."),
+  section: z.string().min(1, "Section is required."),
+  admissionDate: z.date(),
+  studentName: z.string().min(2, "Student name must be at least 2 characters."),
+  dob: z.date(),
+  gender: z.enum(["Male", "Female", "Other"]),
+  bloodGroup: z.string().optional(),
+  
+  fatherName: z.string().min(2, "Father's name is required."),
+  motherName: z.string().min(2, "Mother's name is required."),
+  parentMobile: z.string().min(10, "A valid 10-digit mobile number is required."),
+  parentEmail: z.string().email("Invalid email address.").optional().or(z.literal('')),
+  
+  address: z.string().min(5, "Address is required."),
+  city: z.string().min(2, "City is required."),
+  state: z.string().min(2, "State is required."),
+  zipcode: z.string().min(5, "Zip code is required."),
+});
 
 
 export async function getClassesForSchool(schoolId: string) {
@@ -149,4 +170,38 @@ export async function deleteClass({ classId, schoolId }: { classId: string; scho
         console.error("Error deleting class:", error);
         return { success: false, error: "An unexpected error occurred while deleting the class." };
     }
+}
+
+export async function admitStudent(prevState: any, formData: FormData) {
+  const rawData = Object.fromEntries(formData.entries());
+  const dataWithDates = {
+      ...rawData,
+      admissionDate: new Date(rawData.admissionDate as string),
+      dob: new Date(rawData.dob as string),
+  };
+  
+  const parsed = StudentSchema.safeParse(dataWithDates);
+
+  if (!parsed.success) {
+      return { success: false, error: "Invalid data.", details: parsed.error.flatten() };
+  }
+
+  const { schoolId } = parsed.data;
+
+  try {
+      const studentsRef = collection(db, 'students');
+      
+      // We could add checks here, e.g., to prevent duplicate admissions.
+      // For now, we'll just add the new student.
+
+      const newStudentRef = await addDoc(studentsRef, parsed.data);
+      
+      revalidatePath(`/director/dashboard/${schoolId}/academics/admissions`);
+      revalidatePath(`/director/dashboard/${schoolId}/academics/students`);
+
+      return { success: true, message: `Student admitted successfully with ID: ${newStudentRef.id}` };
+  } catch (error) {
+      console.error('Error admitting student:', error);
+      return { success: false, error: 'An unexpected error occurred during admission.' };
+  }
 }
