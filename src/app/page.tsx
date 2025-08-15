@@ -14,15 +14,22 @@ export default function Home() {
           <CardTitle className="text-3xl font-bold">WG Campus ERP</CardTitle>
           <CardDescription>The comprehensive solution for modern educational institutions.</CardDescription>
         </CardHeader>
-        <CardContent className="text-center">
-          <p className="mb-6 text-muted-foreground">
+        <CardContent className="text-center space-y-4">
+          <p className="text-muted-foreground">
             Please select your login portal to continue.
           </p>
-          <Link href="/super-admin/login" passHref>
-            <Button size="lg" className="w-full">
-              Super Admin Login
-            </Button>
-          </Link>
+          <div className="flex flex-col space-y-2">
+            <Link href="/super-admin/login" passHref>
+              <Button size="lg" className="w-full">
+                Super Admin Login
+              </Button>
+            </Link>
+            <Link href="/school/login" passHref>
+                <Button size="lg" variant="secondary" className="w-full">
+                    School Portal Login
+                </Button>
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>
