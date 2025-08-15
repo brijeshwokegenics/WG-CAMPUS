@@ -12,7 +12,11 @@ const sidebarNavItems = [
     href: "/super-admin/dashboard",
     icon: <LayoutDashboard className="h-5 w-5" />,
   },
-  // Removed "Create School" from here to make it a primary action from the dashboard
+  {
+    title: "Manage Schools",
+    href: "/super-admin/dashboard/schools",
+    icon: <Building className="h-5 w-5" />,
+  },
 ];
 
 export function Sidebar() {
@@ -31,7 +35,7 @@ export function Sidebar() {
             href={item.href}
             className={cn(
               "flex items-center px-3 py-2 text-sm font-medium rounded-md",
-              pathname === item.href
+              pathname.startsWith(item.href) // Use startsWith for active state
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted"
             )}

@@ -18,6 +18,7 @@ const SchoolSchema = z.object({
   schoolId: z.string(),
   password: z.string().min(6, { message: "Password must be at least 6 characters long." }),
   confirmPassword: z.string(),
+  enabled: z.boolean().default(true),
 }).refine(data => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
@@ -44,7 +45,7 @@ export type State = {
 };
 
 
-async function readDb() {
+export async function readDb() {
   try {
     const data = await fs.readFile(dbPath, 'utf8');
     return JSON.parse(data);

@@ -33,10 +33,9 @@ export default function CreateSchoolPage() {
   }, []);
 
    useEffect(() => {
-    if (state?.message === "School created successfully!" && state.data?.schoolId) {
-        alert(`School created successfully!\nSchool ID: ${state.data.schoolId}`);
-        // Consider redirecting the user after successful creation
-        // window.location.href = '/super-admin/dashboard';
+    if (state?.message === "School created successfully!") {
+        alert(`School created successfully!`);
+        window.location.href = '/super-admin/dashboard/schools';
     } else if (state?.message && state.message !== "School created successfully!") {
         alert(`Error: ${state.message}`);
     }
