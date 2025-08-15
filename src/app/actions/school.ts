@@ -28,17 +28,13 @@ const SchoolSchema = BaseSchoolSchema.extend({
 });
 
 
-const UpdateSchoolSchema = BaseSchoolSchema.extend({
-    password: z.string().optional(),
-    confirmPassword: z.string().optional(),
-}).refine(data => {
-    // If password is provided (and not just an empty string), it must be at least 6 chars and confirmed
-    if (data.password || data.confirmPassword) {
-        return data.password && data.password.length >= 6 && data.password === data.confirmPassword;
-    }
-    return true; // If no password is provided, validation passes for the password fields.
-}, {
-    message: "Passwords must match and be at least 6 characters long.",
+const UpdateSchoolSchema = BaseSchoolSchema;
+
+const UpdatePasswordSchema = z.object({
+    password: z.string().min(6, { message: "Password must be at least 6 characters long." }),
+    confirmPassword: z.string(),
+}).refine(data => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
     path: ["confirmPassword"],
 });
 
@@ -93,7 +89,6 @@ export async function getSchool(id: string) {
 
 
 export async function createSchool(prevState: State, formData: FormData): Promise<State> {
-  // We need to manually add enabled and then parse
   const formDataObj = Object.fromEntries(formData.entries());
   formDataObj.enabled = 'true';
   
@@ -132,12 +127,6 @@ export async function createSchool(prevState: State, formData: FormData): Promis
 export async function updateSchool(id: string, prevState: State, formData: FormData): Promise<State> {
     const formDataObj = Object.fromEntries(formData.entries());
     
-    // Only include password fields for validation if they are not empty
-    if (!formDataObj.password && !formDataObj.confirmPassword) {
-      delete formDataObj.password;
-      delete formDataObj.confirmPassword;
-    }
-
     const validatedFields = UpdateSchoolSchema.safeParse(formDataObj);
     
     if (!validatedFields.success) {
@@ -147,19 +136,39 @@ export async function updateSchool(id: string, prevState: State, formData: FormD
         };
     }
 
-    const { confirmPassword, ...schoolData } = validatedFields.data;
-
-     // If the password field is empty/undefined, we don't want to update it in the database.
-    if (!schoolData.password) {
-        delete schoolData.password;
-    }
-
+    const schoolData  = validatedFields.data;
+    
     try {
         const schoolDocRef = doc(db, 'schools', id);
         await updateDoc(schoolDocRef, schoolData);
         revalidatePath('/super-admin/dashboard/schools');
         revalidatePath(`/super-admin/dashboard/schools/edit/${id}`);
         return { message: 'School updated successfully!' };
+    } catch (e: any) {
+        return {
+            message: `Database error: ${e.message}`,
+        };
+    }
+}
+
+
+export async function updateSchoolPassword(id: string, prevState: State, formData: FormData): Promise<State> {
+    const validatedFields = UpdatePasswordSchema.safeParse(Object.fromEntries(formData.entries()));
+
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: 'Validation failed. Please check the fields.',
+        };
+    }
+
+    const { password } = validatedFields.data;
+
+    try {
+        const schoolDocRef = doc(db, 'schools', id);
+        await updateDoc(schoolDocRef, { password });
+        revalidatePath('/super-admin/dashboard/schools');
+        return { message: 'Password updated successfully!' };
     } catch (e: any) {
         return {
             message: `Database error: ${e.message}`,

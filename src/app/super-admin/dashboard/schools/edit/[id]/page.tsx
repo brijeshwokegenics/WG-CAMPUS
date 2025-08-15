@@ -60,11 +60,9 @@ export default function EditSchoolPage({ params }: { params: { id: string } }) {
 
     useEffect(() => {
         if (state?.message === 'School updated successfully!') {
-            // The success message will be displayed via the state.message check in the JSX
-            // and we can redirect after a short delay.
             setTimeout(() => {
                 window.location.href = '/super-admin/dashboard/schools';
-            }, 2000); // Redirect after 2 seconds
+            }, 2000); 
         }
     }, [state]);
 
@@ -144,23 +142,6 @@ export default function EditSchoolPage({ params }: { params: { id: string } }) {
                                 <div className="space-y-2">
                                     <Label htmlFor="school-id">School ID</Label>
                                     <Input id="school-id" name="schoolId" value={school.schoolId} readOnly className="bg-muted"/>
-                                </div>
-                            </div>
-
-                            <div className="border-t pt-6">
-                                <h3 className="text-lg font-medium">Update Password</h3>
-                                <p className="text-sm text-muted-foreground mb-4">Leave these fields blank to keep the current password.</p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="password">New Password</Label>
-                                        <Input id="password" name="password" type="password" />
-                                        {state.errors?.password && <p className="text-sm text-destructive">{state.errors.password.join(', ')}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="confirm-password">Confirm New Password</Label>
-                                        <Input id="confirm-password" name="confirmPassword" type="password" />
-                                        {state.errors?.confirmPassword && <p className="text-sm text-destructive">{state.errors.confirmPassword.join(', ')}</p>}
-                                    </div>
                                 </div>
                             </div>
                             

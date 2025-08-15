@@ -123,7 +123,10 @@ export default function ManageSchoolsPage() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                              <Link href={`/super-admin/dashboard/schools/edit/${school.id}`} passHref>
-                                <DropdownMenuItem>View/Edit School</DropdownMenuItem>
+                                <DropdownMenuItem>View/Edit Details</DropdownMenuItem>
+                             </Link>
+                             <Link href={`/super-admin/dashboard/schools/update-password/${school.id}`} passHref>
+                                <DropdownMenuItem>Update Password</DropdownMenuItem>
                              </Link>
                             <DropdownMenuItem onClick={() => handleToggleStatus(school.schoolId, school.enabled)} disabled={isPending}>
                                 {school.enabled ? 'Disable' : 'Enable'} School
