@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, BarChart2, Building2, Banknote, Settings, Megaphone, BookOpen, UserPlus, Briefcase, Users, UserCheck, DollarSign, Calendar, Shield, FileText, Bus, Library, BedDouble, MessageSquare, GraduationCap, Search, BookMarked, Wallet, Truck, Home, Gate, Info } from "lucide-react";
+import { ArrowRight, BarChart2, Building2, Banknote, Settings, Megaphone, BookOpen, UserPlus, Briefcase, Users, UserCheck, DollarSign, Calendar, Shield, FileText, Bus, Library, BedDouble, MessageSquare, GraduationCap, Wallet, Truck, Home, Gate, Info } from "lucide-react";
 
 const kpiData = [
   { title: "Total Students", value: "1,250", icon: <Users className="h-6 w-6 text-muted-foreground" /> },
