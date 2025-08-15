@@ -28,7 +28,7 @@ export async function createClass(schoolId: string, prevState: ClassState, formD
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Validation failed. Please check the fields.',
+      message: 'An error occurred. Please review the form and try again.',
     };
   }
 
