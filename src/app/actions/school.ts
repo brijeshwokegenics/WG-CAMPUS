@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { revalidatePath } from 'next/cache';
 
 
-const SchoolSchema = z.object({
+const BaseSchoolSchema = z.object({
   schoolName: z.string().min(3, { message: "School name must be at least 3 characters long." }),
   contactEmail: z.string().email({ message: "Invalid email address." }),
   address: z.string().min(5, { message: "Address must be at least 5 characters long." }),
@@ -16,15 +16,19 @@ const SchoolSchema = z.object({
   zipcode: z.string().min(5, { message: "Zip code must be at least 5 characters long." }),
   phone: z.string().min(10, { message: "Phone number must be at least 10 digits long." }),
   schoolId: z.string(),
-  password: z.string().min(6, { message: "Password must be at least 6 characters long." }),
-  confirmPassword: z.string(),
   enabled: z.boolean().default(true),
+});
+
+const SchoolSchema = BaseSchoolSchema.extend({
+    password: z.string().min(6, { message: "Password must be at least 6 characters long." }),
+    confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
 });
 
-const UpdateSchoolSchema = SchoolSchema.omit({ password: true, confirmPassword: true });
+
+const UpdateSchoolSchema = BaseSchoolSchema;
 
 
 export type State = {
@@ -77,7 +81,11 @@ export async function getSchool(id: string) {
 
 
 export async function createSchool(prevState: State, formData: FormData): Promise<State> {
-  const validatedFields = SchoolSchema.safeParse(Object.fromEntries(formData.entries()));
+  // We need to manually add enabled and then parse
+  const formDataObj = Object.fromEntries(formData.entries());
+  formDataObj.enabled = 'true';
+  
+  const validatedFields = SchoolSchema.safeParse(formDataObj);
 
   if (!validatedFields.success) {
     return {
