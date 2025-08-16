@@ -1,6 +1,7 @@
 
 'use client';
 
+import React, { useState, useEffect, useTransition } from 'react';
 import {
   Table,
   TableBody,
@@ -21,16 +22,15 @@ import { MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react"
 import { deleteStudent, getStudentsForSchool } from '@/app/actions/academics';
 import { Button } from './ui/button';
 import Link from 'next/link';
-import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 
 export function StudentList({ schoolId, query }: { schoolId: string, query: string }) {
-    const [students, setStudents] = React.useState<any[]>([]);
+    const [students, setStudents] = useState<any[]>([]);
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
 
-    React.useEffect(() => {
+    useEffect(() => {
         async function fetchStudents() {
             const studentData = await getStudentsForSchool(schoolId, query);
             setStudents(studentData);
@@ -81,13 +81,13 @@ export function StudentList({ schoolId, query }: { schoolId: string, query: stri
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                       <Link href={`/director/dashboard/${schoolId}/academics/students/${studentId}`} passHref>
+                       <Link href={`/director/dashboard/${schoolId}/academics/students/${student.id}`} passHref>
                           <DropdownMenuItem>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Profile
                           </DropdownMenuItem>
                        </Link>
-                       <Link href={`/director/dashboard/${schoolId}/academics/students/edit/${studentId}`} passHref>
+                       <Link href={`/director/dashboard/${schoolId}/academics/students/edit/${student.id}`} passHref>
                            <DropdownMenuItem>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit Student
