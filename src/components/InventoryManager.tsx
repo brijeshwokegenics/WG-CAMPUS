@@ -17,7 +17,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
-import { PlusCircle, Edit, Trash2, Loader2, Warehouse, Layers, Plus, Minus, History, Eye } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2, Warehouse, Layers, Plus, Minus, History, Eye, PlusMinus } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 import { 
@@ -250,7 +250,10 @@ const StockUpdateSchema = z.object({
 type StockUpdateFormValues = z.infer<typeof StockUpdateSchema>;
 
 function UpdateStockDialog({ isOpen, setIsOpen, item, schoolId, onSuccess }: { isOpen: boolean, setIsOpen: (v: boolean) => void, item: Item, schoolId: string, onSuccess: () => void }) {
-    const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<StockUpdateFormValues>({ resolver: zodResolver(StockUpdateSchema) });
+    const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset } = useForm<StockUpdateFormValues>({ 
+        resolver: zodResolver(StockUpdateSchema),
+        defaultValues: { type: 'in' }
+    });
     const [state, formAction] = useFormState(updateStock, { success: false });
 
     useEffect(() => {
@@ -282,8 +285,8 @@ function UpdateStockDialog({ isOpen, setIsOpen, item, schoolId, onSuccess }: { i
                     {state.error && <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>}
                      <div className="space-y-2">
                         <Label>Action</Label>
-                         <Controller name="type" control={useForm({ resolver: zodResolver(StockUpdateSchema) }).control} render={({ field }) => (
-                            <Select onValueChange={field.onChange} defaultValue="in">
+                         <Controller name="type" control={control} render={({ field }) => (
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <SelectTrigger><SelectValue placeholder="Select an action" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="in">Add Stock (Receive)</SelectItem>
@@ -403,6 +406,3 @@ export function InventoryManager({ schoolId, initialCategories, initialItems }: 
         </Tabs>
     );
 }
-
-// Add a simple missing component for UpdateStockDialog controller
-const { PlusMinus } = { PlusMinus: (props: any) => <svg {...props}><path d="M4 12h16M12 4v16"/></svg> };
