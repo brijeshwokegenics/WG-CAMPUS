@@ -2,15 +2,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useForm, useFormState } from 'react-hook-form';
+import { useForm, UseFormReturn } from 'react-hook-form';
+import { useFormState } from 'react-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createExamTerm, getExamTerms, updateExamTerm } from '@/app/actions/academics';
+import { createExamTerm, updateExamTerm, getExamTerms } from '@/app/actions/academics';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Loader2, CalendarRange, Edit, FilePenLine, X, Pencil } from 'lucide-react';
+import { PlusCircle, Loader2, CalendarRange, FilePenLine, Pencil } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { cn } from '@/lib/utils';
 import { ExamScheduleDialog } from './ExamScheduleDialog';
@@ -31,14 +32,17 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
     const [loading, setLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingTerm, setEditingTerm] = useState<ExamTerm | null>(null);
-    
-    // State for schedule dialog
+
     const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
     const [selectedTermForSchedule, setSelectedTermForSchedule] = useState<ExamTerm | null>(null);
 
-    // State for marks entry sheet
     const [isMarksSheetOpen, setIsMarksSheetOpen] = useState(false);
     const [selectedTermForMarks, setSelectedTermForMarks] = useState<ExamTerm | null>(null);
+    
+    const form = useForm<ExamTermFormValues>({
+        resolver: zodResolver(ExamTermFormSchema),
+        defaultValues: { name: '', session: '' },
+    });
 
     const fetchTerms = async () => {
         setLoading(true);
@@ -56,6 +60,7 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
     const handleFormSuccess = () => {
         setIsFormOpen(false);
         setEditingTerm(null);
+        form.reset();
         fetchTerms();
     };
 
@@ -63,25 +68,34 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
         setSelectedTermForSchedule(term);
         setIsScheduleDialogOpen(true);
     };
-    
+
     const handleOpenMarksSheet = (term: ExamTerm) => {
         setSelectedTermForMarks(term);
         setIsMarksSheetOpen(true);
     };
-    
+
     const handleEditClick = (term: ExamTerm) => {
         setEditingTerm(term);
+        form.reset({
+            name: term.name,
+            session: term.session,
+        });
         setIsFormOpen(true);
     };
 
     const handleAddNewClick = () => {
         setEditingTerm(null);
+        form.reset({
+            name: '',
+            session: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
+        });
         setIsFormOpen(true);
     };
-    
+
     const handleCancelForm = () => {
         setIsFormOpen(false);
         setEditingTerm(null);
+        form.reset();
     };
 
     return (
@@ -102,12 +116,13 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
                     onSuccess={handleFormSuccess}
                     onCancel={handleCancelForm}
                     editingTerm={editingTerm}
+                    form={form}
                 />
             )}
 
             {loading ? (
                 <div className="text-center py-4"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
-            ) : terms.length === 0 ? (
+            ) : terms.length === 0 && !isFormOpen ? (
                 <p className="text-muted-foreground text-center py-8">No exam terms created yet.</p>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -134,7 +149,7 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
                     ))}
                 </div>
             )}
-            
+
             {selectedTermForSchedule && (
                 <ExamScheduleDialog
                     isOpen={isScheduleDialogOpen}
@@ -144,7 +159,7 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
                     classes={classes}
                 />
             )}
-            
+
             {selectedTermForMarks && (
                 <MarksEntrySheet
                     isOpen={isMarksSheetOpen}
@@ -159,25 +174,31 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
 }
 
 // Sub-component for the form to handle create and edit
-function ExamTermForm({ schoolId, onSuccess, onCancel, editingTerm }: { schoolId: string, onSuccess: () => void, onCancel: () => void, editingTerm: ExamTerm | null }) {
+function ExamTermForm({
+    schoolId,
+    onSuccess,
+    onCancel,
+    editingTerm,
+    form
+}: {
+    schoolId: string;
+    onSuccess: () => void;
+    onCancel: () => void;
+    editingTerm: ExamTerm | null;
+    form: UseFormReturn<ExamTermFormValues>;
+}) {
     const initialState = { success: false, error: null, message: null };
     const action = editingTerm ? updateExamTerm : createExamTerm;
     const [state, formAction] = useFormState(action, initialState);
-
-    const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<ExamTermFormValues>({
-        resolver: zodResolver(ExamTermFormSchema),
-        defaultValues: {
-            name: editingTerm?.name || '',
-            session: editingTerm?.session || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
-        }
-    });
+    
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
 
     useEffect(() => {
         if (state.success) {
             onSuccess();
         }
     }, [state.success, onSuccess]);
-    
+
     const onFormSubmit = (data: ExamTermFormValues) => {
         const formData = new FormData();
         formData.append('schoolId', schoolId);
@@ -203,7 +224,7 @@ function ExamTermForm({ schoolId, onSuccess, onCancel, editingTerm }: { schoolId
                             <AlertDescription>{state.error}</AlertDescription>
                         </Alert>
                     )}
-                    
+
                     <div className="space-y-2">
                         <Label htmlFor="name">Exam Name</Label>
                         <Input id="name" {...register('name')} placeholder="e.g., Mid-Term, Final Exam" />
@@ -217,7 +238,7 @@ function ExamTermForm({ schoolId, onSuccess, onCancel, editingTerm }: { schoolId
                     <div className="flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {editingTerm ? 'Save Changes' : 'Create Term'}
                         </Button>
                     </div>
