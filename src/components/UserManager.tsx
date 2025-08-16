@@ -197,7 +197,7 @@ function AddUserDialog({ isOpen, setIsOpen, schoolId, onSuccess }: { isOpen: boo
     const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<AddUserFormValues>({
         resolver: zodResolver(AddUserFormSchema),
     });
-    const [state, formAction] = useFormState(createUser, { success: false, error: null });
+    const [state, formAction] = useFormState(createUser, { success: false, error: null, details: null });
 
     useEffect(() => {
         if (state.success) {
@@ -209,7 +209,6 @@ function AddUserDialog({ isOpen, setIsOpen, schoolId, onSuccess }: { isOpen: boo
         const formData = new FormData();
         formData.append('schoolId', schoolId);
         Object.entries(data).forEach(([key, value]) => formData.append(key, value as string));
-        // Explicitly set enabled for new users
         formData.append('enabled', 'true');
         formAction(formData);
     };
@@ -222,23 +221,26 @@ function AddUserDialog({ isOpen, setIsOpen, schoolId, onSuccess }: { isOpen: boo
                     <DialogDescription>Create a new staff account with a specific role.</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
-                    {state.error && <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>}
+                    {state.error && !state.details && <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>}
                     
                     <div className="space-y-2">
                         <Label htmlFor="name">Full Name</Label>
                         <Input id="name" {...register('name')} />
                         {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                        {state.details?.fieldErrors?.name && <p className="text-sm text-destructive">{state.details.fieldErrors.name.join(', ')}</p>}
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="email">Email (Optional)</Label>
                             <Input id="email" type="email" {...register('email')} />
+                            {state.details?.fieldErrors?.email && <p className="text-sm text-destructive">{state.details.fieldErrors.email.join(', ')}</p>}
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="phone">Phone Number</Label>
                             <Input id="phone" type="tel" {...register('phone')} />
                             {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+                            {state.details?.fieldErrors?.phone && <p className="text-sm text-destructive">{state.details.fieldErrors.phone.join(', ')}</p>}
                         </div>
                     </div>
                     
@@ -257,6 +259,7 @@ function AddUserDialog({ isOpen, setIsOpen, schoolId, onSuccess }: { isOpen: boo
                             </Select>
                         )} />
                         {errors.role && <p className="text-sm text-destructive">{errors.role.message}</p>}
+                        {state.details?.fieldErrors?.role && <p className="text-sm text-destructive">{state.details.fieldErrors.role.join(', ')}</p>}
                     </div>
 
                      <div className="grid grid-cols-2 gap-4">
@@ -264,11 +267,13 @@ function AddUserDialog({ isOpen, setIsOpen, schoolId, onSuccess }: { isOpen: boo
                             <Label htmlFor="userId">User ID (for login)</Label>
                             <Input id="userId" {...register('userId')} />
                             {errors.userId && <p className="text-sm text-destructive">{errors.userId.message}</p>}
+                            {state.details?.fieldErrors?.userId && <p className="text-sm text-destructive">{state.details.fieldErrors.userId.join(', ')}</p>}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="password">Password</Label>
                             <Input id="password" type="password" {...register('password')} />
                             {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+                            {state.details?.fieldErrors?.password && <p className="text-sm text-destructive">{state.details.fieldErrors.password.join(', ')}</p>}
                         </div>
                      </div>
                     
