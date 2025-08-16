@@ -12,9 +12,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Edit, Save } from 'lucide-react';
+import { Loader2, Edit, Save, Printer } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 type ClassData = { id: string; name: string; sections: string[]; };
 
@@ -94,6 +95,12 @@ export function TimetableManager({ schoolId, classes }: { schoolId: string; clas
         setIsEditing(false);
     };
 
+    const handlePrint = () => {
+        if (!selectedClassId || !selectedSection) return;
+        const printUrl = `/director/dashboard/${schoolId}/academics/timetable/print?classId=${selectedClassId}&section=${selectedSection}`;
+        window.open(printUrl, '_blank');
+    }
+
     const canManageTimetable = selectedClassId && selectedSection;
 
     return (
@@ -128,6 +135,10 @@ export function TimetableManager({ schoolId, classes }: { schoolId: string; clas
             ) : canManageTimetable ? (
                 <form onSubmit={handleSubmit(onFormSubmit)}>
                     <div className="flex justify-end gap-2 mb-4">
+                        <Button type="button" variant="outline" onClick={handlePrint}>
+                            <Printer className="mr-2 h-4 w-4" />
+                            Print Timetable
+                        </Button>
                         {!isEditing ? (
                             <Button type="button" onClick={() => setIsEditing(true)}>
                                 <Edit className="mr-2 h-4 w-4" />
