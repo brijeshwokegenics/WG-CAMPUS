@@ -197,22 +197,23 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
 
     const { fields, replace } = useFieldArray({ control, name: "paidFor" });
 
-    // Effect to set default values when student/feeStatus changes
     useEffect(() => {
-        const defaultValues = {
-            paymentDate: new Date(),
-            paymentMode: "Cash" as const,
-            transactionId: '',
-            discount: 0,
-            fine: 0,
-            paidFor: feeStatus?.map((item: any) => ({ 
-                feeHeadId: item.feeHeadId, 
-                feeHeadName: item.feeHeadName, 
-                amount: item.due > 0 ? item.due : 0, 
-                isPaid: item.due > 0 
-            })) || [],
-        };
-        reset(defaultValues);
+        if(feeStatus) {
+            const defaultValues = {
+                paymentDate: new Date(),
+                paymentMode: "Cash" as const,
+                transactionId: '',
+                discount: 0,
+                fine: 0,
+                paidFor: feeStatus.map((item: any) => ({ 
+                    feeHeadId: item.feeHeadId, 
+                    feeHeadName: item.feeHeadName, 
+                    amount: item.due > 0 ? item.due : 0, 
+                    isPaid: item.due > 0 
+                })),
+            };
+            reset(defaultValues);
+        }
     }, [feeStatus, reset]);
 
 
@@ -236,7 +237,6 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
     useEffect(() => {
         if (state.success) {
             onPaymentSuccess();
-            // Form is reset via the feeStatus useEffect dependency
         }
     }, [state.success, onPaymentSuccess]);
 
