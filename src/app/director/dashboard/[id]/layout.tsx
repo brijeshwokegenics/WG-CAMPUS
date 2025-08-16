@@ -41,7 +41,7 @@ export default function DirectorDashboardLayout({
 
             {/* Header Right Side */}
             <div className="flex w-full items-center justify-end gap-4">
-              <ThemeToggle isCollapsed={false} />
+              <ThemeToggle />
               <Button variant="ghost" size="icon" className="rounded-full">
                 <Bell className="h-5 w-5" />
                 <span className="sr-only">Toggle notifications</span>
