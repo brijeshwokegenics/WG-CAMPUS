@@ -181,6 +181,8 @@ const FeeCollectionSchema = z.object({
     transactionId: z.string().optional(),
     totalAmount: z.coerce.number().min(1, "Total amount must be greater than 0."),
     paidFor: z.array(FeePaymentItemSchema),
+    discount: z.coerce.number().min(0).optional(),
+    fine: z.coerce.number().min(0).optional(),
     receiptNumber: z.string().optional(), // Will be generated on server
 });
 
@@ -194,11 +196,14 @@ export async function collectFee(prevState: any, formData: FormData) {
         transactionId: formData.get('transactionId'),
         totalAmount: formData.get('totalAmount'),
         paidFor: JSON.parse(formData.get('paidFor') as string),
+        discount: formData.get('discount'),
+        fine: formData.get('fine'),
     };
 
     const parsed = FeeCollectionSchema.safeParse(rawData);
 
     if (!parsed.success) {
+        console.log(parsed.error.flatten());
         return { success: false, error: 'Invalid data provided.', details: parsed.error.flatten() };
     }
 
@@ -237,14 +242,18 @@ export async function getStudentFeeDetails(schoolId: string, studentId: string) 
     try {
         // 1. Get student data
         const studentRes = await getStudentById(studentId, schoolId);
-        if (!studentRes.success) return { success: false, error: "Student not found." };
+        if (!studentRes.success || !studentRes.data) return { success: false, error: "Student not found." };
         const student = studentRes.data;
 
         // 2. Get class fee structure
         const structureRes = await getFeeStructure(schoolId, student.classId);
         const feeStructure = structureRes.success ? structureRes.data : null;
 
-        // 3. Get payment history
+        // 3. Get all fee heads to know their types (monthly, annual, etc.)
+        const feeHeadsRes = await getFeeHeads(schoolId);
+        const allFeeHeads = feeHeadsRes.success ? feeHeadsRes.data : [];
+
+        // 4. Get payment history
         const paymentsRef = collection(db, 'feeCollections');
         const q = query(paymentsRef, where('schoolId', '==', schoolId), where('studentId', '==', studentId));
         const paymentSnapshot = await getDocs(q);
@@ -256,7 +265,46 @@ export async function getStudentFeeDetails(schoolId: string, studentId: string) 
         
         paymentHistory.sort((a,b) => b.paymentDate.getTime() - a.paymentDate.getTime());
 
-        return { success: true, data: { student, feeStructure, paymentHistory } };
+        // 5. Calculate fee status (dues)
+        const feeStatus: any[] = [];
+        if (feeStructure) {
+            for (const structureItem of feeStructure.structure) {
+                const feeHead = allFeeHeads.find((h:any) => h.id === structureItem.feeHeadId);
+                if (!feeHead) continue;
+
+                const applicableAmount = structureItem.amount;
+                let installments = 1;
+                if (feeHead.type === 'Monthly') installments = 12;
+                if (feeHead.type === 'Quarterly') installments = 4;
+                
+                const totalPayable = applicableAmount * installments;
+                
+                const paymentsForThisHead = paymentHistory.flatMap(p => p.paidFor.filter((item: any) => item.feeHeadId === structureItem.feeHeadId));
+                const totalPaid = paymentsForThisHead.reduce((sum, item) => sum + item.amount, 0);
+
+                // For simplicity, summing up all discounts for this head. A more complex system might allocate discounts.
+                const totalDiscount = paymentHistory.reduce((sum, p) => {
+                    if (p.paidFor.some((item: any) => item.feeHeadId === structureItem.feeHeadId)) {
+                        return sum + (p.discount || 0);
+                    }
+                    return sum;
+                }, 0);
+
+
+                feeStatus.push({
+                    feeHeadId: structureItem.feeHeadId,
+                    feeHeadName: structureItem.feeHeadName,
+                    type: feeHead.type,
+                    totalPayable: totalPayable,
+                    totalPaid: totalPaid,
+                    totalDiscount: totalDiscount,
+                    due: totalPayable - totalPaid - totalDiscount,
+                });
+            }
+        }
+
+
+        return { success: true, data: { student, feeStructure, paymentHistory, feeStatus } };
     } catch (error) {
         console.error("Error fetching student fee details:", error);
         return { success: false, error: "Failed to fetch fee details." };
@@ -284,5 +332,3 @@ export async function getFeeReceipt(receiptId: string) {
         return { success: false, error: "Failed to fetch receipt." };
     }
 }
-
-    

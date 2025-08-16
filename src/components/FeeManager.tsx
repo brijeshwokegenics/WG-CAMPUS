@@ -6,7 +6,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Loader2, Search, User, Wallet, History, Printer } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2, Search, User, Wallet, History, Printer, HandCoins, MinusCircle, PlusCircle } from 'lucide-react';
 
 import { getStudentsForSchool } from '@/app/actions/academics';
 import { getStudentFeeDetails, collectFee } from '@/app/actions/finance';
@@ -22,7 +22,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useFormState } from 'react-dom';
-import numberToWords from 'number-to-words';
 
 type ClassData = { id: string; name: string; sections: string[]; };
 type StudentSearchResult = { id: string; studentName: string; };
@@ -37,6 +36,8 @@ const FeeCollectionFormSchema = z.object({
     paymentDate: z.date(),
     paymentMode: z.enum(['Cash', 'Cheque', 'UPI', 'Card', 'Bank Transfer']),
     transactionId: z.string().optional(),
+    discount: z.coerce.number().min(0).optional(),
+    fine: z.coerce.number().min(0).optional(),
     paidFor: z.array(FeePaymentItemSchema).min(1, "At least one fee head must be selected."),
 });
 
@@ -56,6 +57,7 @@ export function FeeManager({ schoolId, classes }: { schoolId: string, classes: C
     const [studentDetails, setStudentDetails] = useState<any>(null);
     const [feeStructure, setFeeStructure] = useState<any>(null);
     const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
+    const [feeStatus, setFeeStatus] = useState<any[]>([]);
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
     const searchClass = useMemo(() => classes.find(c => c.id === searchClassId), [classes, searchClassId]);
@@ -79,6 +81,7 @@ export function FeeManager({ schoolId, classes }: { schoolId: string, classes: C
                 setStudentDetails(result.data.student);
                 setFeeStructure(result.data.feeStructure);
                 setPaymentHistory(result.data.paymentHistory);
+                setFeeStatus(result.data.feeStatus);
             }
             setIsLoadingDetails(false);
         });
@@ -155,16 +158,18 @@ export function FeeManager({ schoolId, classes }: { schoolId: string, classes: C
             {isLoadingDetails ? (
                  <div className="text-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
             ) : selectedStudentId && studentDetails && (
-                <div>
+                <div className='space-y-6'>
                      <div className="flex justify-between items-center mb-4">
                         <h2 className="text-2xl font-bold">Fee Details for {studentDetails.studentName}</h2>
                         <Button variant="outline" onClick={handleClear}>Search for another student</Button>
                     </div>
+                    
+                    <FeeStatus studentFeeStatus={feeStatus} />
 
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                         {/* Fee Payment Form */}
                         <div className="lg:col-span-3">
-                           <FeeCollectionForm student={studentDetails} feeStructure={feeStructure} schoolId={schoolId} onPaymentSuccess={() => handleSelectStudent(selectedStudentId)}/>
+                           <FeeCollectionForm student={studentDetails} feeStatus={feeStatus} schoolId={schoolId} onPaymentSuccess={() => handleSelectStudent(selectedStudentId)}/>
                         </div>
                         {/* Payment History */}
                         <div className="lg:col-span-2">
@@ -178,7 +183,7 @@ export function FeeManager({ schoolId, classes }: { schoolId: string, classes: C
 }
 
 
-function FeeCollectionForm({ student, feeStructure, schoolId, onPaymentSuccess }: { student: any, feeStructure: any, schoolId: string, onPaymentSuccess: () => void }) {
+function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: { student: any, feeStatus: any[], schoolId: string, onPaymentSuccess: () => void }) {
     
     const { register, handleSubmit, control, formState: { errors, isSubmitting }, watch, reset } = useForm<FeeCollectionFormValues>({
         resolver: zodResolver(FeeCollectionFormSchema),
@@ -186,7 +191,9 @@ function FeeCollectionForm({ student, feeStructure, schoolId, onPaymentSuccess }
             paymentDate: new Date(),
             paymentMode: "Cash",
             transactionId: '',
-            paidFor: feeStructure?.structure.map((item: any) => ({ ...item, isPaid: false })) || [],
+            discount: 0,
+            fine: 0,
+            paidFor: feeStatus?.map((item: any) => ({ feeHeadId: item.feeHeadId, feeHeadName: item.feeHeadName, amount: 0, isPaid: false })) || [],
         },
     });
 
@@ -195,12 +202,19 @@ function FeeCollectionForm({ student, feeStructure, schoolId, onPaymentSuccess }
     const [state, formAction] = useFormState(collectFee, { success: false });
 
     const watchPaidFor = watch('paidFor');
+    const watchDiscount = watch('discount');
+    const watchFine = watch('fine');
+    
     const totalAmount = useMemo(() => {
         return watchPaidFor.reduce((acc, curr, index) => {
             const item = (fields[index] as any);
             return item.isPaid ? acc + Number(curr.amount || 0) : acc;
         }, 0);
     }, [watchPaidFor, fields]);
+    
+    const netAmount = useMemo(() => {
+        return totalAmount - (Number(watchDiscount) || 0) + (Number(watchFine) || 0);
+    }, [totalAmount, watchDiscount, watchFine]);
     
     useEffect(() => {
         if(state.success) {
@@ -217,6 +231,8 @@ function FeeCollectionForm({ student, feeStructure, schoolId, onPaymentSuccess }
         formData.append('paymentDate', data.paymentDate.toISOString());
         formData.append('paymentMode', data.paymentMode);
         formData.append('transactionId', data.transactionId || '');
+        formData.append('discount', String(data.discount || 0));
+        formData.append('fine', String(data.fine || 0));
         
         const paidItems = data.paidFor.filter((item, index) => (fields[index] as any).isPaid);
         if(paidItems.length === 0) {
@@ -258,7 +274,7 @@ function FeeCollectionForm({ student, feeStructure, schoolId, onPaymentSuccess }
                                     <TableRow>
                                         <TableHead className="w-12"></TableHead>
                                         <TableHead>Fee Head</TableHead>
-                                        <TableHead className="text-right">Amount Due</TableHead>
+                                        <TableHead className="text-right">Amount To Pay</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -285,6 +301,22 @@ function FeeCollectionForm({ student, feeStructure, schoolId, onPaymentSuccess }
                             </Table>
                         </div>
                         {errors.paidFor && <p className="text-sm text-destructive">{errors.paidFor.message || errors.paidFor.root?.message}</p>}
+                    </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Discount</Label>
+                            <div className="relative">
+                                <MinusCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
+                                <Input type="number" {...register('discount')} className="pl-8" />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Fine (Optional)</Label>
+                             <div className="relative">
+                                <PlusCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
+                                <Input type="number" {...register('fine')} className="pl-8" />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="border rounded-lg p-4 space-y-4">
@@ -322,7 +354,7 @@ function FeeCollectionForm({ student, feeStructure, schoolId, onPaymentSuccess }
                             </div>
                         )}
                          <div className="text-right text-xl font-bold">
-                            Total Amount: {totalAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                            Net Amount: {netAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
                         </div>
                     </div>
 
@@ -385,4 +417,55 @@ function PaymentHistory({ history, schoolId }: { history: any[], schoolId: strin
     );
 }
 
-    
+function FeeStatus({ studentFeeStatus }: { studentFeeStatus: any[] }) {
+    const totalDue = studentFeeStatus.reduce((acc, item) => acc + item.due, 0);
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className='flex justify-between items-center'>
+                    <span>Fee Status</span>
+                    <span className={cn('text-lg', totalDue > 0 ? 'text-destructive' : 'text-green-600')}>
+                        Total Dues: {totalDue.toLocaleString('en-IN', {style: 'currency', currency: 'INR'})}
+                    </span>
+                </CardTitle>
+                 <CardDescription>An overview of the student's fee dues for the current session.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="max-h-60 overflow-y-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Fee Head</TableHead>
+                                <TableHead className="text-right">Payable</TableHead>
+                                <TableHead className="text-right">Paid</TableHead>
+                                <TableHead className="text-right">Discount</TableHead>
+                                <TableHead className="text-right">Due</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {studentFeeStatus.length > 0 ? studentFeeStatus.map(item => (
+                                <TableRow key={item.feeHeadId}>
+                                    <TableCell className="font-medium">{item.feeHeadName}</TableCell>
+                                    <TableCell className="text-right">{item.totalPayable.toLocaleString('en-IN')}</TableCell>
+                                    <TableCell className="text-right">{item.totalPaid.toLocaleString('en-IN')}</TableCell>
+                                    <TableCell className="text-right text-green-600">{item.totalDiscount > 0 ? `-${item.totalDiscount.toLocaleString('en-IN')}` : '-'}</TableCell>
+                                    <TableCell className={cn("text-right font-semibold", item.due > 0 ? 'text-destructive' : 'text-green-600')}>{item.due.toLocaleString('en-IN')}</TableCell>
+                                </TableRow>
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center h-24">No fee structure assigned to this student's class.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                         <tfoot className='bg-muted/50 font-bold'>
+                            <TableRow>
+                                <TableCell colSpan={4} className="text-right">Total Outstanding Dues</TableCell>
+                                <TableCell className="text-right text-lg">{totalDue.toLocaleString('en-IN')}</TableCell>
+                            </TableRow>
+                        </tfoot>
+                    </Table>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}

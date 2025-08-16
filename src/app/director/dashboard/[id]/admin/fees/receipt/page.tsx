@@ -45,6 +45,8 @@ function FeeReceiptView({ receiptId }: { receiptId: string }) {
     if (!receipt || !school) {
         return <div className="p-8 text-center">Could not load receipt data.</div>;
     }
+    
+    const netAmount = (receipt.totalAmount || 0) - (receipt.discount || 0) + (receipt.fine || 0);
 
     return (
         <div className="bg-white min-h-screen p-4 sm:p-8 flex items-center justify-center font-sans">
@@ -92,20 +94,36 @@ function FeeReceiptView({ receiptId }: { receiptId: string }) {
                                 <tr key={item.feeHeadId} className="border-b">
                                     <td className="py-2 px-1">{index + 1}</td>
                                     <td className="py-2 px-1">{item.feeHeadName}</td>
-                                    <td className="py-2 px-1 text-right">{item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</td>
+                                    <td className="py-2 px-1 text-right">{item.amount.toLocaleString('en-IN')}</td>
                                 </tr>
                             ))}
                         </tbody>
-                        <tfoot className="font-bold">
-                            <tr>
-                                <td colSpan={2} className="pt-4 pr-1 text-right">Total Amount:</td>
-                                <td className="pt-4 pl-1 text-right text-base">{receipt.totalAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</td>
+                        <tfoot className="font-semibold">
+                             <tr>
+                                <td colSpan={2} className="pt-4 pr-1 text-right">Total:</td>
+                                <td className="pt-4 pl-1 text-right">{receipt.totalAmount.toLocaleString('en-IN')}</td>
+                            </tr>
+                            {receipt.discount > 0 && (
+                                <tr>
+                                    <td colSpan={2} className="pr-1 text-right">Discount:</td>
+                                    <td className="pl-1 text-right text-green-600">(-) {receipt.discount.toLocaleString('en-IN')}</td>
+                                </tr>
+                            )}
+                             {receipt.fine > 0 && (
+                                <tr>
+                                    <td colSpan={2} className="pr-1 text-right">Fine:</td>
+                                    <td className="pl-1 text-right text-red-600">(+) {receipt.fine.toLocaleString('en-IN')}</td>
+                                </tr>
+                            )}
+                             <tr className='border-t-2 border-black'>
+                                <td colSpan={2} className="pt-2 pr-1 text-right text-base">Net Amount Paid:</td>
+                                <td className="pt-2 pl-1 text-right text-base">{netAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</td>
                             </tr>
                         </tfoot>
                     </table>
                      
                     <p className="text-xs capitalize">
-                        <strong>Amount in Words:</strong> Rupees {numberToWords.toWords(receipt.totalAmount)} Only
+                        <strong>Amount in Words:</strong> Rupees {numberToWords.toWords(netAmount)} Only
                     </p>
                     <p className="text-xs mt-1">
                         <strong>Payment Mode:</strong> {receipt.paymentMode} {receipt.transactionId && `(${receipt.transactionId})`}
@@ -139,5 +157,3 @@ export default function FeeReceiptPrintPage() {
     
     return <FeeReceiptView receiptId={receiptId} />;
 }
-
-    
