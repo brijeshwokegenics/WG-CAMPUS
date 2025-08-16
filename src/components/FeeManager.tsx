@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo, useTransition } from 'react';
+import React, { useState, useEffect, useMemo, useTransition, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -74,7 +74,7 @@ function StudentSearch({ classes, schoolId, onStudentSelect }: { classes: ClassD
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Find Student</CardTitle>
+                <CardTitle className="flex items-center"><Search className="mr-2 h-5 w-5" /> Find Student</CardTitle>
                 <CardDescription>Search for a student to manage their fees.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -124,18 +124,20 @@ function FeeDetailsDisplay({ schoolId, studentId, onClear }: { schoolId: string,
     const [details, setDetails] = useState<FeeDetails | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const fetchDetails = async () => {
+    const fetchDetails = useCallback(async () => {
         setIsLoading(true);
         const result = await getStudentFeeDetails(schoolId, studentId);
         if(result.success && result.data){
             setDetails(result.data as FeeDetails);
+        } else {
+            setDetails(null);
         }
         setIsLoading(false);
-    };
+    }, [schoolId, studentId]);
 
     useEffect(() => {
         fetchDetails();
-    }, [schoolId, studentId]);
+    }, [fetchDetails]);
 
     if (isLoading) {
         return <div className="text-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -206,7 +208,7 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
         reset(defaultValues);
     }, [feeStatus, reset]);
 
-    const [state, formAction] = useFormState(collectFee, { success: false, message: null, error: null });
+    const [state, formAction] = useFormState(collectFee, { success: false, message: null, error: null, receiptId: null });
 
     const watchPaidFor = watch('paidFor');
     const watchDiscount = watch('discount');
@@ -248,9 +250,9 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
     
     return (
         <Card>
-            <CardHeader><CardTitle className="flex items-center"><Wallet className="mr-2 h-5 w-5" /> New Fee Payment</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center"><HandCoins className="mr-2 h-5 w-5" /> New Fee Payment</CardTitle></CardHeader>
             <CardContent>
-                 {state.error && <Alert variant="destructive" className="mb-4"><AlertDescription>{state.error}</AlertDescription></Alert>}
+                 {state.error && <Alert variant="destructive" className="mb-4"><AlertTitle>Payment Failed</AlertTitle><AlertDescription>{state.error}</AlertDescription></Alert>}
                  {state.success && state.receiptId &&
                      <Alert variant="default" className="mb-4 border-green-500">
                          <AlertTitle>Payment Successful!</AlertTitle>
