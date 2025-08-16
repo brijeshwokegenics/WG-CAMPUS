@@ -91,14 +91,14 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
         userRole = userData.role;
         // Determine redirect path based on role
         switch(userRole) {
-            case 'accountant':
+            case 'Accountant':
                 redirectPath = `/director/dashboard/${schoolDocId}/accountant/fees`;
                 break;
-            case 'teacher':
+            case 'Teacher':
                 redirectPath = `/director/dashboard/${schoolDocId}/academics/attendance`;
                 break;
-             case 'librarian':
-                redirectPath = `/director/dashboard/${schoolId}/librarian/management`;
+             case 'Librarian':
+                redirectPath = `/director/dashboard/${schoolDocId}/librarian/management`;
                 break;
             case 'Principal':
                  redirectPath = `/director/dashboard/${schoolDocId}`;
