@@ -26,6 +26,7 @@ export default function CreateSchoolPage() {
   const [state, dispatch] = useFormState(createSchool, initialState);
 
   useEffect(() => {
+    // Generate ID on the client side to avoid hydration mismatch
     const generatedId = `SCH-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
     setSchoolId(generatedId);
   }, []);
