@@ -146,8 +146,7 @@ const UpdateStudyMaterialSchema = StudyMaterialSchema.omit({ schoolId: true }).e
   id: z.string().min(1),
 });
 
-
-const HomeworkSchema = z.object({
+const HomeworkObjectSchema = z.object({
   schoolId: z.string().min(1),
   classId: z.string().min(1, "Class is required."),
   section: z.string().min(1, "Section is required."),
@@ -156,12 +155,14 @@ const HomeworkSchema = z.object({
   title: z.string().min(3, "Title is required."),
   description: z.string().optional(),
   fileUrl: z.string().url("A valid file URL is required.").optional().or(z.literal('')),
-}).refine(data => data.submissionDate >= data.date, {
+});
+
+const HomeworkSchema = HomeworkObjectSchema.refine(data => data.submissionDate >= data.date, {
   message: "Submission date cannot be before the assignment date.",
   path: ["submissionDate"],
 });
 
-const UpdateHomeworkSchema = HomeworkSchema.omit({ schoolId: true }).extend({
+const UpdateHomeworkSchema = HomeworkObjectSchema.omit({ schoolId: true }).extend({
     id: z.string().min(1),
 }).refine(data => data.submissionDate >= data.date, {
     message: "Submission date cannot be before the assignment date.",
