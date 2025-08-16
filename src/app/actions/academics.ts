@@ -34,7 +34,13 @@ const StudentSchema = z.object({
   city: z.string().min(2, "City is required."),
   state: z.string().min(2, "State is required."),
   zipcode: z.string().min(5, "Zip code is required."),
+
+  photoUrl: z.string().url().optional().or(z.literal('')),
+  aadharUrl: z.string().url().optional().or(z.literal('')),
+  birthCertificateUrl: z.string().url().optional().or(z.literal('')),
 });
+
+const UpdateStudentSchema = StudentSchema.omit({schoolId: true});
 
 
 export async function getClassesForSchool(schoolId: string) {
@@ -191,9 +197,6 @@ export async function admitStudent(prevState: any, formData: FormData) {
   try {
       const studentsRef = collection(db, 'students');
       
-      // We could add checks here, e.g., to prevent duplicate admissions.
-      // For now, we'll just add the new student.
-
       const newStudentRef = await addDoc(studentsRef, parsed.data);
       
       revalidatePath(`/director/dashboard/${schoolId}/academics/admissions`);
@@ -227,6 +230,7 @@ export async function getStudentsForSchool(schoolId: string, searchTerm: string)
             if (classCache.has(classId)) {
                 return classCache.get(classId);
             }
+            if (!classId) return 'N/A';
             const classDocRef = doc(db, 'classes', classId);
             const classDoc = await getDoc(classDocRef);
             if (classDoc.exists() && classDoc.data().schoolId === schoolId) {
@@ -264,5 +268,112 @@ export async function getStudentsForSchool(schoolId: string, searchTerm: string)
     } catch (error) {
         console.error("Error fetching students:", error);
         return [];
+    }
+}
+
+
+export async function getStudentById(studentId: string, schoolId: string) {
+    if (!studentId || !schoolId) {
+        return { success: false, error: 'Student ID and School ID are required.' };
+    }
+
+    try {
+        const studentDocRef = doc(db, 'students', studentId);
+        const studentDoc = await getDoc(studentDocRef);
+
+        if (!studentDoc.exists() || studentDoc.data().schoolId !== schoolId) {
+            return { success: false, error: 'Student not found.' };
+        }
+
+        const studentData = studentDoc.data();
+        
+        // Fetch class name
+        let className = 'N/A';
+        if (studentData.classId) {
+            const classDocRef = doc(db, 'classes', studentData.classId);
+            const classDoc = await getDoc(classDocRef);
+            if (classDoc.exists() && classDoc.data().schoolId === schoolId) {
+                className = classDoc.data().name;
+            }
+        }
+        
+        // Convert Firestore Timestamps to Dates
+        const dataWithDates = {
+            ...studentData,
+            admissionDate: studentData.admissionDate.toDate(),
+            dob: studentData.dob.toDate(),
+            className,
+        };
+
+        return { success: true, data: dataWithDates };
+    } catch (error) {
+        console.error('Error fetching student:', error);
+        return { success: false, error: 'Failed to fetch student data.' };
+    }
+}
+
+
+export async function updateStudent(prevState: any, formData: FormData) {
+  const studentId = formData.get('studentId') as string;
+  const schoolId = formData.get('schoolId') as string;
+  
+  if (!studentId || !schoolId) {
+    return { success: false, error: 'Student ID and School ID are required.' };
+  }
+
+  const rawData = Object.fromEntries(formData.entries());
+    const dataWithDates = {
+      ...rawData,
+      admissionDate: new Date(rawData.admissionDate as string),
+      dob: new Date(rawData.dob as string),
+  };
+
+  const parsed = UpdateStudentSchema.safeParse(dataWithDates);
+
+  if (!parsed.success) {
+      return { success: false, error: "Invalid data.", details: parsed.error.flatten() };
+  }
+
+  try {
+    const studentDocRef = doc(db, 'students', studentId);
+
+    // Security check
+    const studentDoc = await getDoc(studentDocRef);
+    if (!studentDoc.exists() || studentDoc.data().schoolId !== schoolId) {
+        return { success: false, error: "Student not found or permission denied." };
+    }
+
+    await updateDoc(studentDocRef, parsed.data);
+    
+    revalidatePath(`/director/dashboard/${schoolId}/academics/students`);
+    revalidatePath(`/director/dashboard/${schoolId}/academics/students/${studentId}`);
+
+    return { success: true, message: 'Student profile updated successfully!' };
+  } catch (error) {
+    console.error('Error updating student:', error);
+    return { success: false, error: 'An unexpected error occurred.' };
+  }
+}
+
+export async function deleteStudent({ studentId, schoolId }: { studentId: string; schoolId: string }) {
+    if (!studentId || !schoolId) {
+        return { success: false, error: 'Student ID and School ID are required.' };
+    }
+
+    try {
+        const studentDocRef = doc(db, 'students', studentId);
+
+        const studentDoc = await getDoc(studentDocRef);
+        if (!studentDoc.exists() || studentDoc.data().schoolId !== schoolId) {
+            return { success: false, error: "Student not found or permission denied." };
+        }
+        
+        await deleteDoc(studentDocRef);
+
+        revalidatePath(`/director/dashboard/${schoolId}/academics/students`);
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting student:", error);
+        return { success: false, error: "An unexpected error occurred while deleting the student." };
     }
 }

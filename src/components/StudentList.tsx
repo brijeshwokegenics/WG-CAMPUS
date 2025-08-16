@@ -1,4 +1,6 @@
 
+'use client';
+
 import {
   Table,
   TableBody,
@@ -16,12 +18,37 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react"
-import { getStudentsForSchool } from '@/app/actions/academics';
+import { deleteStudent, getStudentsForSchool } from '@/app/actions/academics';
 import { Button } from './ui/button';
+import Link from 'next/link';
+import { useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 
 
-export async function StudentList({ schoolId, query }: { schoolId: string, query: string }) {
-    const students = await getStudentsForSchool(schoolId, query);
+export function StudentList({ schoolId, query }: { schoolId: string, query: string }) {
+    const [students, setStudents] = React.useState<any[]>([]);
+    const [isPending, startTransition] = useTransition();
+    const router = useRouter();
+
+    React.useEffect(() => {
+        async function fetchStudents() {
+            const studentData = await getStudentsForSchool(schoolId, query);
+            setStudents(studentData);
+        }
+        fetchStudents();
+    }, [schoolId, query]);
+
+    const handleDelete = (studentId: string) => {
+        if (confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
+            startTransition(async () => {
+                await deleteStudent({ studentId, schoolId });
+                // Refresh data
+                const studentData = await getStudentsForSchool(schoolId, query);
+                setStudents(studentData);
+            });
+        }
+    };
+
 
   return (
     <Table>
@@ -47,23 +74,27 @@ export async function StudentList({ schoolId, query }: { schoolId: string, query
               <TableCell className="text-right">
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
+                      <Button variant="ghost" className="h-8 w-8 p-0" disabled={isPending}>
                         <span className="sr-only">Open menu</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                       <DropdownMenuItem>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Profile
-                       </DropdownMenuItem>
-                       <DropdownMenuItem>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit Student
-                       </DropdownMenuItem>
+                       <Link href={`/director/dashboard/${schoolId}/academics/students/${studentId}`} passHref>
+                          <DropdownMenuItem>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Profile
+                          </DropdownMenuItem>
+                       </Link>
+                       <Link href={`/director/dashboard/${schoolId}/academics/students/edit/${studentId}`} passHref>
+                           <DropdownMenuItem>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit Student
+                           </DropdownMenuItem>
+                       </Link>
                        <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(student.id)} disabled={isPending}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete Student
                       </DropdownMenuItem>
