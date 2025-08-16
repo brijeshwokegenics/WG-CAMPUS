@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -78,12 +77,12 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Classes & Sections</h1>
           <p className="text-muted-foreground">Manage academic classes and their respective sections.</p>
         </div>
-        <Button onClick={handleAddNew}>
+        <Button onClick={handleAddNew} className="w-full md:w-auto">
           <PlusCircle className="mr-2 h-5 w-5" />
           Add New Class
         </Button>
@@ -148,7 +147,7 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
       </Card>
       
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{editingClass ? 'Edit Class' : 'Add New Class'}</DialogTitle>
             <DialogDescription>
