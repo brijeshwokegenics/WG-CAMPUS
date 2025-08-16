@@ -125,6 +125,46 @@ export async function getStaffAttendanceForDate({ schoolId, date }: { schoolId: 
     }
 }
 
+
+export async function getMonthlyStaffAttendance({ schoolId, month }: { schoolId: string, month: string }) {
+    if (!schoolId || !month) {
+        return { success: false, error: 'Missing required fields to fetch attendance report.' };
+    }
+
+    try {
+        const [year, monthIndex] = month.split('-').map(Number);
+        const startDate = startOfMonth(new Date(year, monthIndex - 1));
+        const endDate = endOfMonth(new Date(year, monthIndex - 1));
+
+        // Get all staff for the school first
+        const usersRef = collection(db, 'users');
+        const usersQuery = query(usersRef, where('schoolId', '==', schoolId));
+        const usersSnapshot = await getDocs(usersQuery);
+        const staff = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        if (staff.length === 0) {
+            return { success: true, data: { staff: [], attendance: [] } };
+        }
+
+        const attendanceRef = collection(db, 'staffAttendance');
+        const q = query(attendanceRef,
+            where('schoolId', '==', schoolId),
+            where('date', '>=', format(startDate, 'yyyy-MM-dd')),
+            where('date', '<=', format(endDate, 'yyyy-MM-dd'))
+        );
+
+        const querySnapshot = await getDocs(q);
+        const attendanceRecords = querySnapshot.docs.map(doc => doc.data());
+        
+        return { success: true, data: { staff, attendance: attendanceRecords } };
+
+    } catch (error) {
+        console.error('Error fetching monthly staff attendance:', error);
+        return { success: false, error: 'Failed to fetch monthly staff attendance data.' };
+    }
+}
+
+
 // ========== PAYROLL ==========
 const PayrollGenerationSchema = z.object({
     schoolId: z.string(),

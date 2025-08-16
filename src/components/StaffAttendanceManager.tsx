@@ -3,12 +3,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useFormState } from 'react-dom';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
+import { format, getDaysInMonth, parseISO } from 'date-fns';
+import { Calendar as CalendarIcon, Loader2, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 import { cn } from '@/lib/utils';
 import { getUsersForSchool } from '@/app/actions/users';
-import { saveStaffAttendance, getStaffAttendanceForDate } from '@/app/actions/hr';
+import { saveStaffAttendance, getStaffAttendanceForDate, getMonthlyStaffAttendance } from '@/app/actions/hr';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -16,6 +17,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Input } from './ui/input';
+
 
 type User = { id: string; name: string, userId: string };
 type AttendanceStatus = 'Present' | 'Absent' | 'Leave';
@@ -26,6 +30,10 @@ export function StaffAttendanceManager({ schoolId }: { schoolId: string }) {
   const [staff, setStaff] = useState<User[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord>({});
   const [loading, setLoading] = useState(true);
+  
+  const [reportMonth, setReportMonth] = useState(format(new Date(), 'yyyy-MM'));
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const initialState = { success: false, error: null, message: null };
   const [state, formAction] = useFormState(saveStaffAttendance, initialState);
@@ -83,15 +91,54 @@ export function StaffAttendanceManager({ schoolId }: { schoolId: string }) {
     formAction(formData);
   };
 
+  const handleGenerateReport = async () => {
+    if (!reportMonth) {
+        alert("Please select a month for the report.");
+        return;
+    }
+    setGeneratingReport(true);
+    const result = await getMonthlyStaffAttendance({ schoolId, month: reportMonth });
+
+    if (result.success && result.data) {
+        const { staff, attendance } = result.data;
+
+        const monthDate = parseISO(`${reportMonth}-01`);
+        const daysInMonth = getDaysInMonth(monthDate);
+        
+        const reportData = staff.map((user: any) => {
+            const userRow: Record<string, any> = { 'User ID': user.userId, 'Staff Name': user.name };
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                const date = new Date(monthDate.getFullYear(), monthDate.getMonth(), i);
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const dayHeader = format(date, 'dd-MMM');
+                const attendanceRecord = attendance.find((att: any) => att.date === dateStr);
+                
+                userRow[dayHeader] = attendanceRecord?.attendance?.[user.id]?.charAt(0) || '-';
+            }
+            return userRow;
+        });
+
+        const ws = XLSX.utils.json_to_sheet(reportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Staff Attendance");
+        XLSX.writeFile(wb, `Staff_Attendance_${format(monthDate, 'MMMM_yyyy')}.xlsx`);
+        setIsReportModalOpen(false);
+    } else {
+        alert(`Error generating report: ${result.error}`);
+    }
+    setGeneratingReport(false);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3">
-        <div className="space-y-2">
+      {/* Filters and actions */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 border rounded-lg">
+         <div className="space-y-2">
           <Label>Select Date</Label>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}>
+              <Button variant="outline" className={cn("w-full md:w-[280px] justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}>
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {selectedDate ? format(selectedDate, 'PPP') : <span>Pick a date</span>}
               </Button>
@@ -107,6 +154,40 @@ export function StaffAttendanceManager({ schoolId }: { schoolId: string }) {
                 />
             </PopoverContent>
           </Popover>
+        </div>
+        <div>
+             <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline">
+                        <Download className="mr-2 h-4 w-4" />
+                        Generate Monthly Report
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Generate Monthly Staff Attendance Report</DialogTitle>
+                        <DialogDescription>
+                            Select a month to download the attendance report in Excel format.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                       <div className="space-y-2 flex-grow">
+                            <Label htmlFor="report-month">Report Month</Label>
+                            <Input 
+                                id="report-month"
+                                type="month" 
+                                value={reportMonth} 
+                                onChange={(e) => setReportMonth(e.target.value)}
+                                max={format(new Date(), 'yyyy-MM')}
+                            />
+                        </div>
+                        <Button onClick={handleGenerateReport} disabled={generatingReport} className="w-full">
+                            {generatingReport ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                            {generatingReport ? 'Generating...' : 'Download Report'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
       </div>
 
