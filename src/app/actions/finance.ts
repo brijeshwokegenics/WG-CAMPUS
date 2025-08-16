@@ -298,7 +298,7 @@ export async function getStudentFeeDetails(schoolId: string, studentId: string) 
                     totalPayable: totalPayable,
                     totalPaid: totalPaid,
                     totalDiscount: totalDiscount,
-                    due: totalPayable - totalPaid - totalDiscount,
+                    due: totalPayable - totalPaid,
                 });
             }
         }

@@ -193,9 +193,15 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
     
     const { register, handleSubmit, control, formState: { errors, isSubmitting }, watch, reset } = useForm<FeeCollectionFormValues>({
         resolver: zodResolver(FeeCollectionFormSchema),
-        defaultValues: {
+    });
+
+    const { fields, replace } = useFieldArray({ control, name: "paidFor" });
+
+    // Effect to set default values when student/feeStatus changes
+    useEffect(() => {
+        const defaultValues = {
             paymentDate: new Date(),
-            paymentMode: "Cash",
+            paymentMode: "Cash" as const,
             transactionId: '',
             discount: 0,
             fine: 0,
@@ -205,18 +211,19 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
                 amount: item.due > 0 ? item.due : 0, 
                 isPaid: item.due > 0 
             })) || [],
-        },
-    });
+        };
+        reset(defaultValues);
+    }, [feeStatus, reset]);
 
-    const { fields } = useFieldArray({ control, name: "paidFor" });
 
-    const [state, formAction] = useFormState(collectFee, { success: false });
+    const [state, formAction] = useFormState(collectFee, { success: false, message: null, error: null });
 
     const watchPaidFor = watch('paidFor');
     const watchDiscount = watch('discount');
     const watchFine = watch('fine');
     
     const totalAmount = useMemo(() => {
+        if (!watchPaidFor) return 0;
         return watchPaidFor.reduce((acc, curr) => {
             return curr.isPaid ? acc + Number(curr.amount || 0) : acc;
         }, 0);
@@ -227,11 +234,11 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
     }, [totalAmount, watchDiscount, watchFine]);
     
     useEffect(() => {
-        if(state.success) {
+        if (state.success) {
             onPaymentSuccess();
-            reset();
+            // Form is reset via the feeStatus useEffect dependency
         }
-    }, [state.success, onPaymentSuccess, reset]);
+    }, [state.success, onPaymentSuccess]);
 
     const onFormSubmit = (data: FeeCollectionFormValues) => {
         const formData = new FormData();
@@ -246,7 +253,7 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
         
         const paidItems = data.paidFor
             .filter(item => item.isPaid)
-            .map(({ feeHeadId, feeHeadName, amount }) => ({ feeHeadId, feeHeadName, amount }));
+            .map(({ feeHeadId, feeHeadName, amount }) => ({ feeHeadId, feeHeadName, amount: Number(amount) }));
 
         if(paidItems.length === 0) {
             alert("Please select at least one fee item to pay.");
