@@ -64,8 +64,8 @@ const directorSidebarNavItems = (schoolId: string) => [
     items: [
       { title: "Staff Directory", href: `/director/dashboard/${schoolId}/hr/directory`, icon: <BookUser className="h-4 w-4" /> },
       { title: "Staff Attendance", href: `/director/dashboard/${schoolId}/hr/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
-      { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-4 w-4" /> },
       { title: "Staff Salary", href: `/director/dashboard/${schoolId}/hr/salary`, icon: <Banknote className="h-4 w-4" /> },
+      { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-4 w-4" /> },
     ],
   },
   {
@@ -132,7 +132,7 @@ type SidebarProps = {
 
 export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'Administration': true});
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'HR': true, 'Administration': true});
 
   const navItems = useMemo(() => directorSidebarNavItems(schoolId), [schoolId]);
 
@@ -226,4 +226,3 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
     </div>
   );
 }
-

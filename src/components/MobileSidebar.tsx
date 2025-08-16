@@ -4,7 +4,7 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, School, ChevronDown, GraduationCap, Briefcase, Building, MessageSquare, PersonStanding, BookUser, LayoutDashboard, Users, UserCog, Printer, ClipboardList, Calendar, FileText, Book } from "lucide-react";
+import { Menu, School, ChevronDown, GraduationCap, Briefcase, Building, MessageSquare, PersonStanding, BookUser, LayoutDashboard, Users, UserCog, Printer, ClipboardList, Calendar, FileText, Book, Wallet, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -32,8 +32,8 @@ const directorSidebarNavItems = (schoolId: string) => [
     items: [
       { title: "Staff Directory", href: `/director/dashboard/${schoolId}/hr/directory` },
       { title: "Staff Attendance", href: `/director/dashboard/${schoolId}/hr/attendance` },
-      { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll` },
       { title: "Staff Salary", href: `/director/dashboard/${schoolId}/hr/salary` },
+      { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll` },
     ],
   },
   {
@@ -205,4 +205,3 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
         </Sheet>
     );
 }
-
