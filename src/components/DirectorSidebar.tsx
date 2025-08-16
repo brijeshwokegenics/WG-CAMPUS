@@ -132,7 +132,7 @@ type SidebarProps = {
 
 export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true});
 
   const navItems = useMemo(() => directorSidebarNavItems(schoolId), [schoolId]);
 

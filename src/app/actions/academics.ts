@@ -92,6 +92,41 @@ const TimetableSchema = z.object({
     saturday: TimetableDaySchema,
 });
 
+const ExamTermSchema = z.object({
+    schoolId: z.string(),
+    name: z.string().min(3, "Exam name must be at least 3 characters."),
+    session: z.string().min(4, "Session is required, e.g., 2024-2025."),
+});
+
+const SubjectScheduleSchema = z.object({
+  subjectName: z.string().min(1, "Subject name is required."),
+  date: z.date(),
+  startTime: z.string().min(1, "Start time is required."),
+  endTime: z.string().min(1, "End time is required."),
+  maxMarks: z.number().min(1, "Max marks must be at least 1."),
+});
+
+const ExamScheduleSchema = z.object({
+    schoolId: z.string(),
+    examTermId: z.string(),
+    classId: z.string(),
+    subjects: z.array(SubjectScheduleSchema),
+});
+
+const StudentMarksSchema = z.object({
+    subjectName: z.string(),
+    marksObtained: z.number().optional(),
+});
+
+const MarksEntrySchema = z.object({
+    schoolId: z.string(),
+    examTermId: z.string(),
+    classId: z.string(),
+    section: z.string(),
+    studentId: z.string(),
+    marks: z.array(StudentMarksSchema),
+});
+
 
 export async function getClassesForSchool(schoolId: string) {
   if (!schoolId) {
@@ -659,5 +694,146 @@ export async function getTimetable({ schoolId, classId, section }: { schoolId: s
     } catch (error) {
         console.error('Error fetching timetable:', error);
         return { success: false, error: 'Failed to fetch timetable data.' };
+    }
+}
+
+
+export async function createExamTerm(prevState: any, formData: FormData) {
+    const parsed = ExamTermSchema.safeParse({
+        schoolId: formData.get('schoolId'),
+        name: formData.get('name'),
+        session: formData.get('session'),
+    });
+
+    if (!parsed.success) {
+        return { success: false, error: "Invalid data.", details: parsed.error.flatten() };
+    }
+
+    try {
+        await addDoc(collection(db, 'examTerms'), parsed.data);
+        revalidatePath(`/director/dashboard/${parsed.data.schoolId}/academics/exams`);
+        return { success: true, message: "Exam term created successfully." };
+    } catch (error) {
+        console.error("Error creating exam term:", error);
+        return { success: false, error: "Failed to create exam term." };
+    }
+}
+
+export async function getExamTerms(schoolId: string) {
+    try {
+        const q = query(collection(db, 'examTerms'), where('schoolId', '==', schoolId));
+        const snapshot = await getDocs(q);
+        const terms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return { success: true, data: terms };
+    } catch (error) {
+        console.error("Error fetching exam terms:", error);
+        return { success: false, error: "Failed to fetch exam terms." };
+    }
+}
+
+export async function updateExamSchedule(prevState: any, formData: FormData) {
+    const rawData = {
+        schoolId: formData.get('schoolId'),
+        examTermId: formData.get('examTermId'),
+        classId: formData.get('classId'),
+        subjects: JSON.parse(formData.get('subjects') as string),
+    };
+    
+    // Convert date strings to Date objects
+    rawData.subjects.forEach((sub: any) => {
+        sub.date = new Date(sub.date);
+        sub.maxMarks = Number(sub.maxMarks) || 0;
+    });
+
+    const parsed = ExamScheduleSchema.safeParse(rawData);
+
+    if (!parsed.success) {
+        console.log(parsed.error.flatten());
+        return { success: false, error: "Invalid schedule data.", details: parsed.error.flatten() };
+    }
+    
+    const { schoolId, examTermId, classId } = parsed.data;
+    const docId = `${schoolId}_${examTermId}_${classId}`;
+
+    try {
+        await setDoc(doc(db, 'examSchedules', docId), parsed.data, { merge: true });
+        revalidatePath(`/director/dashboard/${schoolId}/academics/exams`);
+        return { success: true, message: "Exam schedule updated successfully." };
+    } catch (error) {
+        console.error("Error updating exam schedule:", error);
+        return { success: false, error: "Failed to update schedule." };
+    }
+}
+
+export async function getExamSchedule(schoolId: string, examTermId: string, classId: string) {
+     if (!schoolId || !examTermId || !classId) {
+        return { success: false, error: "Missing required fields." };
+    }
+    const docId = `${schoolId}_${examTermId}_${classId}`;
+    try {
+        const docRef = doc(db, 'examSchedules', docId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+             const data = docSnap.data();
+             // Convert firestore timestamps back to dates for the form
+             const subjects = data.subjects.map((s:any) => ({...s, date: s.date.toDate()}));
+            return { success: true, data: {...data, subjects} };
+        }
+        return { success: true, data: null };
+    } catch (error) {
+        console.error("Error fetching exam schedule:", error);
+        return { success: false, error: "Failed to fetch schedule." };
+    }
+}
+
+export async function saveMarks(prevState: any, formData: FormData) {
+    const rawData = {
+        schoolId: formData.get('schoolId'),
+        examTermId: formData.get('examTermId'),
+        classId: formData.get('classId'),
+        section: formData.get('section'),
+        studentId: formData.get('studentId'),
+        marks: JSON.parse(formData.get('marks') as string),
+    };
+
+    rawData.marks.forEach((m: any) => {
+       m.marksObtained = m.marksObtained !== '' ? Number(m.marksObtained) : undefined;
+    });
+
+    const parsed = MarksEntrySchema.safeParse(rawData);
+
+    if (!parsed.success) {
+        console.log(parsed.error.flatten());
+        return { success: false, error: "Invalid marks data.", details: parsed.error.flatten() };
+    }
+
+    const { schoolId, examTermId, studentId } = parsed.data;
+    const docId = `${schoolId}_${examTermId}_${studentId}`;
+
+    try {
+        await setDoc(doc(db, 'marks', docId), parsed.data, { merge: true });
+        revalidatePath(`/director/dashboard/${schoolId}/academics/exams`);
+        return { success: true, message: "Marks saved successfully." };
+    } catch (error) {
+        console.error("Error saving marks:", error);
+        return { success: false, error: "Failed to save marks." };
+    }
+}
+
+export async function getMarksForStudent(schoolId: string, examTermId: string, studentId: string) {
+    if (!schoolId || !examTermId || !studentId) {
+        return { success: false, error: "Missing required fields." };
+    }
+    const docId = `${schoolId}_${examTermId}_${studentId}`;
+    try {
+        const docRef = doc(db, 'marks', docId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return { success: true, data: docSnap.data() };
+        }
+        return { success: true, data: null };
+    } catch (error) {
+        console.error("Error fetching marks:", error);
+        return { success: false, error: "Failed to fetch marks." };
     }
 }
