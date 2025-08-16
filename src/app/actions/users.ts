@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
-const UserRole = z.enum(["Teacher", "Accountant", "Librarian", "Admin"]);
+const UserRole = z.enum(["Teacher", "Accountant", "Librarian", "Admin", "Principal"]);
 
 const UserSchema = z.object({
   schoolId: z.string().min(1, 'School ID is required.'),
@@ -19,7 +19,6 @@ const UserSchema = z.object({
   enabled: z.boolean().default(true),
 });
 
-const AddUserFormSchema = UserSchema.omit({ schoolId: true, enabled: true });
 const UpdateUserFormSchema = UserSchema.omit({ password: true, schoolId: true, userId: true });
 
 

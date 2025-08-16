@@ -35,7 +35,7 @@ import { Alert, AlertDescription } from './ui/alert';
 
 import { createUser, getUsersForSchool, updateUser, deleteUser, updateUserPassword } from '@/app/actions/users';
 
-const UserRole = z.enum(["Teacher", "Accountant", "Librarian", "Admin"]);
+const UserRole = z.enum(["Teacher", "Accountant", "Librarian", "Admin", "Principal"]);
 
 const BaseUserSchema = z.object({
   name: z.string().min(2, 'User name must be at least 2 characters.'),
@@ -246,6 +246,7 @@ function AddUserDialog({ isOpen, setIsOpen, schoolId, onSuccess }: { isOpen: boo
                              <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value="Principal">Principal</SelectItem>
                                     <SelectItem value="Teacher">Teacher</SelectItem>
                                     <SelectItem value="Accountant">Accountant</SelectItem>
                                     <SelectItem value="Librarian">Librarian</SelectItem>
@@ -350,6 +351,7 @@ function EditUserDialog({ isOpen, setIsOpen, schoolId, user, onSuccess }: { isOp
                                 <Select onValueChange={field.onChange} value={field.value}>
                                     <SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="Principal">Principal</SelectItem>
                                         <SelectItem value="Teacher">Teacher</SelectItem>
                                         <SelectItem value="Accountant">Accountant</SelectItem>
                                         <SelectItem value="Librarian">Librarian</SelectItem>
