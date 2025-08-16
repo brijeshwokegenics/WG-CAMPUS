@@ -34,7 +34,7 @@ const StudyMaterialFormSchema = z.object({
   date: z.date(),
   title: z.string().min(3, "Title is required."),
   description: z.string().optional(),
-  fileUrl: z.string().url("A file upload is required."),
+  fileUrl: z.string().url().optional().or(z.literal('')),
 });
 
 const HomeworkFormSchema = z.object({
@@ -44,7 +44,7 @@ const HomeworkFormSchema = z.object({
   submissionDate: z.date(),
   title: z.string().min(3, "Title is required."),
   description: z.string().optional(),
-  fileUrl: z.string().url("A file upload is required."),
+  fileUrl: z.string().url().optional().or(z.literal('')),
 }).refine(data => data.submissionDate >= data.date, {
   message: "Submission date cannot be before the assignment date.",
   path: ["submissionDate"],
@@ -197,7 +197,7 @@ function AddStudyMaterialForm({ schoolId, selectedClassId, selectedSection, onSu
             <div className="space-y-2">
                 <FileUpload
                     id="fileUrl_sm"
-                    label="Attach File"
+                    label="Attach File (Optional)"
                     uploadPath={`/${schoolId}/study_materials`}
                     onUploadComplete={(url) => setValue('fileUrl', url, { shouldValidate: true })}
                     onFileRemove={() => setValue('fileUrl', '', { shouldValidate: true })}
@@ -273,7 +273,7 @@ function AddHomeworkForm({ schoolId, selectedClassId, selectedSection, onSuccess
              <div className="space-y-2">
                 <FileUpload
                     id="fileUrl_hw"
-                    label="Attach File"
+                    label="Attach File (Optional)"
                     uploadPath={`/${schoolId}/homework`}
                     onUploadComplete={(url) => setValue('fileUrl', url, { shouldValidate: true })}
                     onFileRemove={() => setValue('fileUrl', '', { shouldValidate: true })}
@@ -319,9 +319,13 @@ function ContentList({ title, content, loading, isHomework }: { title: string, c
                                     <TableCell>{format(item.date, 'dd-MMM-yy')}</TableCell>
                                     {isHomework && <TableCell>{format(item.submissionDate, 'dd-MMM-yy')}</TableCell>}
                                     <TableCell className="text-right">
-                                        <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
-                                            <Button variant="outline" size="sm"><Download className="mr-2 h-3 w-3"/>Download</Button>
-                                        </a>
+                                        {item.fileUrl ? (
+                                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
+                                                <Button variant="outline" size="sm"><Download className="mr-2 h-3 w-3"/>Download</Button>
+                                            </a>
+                                        ) : (
+                                            <span className='text-xs text-muted-foreground'>No file</span>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))}

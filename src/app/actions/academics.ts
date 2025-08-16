@@ -139,7 +139,7 @@ const StudyMaterialSchema = z.object({
   date: z.date(),
   title: z.string().min(3, "Title is required."),
   description: z.string().optional(),
-  fileUrl: z.string().url("A valid file URL is required."),
+  fileUrl: z.string().url("A valid file URL is required.").optional().or(z.literal('')),
 });
 
 const HomeworkSchema = z.object({
@@ -150,7 +150,7 @@ const HomeworkSchema = z.object({
   submissionDate: z.date(),
   title: z.string().min(3, "Title is required."),
   description: z.string().optional(),
-  fileUrl: z.string().url("A valid file URL is required."),
+  fileUrl: z.string().url("A valid file URL is required.").optional().or(z.literal('')),
 }).refine(data => data.submissionDate >= data.date, {
   message: "Submission date cannot be before the assignment date.",
   path: ["submissionDate"],
