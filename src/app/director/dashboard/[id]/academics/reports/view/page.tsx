@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getStudentById, getMarksForStudent, getExamSchedule, getExamTerms } from '@/app/actions/academics';
 import { getSchool } from '@/app/actions/school';
@@ -29,7 +29,6 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
             if (studentRes.success && studentRes.data) {
                 setStudent(studentRes.data);
                 
-                // Fetch all data in parallel
                 const [schoolRes, termsRes, ...marksAndSchedules] = await Promise.all([
                     getSchool(schoolId),
                     getExamTerms(schoolId),
@@ -40,7 +39,11 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                 ]);
 
                 if (schoolRes.school) setSchool(schoolRes.school);
-                if (termsRes.success) setExamTerms(termsRes.data);
+                if (termsRes.success) {
+                    // Sort the fetched terms to match the order in examTermIds
+                    const sortedTerms = examTermIds.map(id => termsRes.data.find((t: any) => t.id === id)).filter(Boolean);
+                    setExamTerms(sortedTerms);
+                }
 
                 const marks: Record<string, MarksData> = {};
                 const subjects: Record<string, Subject[]> = {};
@@ -79,6 +82,65 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
         }
     }, [loading, student, school]);
 
+    const uniqueSubjects = useMemo(() => {
+        const subjectSet = new Set<string>();
+        examTermIds.forEach(termId => {
+            allSubjects[termId]?.forEach(subject => {
+                subjectSet.add(subject.subjectName);
+            });
+        });
+        return Array.from(subjectSet);
+    }, [allSubjects, examTermIds]);
+
+    const { grandTotal, finalResult, grade } = useMemo(() => {
+        let totalMaxMarks = 0;
+        let totalMarksObtained = 0;
+        let isFail = false;
+        const PASS_PERCENTAGE = 33;
+
+        uniqueSubjects.forEach(subjectName => {
+            let subjectTotalMax = 0;
+            let subjectTotalObtained = 0;
+
+            examTermIds.forEach(termId => {
+                const subjectInfo = allSubjects[termId]?.find(s => s.subjectName === subjectName);
+                const marksInfo = allMarks[termId]?.marks.find((m: any) => m.subjectName === subjectName);
+                
+                subjectTotalMax += subjectInfo?.maxMarks || 0;
+                subjectTotalObtained += marksInfo?.marksObtained ?? 0;
+            });
+            
+            totalMaxMarks += subjectTotalMax;
+            totalMarksObtained += subjectTotalObtained;
+            
+            if (subjectTotalMax > 0 && (subjectTotalObtained / subjectTotalMax) * 100 < PASS_PERCENTAGE) {
+                isFail = true;
+            }
+        });
+
+        const percentage = totalMaxMarks > 0 ? (totalMarksObtained / totalMaxMarks) * 100 : 0;
+        
+        let calculatedGrade = 'F';
+        if (percentage > 90) calculatedGrade = 'A+';
+        else if (percentage > 80) calculatedGrade = 'A';
+        else if (percentage > 70) calculatedGrade = 'B';
+        else if (percentage > 60) calculatedGrade = 'C';
+        else if (percentage > 50) calculatedGrade = 'D';
+        else if (percentage >= PASS_PERCENTAGE) calculatedGrade = 'E';
+
+        return {
+            grandTotal: {
+                max: totalMaxMarks,
+                obtained: totalMarksObtained,
+                percentage: percentage.toFixed(2)
+            },
+            finalResult: isFail ? 'Fail' : 'Pass',
+            grade: isFail ? 'F' : calculatedGrade,
+        };
+
+    }, [uniqueSubjects, allSubjects, allMarks, examTermIds]);
+
+
     if (loading) {
         return <div className="p-8 text-center flex items-center justify-center min-h-screen"><Loader2 className="mr-2 h-8 w-8 animate-spin" /> Loading Report Card...</div>;
     }
@@ -86,11 +148,6 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
     if (!student || !school) {
         return <div className="p-8 text-center">Could not load student or school data.</div>;
     }
-    
-    const uniqueSubjects = Array.from(new Set(Object.values(allSubjects).flat().map(s => s.subjectName)));
-
-    let totalMaxMarks = 0;
-    let totalMarksObtained = 0;
 
     return (
          <div className="bg-white text-black font-sans p-8">
@@ -119,14 +176,14 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                     <p><strong>Class & Section:</strong> {student.className} - {student.section}</p>
                     <p><strong>Date of Birth:</strong> {format(student.dob, 'PPP')}</p>
                     <p><strong>Father's Name:</strong> {student.fatherName}</p>
-                    <p><strong>Session:</strong> {examTerms.find(t => t.id === examTermIds[0])?.session || ''}</p>
+                    <p><strong>Session:</strong> {examTerms[0]?.session || ''}</p>
                 </div>
 
                 <table>
                     <thead>
                         <tr>
                             <th rowSpan={2}>Subjects</th>
-                            {examTerms.filter(t => examTermIds.includes(t.id)).map(term => (
+                            {examTerms.map(term => (
                                 <th key={term.id} colSpan={2}>{term.name}</th>
                             ))}
                             <th colSpan={2}>Grand Total</th>
@@ -165,8 +222,8 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                                             </React.Fragment>
                                         )
                                     })}
-                                    <td>{subjectRowMax}</td>
-                                    <td>{subjectRowObtained}</td>
+                                    <td className="font-semibold">{subjectRowMax}</td>
+                                    <td className="font-semibold">{subjectRowObtained}</td>
                                 </tr>
                             )
                         })}
@@ -181,8 +238,6 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                                     termMaxTotal += subjectInfo?.maxMarks || 0;
                                     termObtainedTotal += marksInfo?.marksObtained ?? 0;
                                 });
-                                totalMaxMarks += termMaxTotal;
-                                totalMarksObtained += termObtainedTotal;
                                 return (
                                     <React.Fragment key={`total-${termId}`}>
                                         <td>{termMaxTotal}</td>
@@ -190,16 +245,16 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                                     </React.Fragment>
                                 )
                              })}
-                             <td>{totalMaxMarks}</td>
-                             <td>{totalMarksObtained}</td>
+                             <td>{grandTotal.max}</td>
+                             <td>{grandTotal.obtained}</td>
                         </tr>
                     </tbody>
                 </table>
                 
                 <div className="mt-8 grid grid-cols-3 gap-4 text-sm font-semibold">
-                    <div>Percentage: <span className="font-bold text-base">{totalMaxMarks > 0 ? ((totalMarksObtained / totalMaxMarks) * 100).toFixed(2) : 0}%</span></div>
-                    <div>Grade: <span className="font-bold text-base">A+</span></div>
-                    <div>Result: <span className="font-bold text-base">Pass</span></div>
+                    <div>Percentage: <span className="font-bold text-base">{grandTotal.percentage}%</span></div>
+                    <div>Grade: <span className="font-bold text-base">{grade}</span></div>
+                    <div>Result: <span className="font-bold text-base">{finalResult}</span></div>
                 </div>
                 
                 <div className="mt-16 flex justify-between items-end text-sm">

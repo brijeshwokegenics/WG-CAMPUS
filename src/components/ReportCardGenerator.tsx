@@ -20,7 +20,7 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
     const [selectedSection, setSelectedSection] = useState('');
     const [students, setStudents] = useState<Student[]>([]);
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-    const [selectedExamTermIds, setSelectedExamTermIds] = useState<Record<string, boolean>>({});
+    const [selectedExamTermIds, setSelectedExamTermIds] = useState<string[]>([]);
     const [loadingStudents, setLoadingStudents] = useState(false);
 
     const selectedClass = useMemo(() => classes.find(c => c.id === selectedClassId), [classes, selectedClassId]);
@@ -31,7 +31,7 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
                 setLoadingStudents(true);
                 const studentData = await getStudentsForSchool({ schoolId, classId: selectedClassId, section: selectedSection });
                 setStudents(studentData);
-                setSelectedStudent(null); // Reset selected student when class/section changes
+                setSelectedStudent(null); 
                 setLoadingStudents(false);
             } else {
                 setStudents([]);
@@ -41,7 +41,11 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
     }, [schoolId, selectedClassId, selectedSection]);
 
     const handleExamTermSelect = (termId: string, isSelected: boolean) => {
-        setSelectedExamTermIds(prev => ({ ...prev, [termId]: isSelected }));
+        if (isSelected) {
+            setSelectedExamTermIds(prev => [...prev, termId]);
+        } else {
+            setSelectedExamTermIds(prev => prev.filter(id => id !== termId));
+        }
     };
 
     const handleGenerateReport = () => {
@@ -49,12 +53,8 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
             alert("Please select a student.");
             return;
         }
-
-        const termIdsToInclude = Object.entries(selectedExamTermIds)
-            .filter(([, isSelected]) => isSelected)
-            .map(([id]) => id);
         
-        if (termIdsToInclude.length === 0) {
+        if (selectedExamTermIds.length === 0) {
             alert("Please select at least one exam term.");
             return;
         }
@@ -62,7 +62,7 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
         const queryParams = new URLSearchParams({
             studentId: selectedStudent.id,
         });
-        termIdsToInclude.forEach(id => queryParams.append('examTermId', id));
+        selectedExamTermIds.forEach(id => queryParams.append('examTermId', id));
 
         const reportUrl = `/director/dashboard/${schoolId}/academics/reports/view?${queryParams.toString()}`;
         window.open(reportUrl, '_blank');
@@ -135,7 +135,7 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
                         <Card>
                              <CardHeader>
                                 <CardTitle>Select Exams for {selectedStudent.studentName}</CardTitle>
-                                <CardDescription>Choose one or more exams to include in the report card.</CardDescription>
+                                <CardDescription>Choose one or more exams to include in the report card. The order of selection matters.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
@@ -143,7 +143,7 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
                                      <div key={term.id} className="flex items-center space-x-2">
                                         <Checkbox
                                             id={`term-${term.id}`}
-                                            checked={selectedExamTermIds[term.id] || false}
+                                            checked={selectedExamTermIds.includes(term.id)}
                                             onCheckedChange={(checked) => handleExamTermSelect(term.id, Boolean(checked))}
                                         />
                                         <Label htmlFor={`term-${term.id}`} className="font-medium">
@@ -155,7 +155,7 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
 
                                 <Button 
                                     onClick={handleGenerateReport} 
-                                    disabled={Object.values(selectedExamTermIds).every(v => !v)}
+                                    disabled={selectedExamTermIds.length === 0}
                                     className="w-full"
                                 >
                                     <FileText className="mr-2 h-4 w-4" />
