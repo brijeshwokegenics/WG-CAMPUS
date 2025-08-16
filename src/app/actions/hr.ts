@@ -241,15 +241,11 @@ export async function generatePayrollForMonth(prevState: any, formData: FormData
             const proRataRatio = totalDays > 0 ? payableDays / totalDays : 0;
 
             const earnedBasic = salaryInfo.basicSalary * proRataRatio;
-
             const totalAllowances = salaryInfo.allowances?.reduce((acc: number, curr: any) => acc + curr.amount, 0) || 0;
             const totalDeductions = salaryInfo.deductions?.reduce((acc: number, curr: any) => acc + curr.amount, 0) || 0;
             
-            const earnedAllowances = totalAllowances * proRataRatio;
-            const applicableDeductions = totalDeductions * proRataRatio; // Correctly pro-rate deductions
-
-            const grossSalary = earnedBasic + earnedAllowances;
-            const netSalary = grossSalary - applicableDeductions;
+            const grossSalary = earnedBasic + totalAllowances;
+            const netSalary = grossSalary - totalDeductions;
 
             return {
                 userId: user.id,
@@ -270,9 +266,9 @@ export async function generatePayrollForMonth(prevState: any, formData: FormData
                 },
                 payout: {
                     earnedBasic: Math.round(earnedBasic),
-                    earnedAllowances: Math.round(earnedAllowances),
+                    earnedAllowances: Math.round(totalAllowances),
                     grossSalary: Math.round(grossSalary),
-                    applicableDeductions: Math.round(applicableDeductions),
+                    applicableDeductions: Math.round(totalDeductions),
                     netPayable: Math.round(netSalary),
                 },
             };
@@ -324,3 +320,5 @@ export async function getPayrollHistory(schoolId: string) {
         return { success: false, error: "Failed to fetch payrolls." };
       }
 }
+
+    
