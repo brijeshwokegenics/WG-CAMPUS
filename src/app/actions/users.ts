@@ -24,7 +24,13 @@ const UpdateUserFormSchema = UserSchema.omit({ password: true, schoolId: true, u
 
 export async function createUser(prevState: any, formData: FormData) {
   const rawData = Object.fromEntries(formData.entries());
-  const parsed = UserSchema.safeParse(rawData);
+   // Convert 'enabled' from string to boolean for validation
+  const dataToParse = {
+    ...rawData,
+    enabled: rawData.enabled === 'true',
+  };
+
+  const parsed = UserSchema.safeParse(dataToParse);
 
   if (!parsed.success) {
     return { success: false, error: 'Invalid data provided.', details: parsed.error.flatten() };
@@ -39,7 +45,7 @@ export async function createUser(prevState: any, formData: FormData) {
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-      return { success: false, error: `A user with User ID "${userId}" already exists in this school.` };
+      return { success: false, error: `A user with User ID "${userId}" already exists in this school.`, details: { fieldErrors: { userId: [`User ID "${userId}" is already taken.`] }} };
     }
 
     await addDoc(usersRef, parsed.data);
