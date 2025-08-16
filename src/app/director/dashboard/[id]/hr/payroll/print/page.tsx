@@ -17,8 +17,15 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
     const [payroll, setPayroll] = useState<PayrollData>(null);
     const [staffData, setStaffData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [numberToWords, setNumberToWords] = useState<any>(null);
+
 
     useEffect(() => {
+        // Dynamically import number-to-words only on the client-side
+        import('number-to-words').then(module => {
+            setNumberToWords(() => module.toWords);
+        });
+        
         async function fetchData() {
             setLoading(true);
             const [schoolRes, payrollRes] = await Promise.all([
@@ -49,7 +56,7 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
     }, [loading, staffData, school]);
 
 
-    if (loading) {
+    if (loading || !numberToWords) {
         return <div className="p-8 text-center flex items-center justify-center min-h-screen"><Loader2 className="mr-2 h-8 w-8 animate-spin" /> Loading Payslip...</div>;
     }
 
@@ -58,7 +65,6 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
     }
 
     const { name, salaryDetails, attendanceDetails, payout } = staffData;
-    const numberToWords = require('number-to-words');
 
     return (
          <div className="bg-white min-h-screen p-4 sm:p-8 flex items-center justify-center font-sans">
@@ -145,7 +151,7 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
                              <span>{payout.netPayable.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>
                         </div>
                          <p className="text-right text-sm capitalize">
-                            (Rupees {numberToWords.toWords(payout.netPayable)} Only)
+                            (Rupees {numberToWords(payout.netPayable)} Only)
                         </p>
                     </div>
 

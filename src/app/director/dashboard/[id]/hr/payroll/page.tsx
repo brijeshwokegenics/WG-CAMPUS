@@ -2,7 +2,7 @@
 import { PayrollManager } from "@/components/PayrollManager";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function PayrollPage({ params }: { params: { id: string } }) {
+export default function PayrollPage({ params }: { params: { id:string } }) {
   const schoolId = params.id;
   return (
     <div className="space-y-6">
@@ -12,17 +12,7 @@ export default function PayrollPage({ params }: { params: { id: string } }) {
           Generate monthly payroll and view historical payroll data.
         </p>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Payroll Dashboard</CardTitle>
-          <CardDescription>
-            Select a month to generate payroll or view past records.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <PayrollManager schoolId={schoolId} />
-        </CardContent>
-      </Card>
+      <PayrollManager schoolId={schoolId} />
     </div>
   );
 }
