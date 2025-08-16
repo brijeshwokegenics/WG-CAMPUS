@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { School } from "lucide-react";
 import Link from "next/link";
-import { loginSchool, LoginState } from '@/app/actions/auth';
+import { login, LoginState } from '@/app/actions/auth';
 import { useEffect } from 'react';
 
 function SubmitButton() {
@@ -20,13 +20,12 @@ function SubmitButton() {
     );
 }
 
-
 export default function SchoolLoginPage() {
   const initialState: LoginState = { message: null, errors: {} };
-  const [state, dispatch] = useFormState(loginSchool, initialState);
+  const [state, dispatch] = useFormState(login, initialState);
   
    useEffect(() => {
-    if (state?.message && state.message.startsWith('This school account has been disabled')) {
+    if (state?.message && (state.message.includes('disabled') || state.message.includes('not found'))) {
         alert(`${state.message}`);
     }
   }, [state]);
@@ -50,6 +49,11 @@ export default function SchoolLoginPage() {
                {state.errors?.schoolId && <p className="text-sm text-destructive">{state.errors.schoolId.join(', ')}</p>}
             </div>
             <div className="space-y-2">
+              <Label htmlFor="user-id">User ID</Label>
+              <Input id="user-id" name="userId" placeholder="Enter your User ID" required />
+               {state.errors?.userId && <p className="text-sm text-destructive">{state.errors.userId.join(', ')}</p>}
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" required />
               {state.errors?.password && <p className="text-sm text-destructive">{state.errors.password.join(', ')}</p>}
@@ -67,3 +71,4 @@ export default function SchoolLoginPage() {
     </div>
   );
 }
+
