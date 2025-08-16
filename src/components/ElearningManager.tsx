@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFormState } from 'react-dom';
 import { format } from 'date-fns';
-import { CalendarIcon, Loader2, Book, FileText, Download } from 'lucide-react';
+import { CalendarIcon, Loader2, Book, FileText, Download, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,8 +21,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { FileUpload } from './FileUpload';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { ElearningEditDialog } from './ElearningEditDialog';
 
-import { getStudyMaterials, addStudyMaterial, getHomework, addHomework } from '@/app/actions/academics';
+import { getStudyMaterials, addStudyMaterial, getHomework, addHomework, deleteStudyMaterial, deleteHomework } from '@/app/actions/academics';
 import { cn } from '@/lib/utils';
 
 type ClassData = { id: string; name: string; sections: string[]; };
@@ -34,7 +36,7 @@ const StudyMaterialFormSchema = z.object({
   date: z.date(),
   title: z.string().min(3, "Title is required."),
   description: z.string().optional(),
-  fileUrl: z.string().url().optional().or(z.literal('')),
+  fileUrl: z.string().url("A valid file URL is required.").optional().or(z.literal('')),
 });
 
 const HomeworkFormSchema = z.object({
@@ -44,7 +46,7 @@ const HomeworkFormSchema = z.object({
   submissionDate: z.date(),
   title: z.string().min(3, "Title is required."),
   description: z.string().optional(),
-  fileUrl: z.string().url().optional().or(z.literal('')),
+  fileUrl: z.string().url("A valid file URL is required.").optional().or(z.literal('')),
 }).refine(data => data.submissionDate >= data.date, {
   message: "Submission date cannot be before the assignment date.",
   path: ["submissionDate"],
@@ -57,26 +59,13 @@ export function ElearningManager({ schoolId, classes }: { schoolId: string, clas
     const [studyMaterials, setStudyMaterials] = useState<any[]>([]);
     const [homeworks, setHomeworks] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState<any>(null);
+    const [editingType, setEditingType] = useState<'material' | 'homework' | null>(null);
 
     const selectedClass = useMemo(() => classes.find(c => c.id === selectedClassId), [classes, selectedClassId]);
     
-    useEffect(() => {
-        async function fetchData() {
-            if (selectedClassId && selectedSection) {
-                setLoading(true);
-                const [materialsRes, homeworkRes] = await Promise.all([
-                    getStudyMaterials({ schoolId, classId: selectedClassId, section: selectedSection }),
-                    getHomework({ schoolId, classId: selectedClassId, section: selectedSection })
-                ]);
-                if (materialsRes.success) setStudyMaterials(materialsRes.data || []);
-                if (homeworkRes.success) setHomeworks(homeworkRes.data || []);
-                setLoading(false);
-            }
-        }
-        fetchData();
-    }, [schoolId, selectedClassId, selectedSection]);
-
-    const handleSuccess = async () => {
+    const fetchData = async () => {
         if (selectedClassId && selectedSection) {
             setLoading(true);
             const [materialsRes, homeworkRes] = await Promise.all([
@@ -87,6 +76,28 @@ export function ElearningManager({ schoolId, classes }: { schoolId: string, clas
             if (homeworkRes.success) setHomeworks(homeworkRes.data || []);
             setLoading(false);
         }
+    };
+    
+    useEffect(() => {
+        fetchData();
+    }, [schoolId, selectedClassId, selectedSection]);
+
+    const handleEdit = (item: any, type: 'material' | 'homework') => {
+        setEditingItem(item);
+        setEditingType(type);
+        setIsEditModalOpen(true);
+    };
+    
+    const handleDelete = async (id: string, type: 'material' | 'homework') => {
+        const confirmation = confirm(`Are you sure you want to delete this ${type}? This action cannot be undone.`);
+        if (!confirmation) return;
+
+        if (type === 'material') {
+            await deleteStudyMaterial({ id, schoolId });
+        } else {
+            await deleteHomework({ id, schoolId });
+        }
+        fetchData();
     };
 
   return (
@@ -110,32 +121,48 @@ export function ElearningManager({ schoolId, classes }: { schoolId: string, clas
       </div>
       
       {selectedClassId && selectedSection ? (
-        <Tabs defaultValue="study-material" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="study-material"><Book className="mr-2 h-4 w-4" /> Study Material</TabsTrigger>
-                <TabsTrigger value="homework"><FileText className="mr-2 h-4 w-4" /> Homework</TabsTrigger>
-            </TabsList>
-            <TabsContent value="study-material">
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <AddStudyMaterialForm schoolId={schoolId} selectedClassId={selectedClassId} selectedSection={selectedSection} onSuccess={handleSuccess}/>
-                            <ContentList title="Uploaded Study Materials" content={studyMaterials} loading={loading} isHomework={false} />
-                        </div>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-            <TabsContent value="homework">
-                <Card>
-                    <CardContent className="pt-6">
-                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <AddHomeworkForm schoolId={schoolId} selectedClassId={selectedClassId} selectedSection={selectedSection} onSuccess={handleSuccess}/>
-                            <ContentList title="Uploaded Homework" content={homeworks} loading={loading} isHomework={true} />
-                        </div>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-        </Tabs>
+        <>
+            <Tabs defaultValue="study-material" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="study-material"><Book className="mr-2 h-4 w-4" /> Study Material</TabsTrigger>
+                    <TabsTrigger value="homework"><FileText className="mr-2 h-4 w-4" /> Homework</TabsTrigger>
+                </TabsList>
+                <TabsContent value="study-material">
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <AddStudyMaterialForm schoolId={schoolId} selectedClassId={selectedClassId} selectedSection={selectedSection} onSuccess={fetchData}/>
+                                <ContentList title="Uploaded Study Materials" content={studyMaterials} loading={loading} isHomework={false} onEdit={handleEdit} onDelete={handleDelete} />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="homework">
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <AddHomeworkForm schoolId={schoolId} selectedClassId={selectedClassId} selectedSection={selectedSection} onSuccess={fetchData}/>
+                                <ContentList title="Uploaded Homework" content={homeworks} loading={loading} isHomework={true} onEdit={handleEdit} onDelete={handleDelete} />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+             {isEditModalOpen && editingItem && editingType && (
+                <ElearningEditDialog
+                    isOpen={isEditModalOpen}
+                    setIsOpen={setIsEditModalOpen}
+                    item={editingItem}
+                    type={editingType}
+                    schoolId={schoolId}
+                    classes={classes}
+                    onSuccess={() => {
+                        setIsEditModalOpen(false);
+                        fetchData();
+                    }}
+                />
+            )}
+        </>
       ) : (
         <div className="text-center py-10 border rounded-lg bg-muted/50">
           <p className="text-muted-foreground">Please select a class and section to manage e-learning content.</p>
@@ -289,7 +316,7 @@ function AddHomeworkForm({ schoolId, selectedClassId, selectedSection, onSuccess
 }
 
 // Content List Component
-function ContentList({ title, content, loading, isHomework }: { title: string, content: any[], loading: boolean, isHomework: boolean }) {
+function ContentList({ title, content, loading, isHomework, onEdit, onDelete }: { title: string, content: any[], loading: boolean, isHomework: boolean, onEdit: (item: any, type: 'material' | 'homework') => void, onDelete: (id: string, type: 'material' | 'homework') => void }) {
     return (
         <div className="space-y-4">
             <h3 className="text-lg font-medium">{title}</h3>
@@ -309,7 +336,8 @@ function ContentList({ title, content, loading, isHomework }: { title: string, c
                                 <TableHead>Title</TableHead>
                                 <TableHead>Date</TableHead>
                                 {isHomework && <TableHead>Submission</TableHead>}
-                                <TableHead className="text-right">File</TableHead>
+                                <TableHead>File</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -318,14 +346,32 @@ function ContentList({ title, content, loading, isHomework }: { title: string, c
                                     <TableCell className="font-medium">{item.title}</TableCell>
                                     <TableCell>{format(item.date, 'dd-MMM-yy')}</TableCell>
                                     {isHomework && <TableCell>{format(item.submissionDate, 'dd-MMM-yy')}</TableCell>}
-                                    <TableCell className="text-right">
+                                    <TableCell>
                                         {item.fileUrl ? (
                                             <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
-                                                <Button variant="outline" size="sm"><Download className="mr-2 h-3 w-3"/>Download</Button>
+                                                <Button variant="outline" size="sm"><Download className="mr-2 h-3 w-3"/>View</Button>
                                             </a>
                                         ) : (
                                             <span className='text-xs text-muted-foreground'>No file</span>
                                         )}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <span className="sr-only">Open menu</span>
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => onEdit(item, isHomework ? 'homework' : 'material')}>
+                                                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onDelete(item.id, isHomework ? 'homework' : 'material')} className="text-destructive">
+                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))}

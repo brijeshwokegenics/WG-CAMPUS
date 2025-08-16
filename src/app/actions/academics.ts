@@ -142,6 +142,11 @@ const StudyMaterialSchema = z.object({
   fileUrl: z.string().url("A valid file URL is required.").optional().or(z.literal('')),
 });
 
+const UpdateStudyMaterialSchema = StudyMaterialSchema.omit({ schoolId: true }).extend({
+  id: z.string().min(1),
+});
+
+
 const HomeworkSchema = z.object({
   schoolId: z.string().min(1),
   classId: z.string().min(1, "Class is required."),
@@ -154,6 +159,13 @@ const HomeworkSchema = z.object({
 }).refine(data => data.submissionDate >= data.date, {
   message: "Submission date cannot be before the assignment date.",
   path: ["submissionDate"],
+});
+
+const UpdateHomeworkSchema = HomeworkSchema.omit({ schoolId: true }).extend({
+    id: z.string().min(1),
+}).refine(data => data.submissionDate >= data.date, {
+    message: "Submission date cannot be before the assignment date.",
+    path: ["submissionDate"],
 });
 
 
@@ -945,6 +957,47 @@ export async function getStudyMaterials({ schoolId, classId, section }: { school
   }
 }
 
+export async function updateStudyMaterial(prevState: any, formData: FormData) {
+    const rawData = {
+        ...Object.fromEntries(formData.entries()),
+        date: new Date(formData.get('date') as string),
+    };
+    const parsed = UpdateStudyMaterialSchema.safeParse(rawData);
+
+    if (!parsed.success) {
+        console.error(parsed.error.flatten());
+        return { success: false, error: 'Invalid data for updating study material.' };
+    }
+
+    const { id, ...updateData } = parsed.data;
+    const schoolId = formData.get('schoolId') as string;
+
+    try {
+        const docRef = doc(db, 'studyMaterials', id);
+        // Security check could be added here to ensure doc belongs to schoolId
+        await updateDoc(docRef, updateData);
+        revalidatePath(`/director/dashboard/${schoolId}/academics/elearning`);
+        return { success: true, message: 'Study material updated successfully.' };
+    } catch (error) {
+        console.error('Error updating study material:', error);
+        return { success: false, error: 'An unexpected error occurred.' };
+    }
+}
+
+export async function deleteStudyMaterial({ id, schoolId }: { id: string; schoolId: string }) {
+    try {
+        const docRef = doc(db, 'studyMaterials', id);
+        // Add a security check if needed
+        await deleteDoc(docRef);
+        revalidatePath(`/director/dashboard/${schoolId}/academics/elearning`);
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting study material:', error);
+        return { success: false, error: 'Failed to delete study material.' };
+    }
+}
+
+
 export async function addHomework(prevState: any, formData: FormData) {
   const rawData = {
     ...Object.fromEntries(formData.entries()),
@@ -988,4 +1041,43 @@ export async function getHomework({ schoolId, classId, section }: { schoolId: st
     console.error('Error fetching homework:', error);
     return { success: false, error: 'Failed to fetch homework.' };
   }
+}
+
+export async function updateHomework(prevState: any, formData: FormData) {
+    const rawData = {
+        ...Object.fromEntries(formData.entries()),
+        date: new Date(formData.get('date') as string),
+        submissionDate: new Date(formData.get('submissionDate') as string),
+    };
+    const parsed = UpdateHomeworkSchema.safeParse(rawData);
+
+    if (!parsed.success) {
+        console.error(parsed.error.flatten());
+        return { success: false, error: 'Invalid data for updating homework.', details: parsed.error.flatten() };
+    }
+    
+    const { id, ...updateData } = parsed.data;
+    const schoolId = formData.get('schoolId') as string;
+
+    try {
+        const docRef = doc(db, 'homework', id);
+        await updateDoc(docRef, updateData);
+        revalidatePath(`/director/dashboard/${schoolId}/academics/elearning`);
+        return { success: true, message: 'Homework updated successfully.' };
+    } catch (error) {
+        console.error('Error updating homework:', error);
+        return { success: false, error: 'An unexpected error occurred.' };
+    }
+}
+
+export async function deleteHomework({ id, schoolId }: { id: string; schoolId: string }) {
+    try {
+        const docRef = doc(db, 'homework', id);
+        await deleteDoc(docRef);
+        revalidatePath(`/director/dashboard/${schoolId}/academics/elearning`);
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting homework:', error);
+        return { success: false, error: 'Failed to delete homework.' };
+    }
 }
