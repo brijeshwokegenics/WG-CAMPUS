@@ -188,15 +188,25 @@ export async function deleteClass({ classId, schoolId }: { classId: string; scho
 
 export async function admitStudent(prevState: any, formData: FormData) {
   const rawData = Object.fromEntries(formData.entries());
+  
+  // Convert date strings to Date objects
   const dataWithDates = {
       ...rawData,
       admissionDate: new Date(rawData.admissionDate as string),
       dob: new Date(rawData.dob as string),
   };
   
+  // Remove empty optional fields so they don't fail validation
+  for (const key in dataWithDates) {
+    if (dataWithDates[key] === '') {
+      delete (dataWithDates as any)[key];
+    }
+  }
+
   const parsed = StudentSchema.safeParse(dataWithDates);
 
   if (!parsed.success) {
+      console.log(parsed.error.flatten());
       return { success: false, error: "Invalid data.", details: parsed.error.flatten() };
   }
 
@@ -336,9 +346,18 @@ export async function updateStudent(prevState: any, formData: FormData) {
       dob: new Date(rawData.dob as string),
   };
 
+  // Remove empty optional fields so they don't fail validation
+  for (const key in dataWithDates) {
+    if (dataWithDates[key] === '' || dataWithDates[key] === null) {
+      delete (dataWithDates as any)[key];
+    }
+  }
+
+
   const parsed = UpdateStudentSchema.safeParse(dataWithDates);
 
   if (!parsed.success) {
+      console.log(parsed.error.flatten());
       return { success: false, error: "Invalid data.", details: parsed.error.flatten() };
   }
 

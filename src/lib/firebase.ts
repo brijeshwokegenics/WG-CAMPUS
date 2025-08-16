@@ -1,11 +1,12 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   "projectId": "wg-campus",
   "appId": "1:1071617999329:web:1dde57bcc83611b1cc52a0",
-  "storageBucket": "wg-campus.firebasestorage.app",
+  "storageBucket": "wg-campus.appspot.com",
   "apiKey": "AIzaSyDf1Mp_0EZW3Ao6ADMpYqejOuvyuKmxsLQ",
   "authDomain": "wg-campus.firebaseapp.com",
   "measurementId": "",
@@ -15,5 +16,6 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-export { app, db };
+export { app, db, storage };

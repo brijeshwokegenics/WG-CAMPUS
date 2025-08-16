@@ -18,6 +18,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { FileUpload } from './FileUpload';
 
 const FormSchema = z.object({
   schoolId: z.string(),
@@ -39,6 +40,10 @@ const FormSchema = z.object({
   state: z.string().min(2, "State is required."),
   zipcode: z.string().min(5, "Zip code is required."),
 
+  photoUrl: z.string().url().optional().or(z.literal('')),
+  aadharUrl: z.string().url().optional().or(z.literal('')),
+  birthCertificateUrl: z.string().url().optional().or(z.literal('')),
+
   // New Fields
   aadharNumber: z.string().optional(),
   previousSchool: z.string().optional(),
@@ -49,19 +54,20 @@ const FormSchema = z.object({
 });
 
 type FormValues = z.infer<typeof FormSchema>;
-
 type ClassData = { id: string; name: string; sections: string[]; };
 
 export function AdmissionForm({ schoolId }: { schoolId: string }) {
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
-  const [initialState, setInitialState] = useState({ success: false, error: null, message: null });
+  const initialState = { success: false, error: null, message: null };
 
-  const { register, handleSubmit, control, formState: { errors, isSubmitting }, watch, reset } = useForm<FormValues>({
+  const { register, handleSubmit, control, formState: { errors, isSubmitting }, watch, reset, setValue } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       schoolId: schoolId,
       admissionDate: new Date(),
+      transportRequired: 'No',
+      hostelRequired: 'No'
     }
   });
 
@@ -92,11 +98,13 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
   const onFormSubmit = (data: FormValues) => {
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
-      if (value instanceof Date) {
-        formData.append(key, value.toISOString());
-      } else if (value) {
-        formData.append(key, value);
-      }
+        if (value instanceof Date) {
+            formData.append(key, value.toISOString());
+        } else if (typeof value === 'string' && value) {
+            formData.append(key, value);
+        } else if (typeof value === 'boolean' || typeof value === 'number') {
+            formData.append(key, String(value));
+        }
     });
     formAction(formData);
   };
@@ -305,24 +313,27 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
          {/* Document Uploads */}
         <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-3">
             <legend className="-ml-1 px-1 text-sm font-medium">Upload Documents</legend>
-             <p className="md:col-span-3 text-sm text-muted-foreground -mt-2 mb-2">
-                Note: File upload functionality is not fully integrated. Please upload your file to a cloud service (like Google Drive) and paste the public URL here.
-            </p>
-            <div className="space-y-2">
-                <Label htmlFor="photoUrl">Student Photo</Label>
-                <Input id="photoUrl" type="file" />
-                <p className="text-xs text-muted-foreground">Paste URL in the text box that appears after selection.</p>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="aadharUrl">Aadhar Card</Label>
-                <Input id="aadharUrl" type="file" />
-                 <p className="text-xs text-muted-foreground">Paste URL in the text box that appears after selection.</p>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="birthCertificateUrl">Birth Certificate</Label>
-                <Input id="birthCertificateUrl" type="file" />
-                 <p className="text-xs text-muted-foreground">Paste URL in the text box that appears after selection.</p>
-            </div>
+             <FileUpload
+                id="photoUrl"
+                label="Student Photo"
+                uploadPath={`/${schoolId}/student_photos`}
+                onUploadComplete={(url) => setValue('photoUrl', url)}
+                onFileRemove={() => setValue('photoUrl', '')}
+             />
+             <FileUpload
+                id="aadharUrl"
+                label="Aadhar Card"
+                uploadPath={`/${schoolId}/aadhar_cards`}
+                onUploadComplete={(url) => setValue('aadharUrl', url)}
+                onFileRemove={() => setValue('aadharUrl', '')}
+             />
+             <FileUpload
+                id="birthCertificateUrl"
+                label="Birth Certificate"
+                uploadPath={`/${schoolId}/birth_certificates`}
+                onUploadComplete={(url) => setValue('birthCertificateUrl', url)}
+                onFileRemove={() => setValue('birthCertificateUrl', '')}
+             />
         </fieldset>
         
         <div className="flex justify-end">

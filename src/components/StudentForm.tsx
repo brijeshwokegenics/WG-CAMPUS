@@ -18,6 +18,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { FileUpload } from './FileUpload';
+
 
 const FormSchema = z.object({
   studentId: z.string(),
@@ -106,17 +108,6 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
         formData.append(key, value as string);
       }
     });
-    // This is a workaround to handle file inputs in a form that submits URLs.
-    // In a real app, you'd handle file uploads to a service like Firebase Storage.
-    const photoUrl = (document.getElementById('photoUrl-input') as HTMLInputElement)?.value;
-    if (photoUrl) formData.set('photoUrl', photoUrl);
-    
-    const aadharUrl = (document.getElementById('aadharUrl-input') as HTMLInputElement)?.value;
-    if (aadharUrl) formData.set('aadharUrl', aadharUrl);
-
-    const birthCertificateUrl = (document.getElementById('birthCertificateUrl-input') as HTMLInputElement)?.value;
-    if (birthCertificateUrl) formData.set('birthCertificateUrl', birthCertificateUrl);
-
     formAction(formData);
   };
   
@@ -326,27 +317,30 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
          {/* Document Uploads */}
         <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-3">
             <legend className="-ml-1 px-1 text-sm font-medium">Upload Documents</legend>
-            <p className="md:col-span-3 text-sm text-muted-foreground -mt-2 mb-2">
-                Note: File upload functionality is not fully integrated. Please upload your file to a cloud service (like Google Drive) and paste the public URL here.
-            </p>
-            <div className="space-y-2">
-                <Label htmlFor="photoUrl">Student Photo</Label>
-                <Input id="photoUrl" type="file" onChange={e => setValue('photoUrl', e.target.value)} />
-                <Input id="photoUrl-input" {...register("photoUrl")} placeholder="Paste URL here..." className="mt-2" />
-                {errors.photoUrl && <p className="text-sm text-destructive mt-1">{errors.photoUrl.message}</p>}
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="aadharUrl">Aadhar Card</Label>
-                <Input id="aadharUrl" type="file" onChange={e => setValue('aadharUrl', e.target.value)} />
-                <Input id="aadharUrl-input" {...register("aadharUrl")} placeholder="Paste URL here..." className="mt-2" />
-                {errors.aadharUrl && <p className="text-sm text-destructive mt-1">{errors.aadharUrl.message}</p>}
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="birthCertificateUrl">Birth Certificate</Label>
-                <Input id="birthCertificateUrl" type="file" onChange={e => setValue('birthCertificateUrl', e.target.value)} />
-                <Input id="birthCertificateUrl-input" {...register("birthCertificateUrl")} placeholder="Paste URL here..." className="mt-2" />
-                {errors.birthCertificateUrl && <p className="text-sm text-destructive mt-1">{errors.birthCertificateUrl.message}</p>}
-            </div>
+             <FileUpload
+                id="photoUrl"
+                label="Student Photo"
+                uploadPath={`/${schoolId}/student_photos`}
+                onUploadComplete={(url) => setValue('photoUrl', url)}
+                onFileRemove={() => setValue('photoUrl', '')}
+                initialUrl={studentData.photoUrl}
+             />
+             <FileUpload
+                id="aadharUrl"
+                label="Aadhar Card"
+                uploadPath={`/${schoolId}/aadhar_cards`}
+                onUploadComplete={(url) => setValue('aadharUrl', url)}
+                onFileRemove={() => setValue('aadharUrl', '')}
+                initialUrl={studentData.aadharUrl}
+             />
+             <FileUpload
+                id="birthCertificateUrl"
+                label="Birth Certificate"
+                uploadPath={`/${schoolId}/birth_certificates`}
+                onUploadComplete={(url) => setValue('birthCertificateUrl', url)}
+                onFileRemove={() => setValue('birthCertificateUrl', '')}
+                initialUrl={studentData.birthCertificateUrl}
+             />
         </fieldset>
         
         <div className="flex justify-end">
@@ -359,5 +353,3 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
     </>
   );
 }
-
-    
