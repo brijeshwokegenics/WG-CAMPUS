@@ -221,7 +221,7 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
     
     useEffect(() => {
         if (state.success) {
-            onPaymentSuccess(); // This will re-fetch data, which will cause this form to re-render with new defaults
+            onPaymentSuccess();
         }
     }, [state.success, onPaymentSuccess]);
 
@@ -350,5 +350,3 @@ function FeeStatus({ studentFeeStatus }: { studentFeeStatus: any[] }) {
         </Card>
     )
 }
-
-    
