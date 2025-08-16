@@ -33,15 +33,17 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
   const [attendance, setAttendance] = useState<AttendanceRecord>({});
   const [loading, setLoading] = useState(false);
   
+  const [reportClassId, setReportClassId] = useState('');
+  const [reportSection, setReportSection] = useState('');
   const [reportMonth, setReportMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [generatingReport, setGeneratingReport] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-
 
   const initialState = { success: false, error: null, message: null };
   const [state, formAction] = useFormState(saveStudentAttendance, initialState);
 
   const selectedClass = useMemo(() => classes.find(c => c.id === selectedClassId), [classes, selectedClassId]);
+  const reportSelectedClass = useMemo(() => classes.find(c => c.id === reportClassId), [classes, reportClassId]);
 
   // Fetch students when class/section changes
   useEffect(() => {
@@ -82,6 +84,15 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
     }
   }, [students, selectedDate, schoolId, selectedClassId, selectedSection]);
 
+  // Sync main filter to report filter when modal opens
+  useEffect(() => {
+    if (isReportModalOpen) {
+        setReportClassId(selectedClassId);
+        setReportSection(selectedSection);
+    }
+  }, [isReportModalOpen, selectedClassId, selectedSection]);
+
+
   const handleStatusChange = (studentId: string, status: AttendanceStatus) => {
     setAttendance(prev => ({ ...prev, [studentId]: status }));
   };
@@ -106,15 +117,16 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
   };
   
   const handleGenerateReport = async () => {
-    if (!selectedClassId || !selectedSection || !reportMonth) {
-        alert("Please select a class and section first.");
+    if (!reportClassId || !reportSection || !reportMonth) {
+        alert("Please select a class, section, and month for the report.");
         return;
     }
     setGeneratingReport(true);
-    const result = await getMonthlyAttendance({ schoolId, classId: selectedClassId, section: selectedSection, month: reportMonth });
+    const result = await getMonthlyAttendance({ schoolId, classId: reportClassId, section: reportSection, month: reportMonth });
 
     if (result.success && result.data) {
         const { students, attendance } = result.data;
+        const className = classes.find(c => c.id === reportClassId)?.name;
 
         const monthDate = parseISO(`${reportMonth}-01`);
         const daysInMonth = getDaysInMonth(monthDate);
@@ -127,7 +139,7 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
                 const dateStr = format(new Date(monthDate.getFullYear(), monthDate.getMonth(), i), 'yyyy-MM-dd');
                 const dayHeader = format(new Date(dateStr), 'dd-MMM');
                 const attendanceRecord = attendance.find((att: any) => att.date === dateStr);
-                studentRow[dayHeader] = attendanceRecord?.attendance[student.id] || '-';
+                studentRow[dayHeader] = attendanceRecord?.attendance[student.id]?.charAt(0) || '-';
             }
             return studentRow;
         });
@@ -135,7 +147,7 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
         const ws = XLSX.utils.json_to_sheet(reportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-        XLSX.writeFile(wb, `Attendance_${selectedClass?.name}_${selectedSection}_${format(monthDate, 'MMMM_yyyy')}.xlsx`);
+        XLSX.writeFile(wb, `Attendance_${className}_${reportSection}_${format(monthDate, 'MMMM_yyyy')}.xlsx`);
         setIsReportModalOpen(false);
     } else {
         alert(`Error generating report: ${result.error}`);
@@ -163,6 +175,20 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 pt-4">
+                         <div className="space-y-2">
+                            <Label>Select Class</Label>
+                            <Select value={reportClassId} onValueChange={setReportClassId}>
+                                <SelectTrigger><SelectValue placeholder="Select a class" /></SelectTrigger>
+                                <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Select Section</Label>
+                            <Select value={reportSection} onValueChange={setReportSection} disabled={!reportClassId}>
+                                <SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger>
+                                <SelectContent>{reportSelectedClass?.sections.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </div>
                        <div className="space-y-2 flex-grow">
                             <Label htmlFor="report-month">Report Month</Label>
                             <Input 
@@ -173,7 +199,7 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
                                 max={format(new Date(), 'yyyy-MM')}
                             />
                         </div>
-                        <Button onClick={handleGenerateReport} disabled={!selectedClassId || !selectedSection || generatingReport} className="w-full">
+                        <Button onClick={handleGenerateReport} disabled={!reportClassId || !reportSection || generatingReport} className="w-full">
                             {generatingReport ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                             {generatingReport ? 'Generating...' : 'Download Report'}
                         </Button>
