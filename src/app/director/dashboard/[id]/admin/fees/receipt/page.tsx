@@ -75,6 +75,8 @@ function ReceiptView({ receiptId }: { receiptId: string }) {
                         <p><strong>Student Name:</strong> <span className='font-semibold'>{receipt.student.studentName}</span></p>
                         <p><strong>Admission ID:</strong> {receipt.studentId}</p>
                         <p><strong>Class:</strong> {receipt.student.className} - {receipt.student.section}</p>
+                        <p><strong>Father's Name:</strong> {receipt.student.fatherName}</p>
+                        <p><strong>Mother's Name:</strong> {receipt.student.motherName}</p>
                     </div>
 
                     <table className="w-full text-sm border-y-2 border-dashed border-black my-4">
@@ -141,5 +143,3 @@ export default function FeeReceiptPage() {
     
     return <ReceiptView receiptId={receiptId} />;
 }
-
-    
