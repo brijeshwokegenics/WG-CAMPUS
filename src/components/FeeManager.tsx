@@ -67,7 +67,7 @@ function StudentSearch({ classes, schoolId, onStudentSelect }: { classes: ClassD
         }
         startSearchTransition(async () => {
             const students = await getStudentsForSchool({ schoolId, classId: searchClassId, section: searchSection, name: searchName });
-            setSearchResults(students);
+            setSearchResults(students as StudentSearchResult[]);
         });
     };
 
@@ -124,6 +124,8 @@ function FeeDetailsDisplay({ schoolId, studentId, onClear }: { schoolId: string,
     const [details, setDetails] = useState<FeeDetails | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    const [state, formAction] = useFormState(collectFee, { success: false, message: null, error: null, receiptId: null });
+
     const fetchDetails = useCallback(async () => {
         setIsLoading(true);
         const result = await getStudentFeeDetails(schoolId, studentId);
@@ -138,6 +140,12 @@ function FeeDetailsDisplay({ schoolId, studentId, onClear }: { schoolId: string,
     useEffect(() => {
         fetchDetails();
     }, [fetchDetails]);
+
+    useEffect(() => {
+        if(state.success) {
+            fetchDetails();
+        }
+    }, [state.success, fetchDetails]);
 
     if (isLoading) {
         return <div className="text-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -158,7 +166,13 @@ function FeeDetailsDisplay({ schoolId, studentId, onClear }: { schoolId: string,
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 <div className="lg:col-span-3">
-                   <FeeCollectionForm student={details.student} feeStatus={details.feeStatus} schoolId={schoolId} onPaymentSuccess={fetchDetails}/>
+                   <FeeCollectionForm 
+                        student={details.student} 
+                        feeStatus={details.feeStatus} 
+                        schoolId={schoolId} 
+                        formAction={formAction}
+                        state={state}
+                    />
                 </div>
                 <div className="lg:col-span-2">
                     <PaymentHistory history={details.paymentHistory} schoolId={schoolId} />
@@ -185,7 +199,7 @@ const FeeCollectionFormSchema = z.object({
 
 type FeeCollectionFormValues = z.infer<typeof FeeCollectionFormSchema>;
 
-function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: { student: any, feeStatus: any[], schoolId: string, onPaymentSuccess: () => void }) {
+function FeeCollectionForm({ student, feeStatus, schoolId, formAction, state }: { student: any, feeStatus: any[], schoolId: string, formAction: any, state: any }) {
     
     const { register, handleSubmit, control, formState: { errors, isSubmitting }, watch, reset } = useForm<FeeCollectionFormValues>({
         resolver: zodResolver(FeeCollectionFormSchema),
@@ -207,8 +221,26 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
         };
         reset(defaultValues);
     }, [feeStatus, reset]);
+    
+    useEffect(() => {
+        if(state.success) {
+            const defaultValues = {
+                paymentDate: new Date(),
+                paymentMode: "Cash" as const,
+                transactionId: '',
+                discount: 0,
+                fine: 0,
+                paidFor: feeStatus.map((item: any) => ({ 
+                    feeHeadId: item.feeHeadId, 
+                    feeHeadName: item.feeHeadName, 
+                    amount: item.due > 0 ? item.due : 0, 
+                    isPaid: item.due > 0 
+                })),
+            };
+            reset(defaultValues);
+        }
+    }, [state.success, reset, feeStatus]);
 
-    const [state, formAction] = useFormState(collectFee, { success: false, message: null, error: null, receiptId: null });
 
     const watchPaidFor = watch('paidFor');
     const watchDiscount = watch('discount');
@@ -221,12 +253,6 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
     
     const netAmount = useMemo(() => totalAmount - (Number(watchDiscount) || 0) + (Number(watchFine) || 0), [totalAmount, watchDiscount, watchFine]);
     
-    useEffect(() => {
-        if (state.success) {
-            onPaymentSuccess();
-        }
-    }, [state.success, onPaymentSuccess]);
-
     const onFormSubmit = (data: FeeCollectionFormValues) => {
         const formData = new FormData();
         formData.append('schoolId', schoolId);
