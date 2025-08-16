@@ -18,7 +18,7 @@ const DeductionSchema = z.object({
   amount: z.coerce.number().min(0),
 });
 
-export const SalarySchema = z.object({
+const SalarySchema = z.object({
   schoolId: z.string().min(1),
   userId: z.string().min(1),
   basicSalary: z.coerce.number().min(0, "Basic salary must be a positive number."),
@@ -73,7 +73,7 @@ export async function getStaffSalaries(schoolId: string) {
 const StaffAttendanceStatusSchema = z.enum(["Present", "Absent", "Leave"]);
 const StaffAttendanceRecordSchema = z.record(z.string(), StaffAttendanceStatusSchema);
 
-export const StaffAttendanceSchema = z.object({
+const StaffAttendanceSchema = z.object({
     schoolId: z.string(),
     date: z.string(), // YYYY-MM-DD
     attendance: StaffAttendanceRecordSchema,
@@ -126,7 +126,7 @@ export async function getStaffAttendanceForDate({ schoolId, date }: { schoolId: 
 }
 
 // ========== PAYROLL ==========
-export const PayrollGenerationSchema = z.object({
+const PayrollGenerationSchema = z.object({
     schoolId: z.string(),
     month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
 });
@@ -179,8 +179,8 @@ export async function generatePayrollForMonth(prevState: any, formData: FormData
             }
 
             const totalDays = monthDates.length;
-            const presentDays = monthlyAttendance.filter(att => att[user.id] === 'Present').length;
-            const leaveDays = monthlyAttendance.filter(att => att[user.id] === 'Leave').length;
+            const presentDays = monthlyAttendance.filter(att => att && att[user.id] === 'Present').length;
+            const leaveDays = monthlyAttendance.filter(att => att && att[user.id] === 'Leave').length;
             const absentDays = totalDays - presentDays - leaveDays;
             
             // Pro-rata salary calculation

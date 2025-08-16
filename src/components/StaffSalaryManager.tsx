@@ -4,17 +4,37 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useFormState } from 'react-dom';
 import { Loader2, PlusCircle, Save, Trash2, Wallet } from 'lucide-react';
 
 import { getUsersForSchool } from '@/app/actions/users';
-import { setStaffSalary, getStaffSalaries, SalarySchema } from '@/app/actions/hr';
+import { setStaffSalary, getStaffSalaries } from '@/app/actions/hr';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { cn } from '@/lib/utils';
+
+
+const AllowanceSchema = z.object({
+  name: z.string().min(1),
+  amount: z.coerce.number().min(0),
+});
+
+const DeductionSchema = z.object({
+  name: z.string().min(1),
+  amount: z.coerce.number().min(0),
+});
+
+const SalarySchema = z.object({
+  schoolId: z.string().min(1),
+  userId: z.string().min(1),
+  basicSalary: z.coerce.number().min(0, "Basic salary must be a positive number."),
+  allowances: z.array(AllowanceSchema).optional(),
+  deductions: z.array(DeductionSchema).optional(),
+});
 
 
 type User = { id: string; name: string; userId: string; email: string | null };

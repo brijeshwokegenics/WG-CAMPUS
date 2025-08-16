@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useFormState } from 'react-dom';
 import { format } from 'date-fns';
 import { Loader2, FileText, ChevronRight, Eye } from 'lucide-react';
+import { z } from 'zod';
 import { generatePayrollForMonth, getPayrollHistory } from '@/app/actions/hr';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -21,6 +22,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+
+
+const PayrollGenerationSchema = z.object({
+    schoolId: z.string(),
+    month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+});
 
 
 type PayrollRecord = { id: string; month: string; generatedOn: string; payrollData: any[] };
