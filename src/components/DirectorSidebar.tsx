@@ -221,26 +221,6 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
           </div>
         ))}
       </nav>
-      <div className="mt-auto p-4 space-y-4 border-t">
-        <ThemeToggle isCollapsed={isCollapsed}/>
-         <TooltipProvider delayDuration={0}>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Link
-                        href="/"
-                        className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                        isCollapsed && "justify-center"
-                        )}
-                    >
-                        <LogOut className="h-5 w-5" />
-                        <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>Logout</span>
-                    </Link>
-                </TooltipTrigger>
-                {isCollapsed && <TooltipContent side="right">Logout</TooltipContent>}
-            </Tooltip>
-        </TooltipProvider>
-      </div>
     </div>
   );
 }
