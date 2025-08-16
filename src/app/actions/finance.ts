@@ -240,20 +240,18 @@ export async function collectFee(prevState: any, formData: FormData) {
 
 export async function getStudentFeeDetails(schoolId: string, studentId: string) {
     try {
-        // 1. Get student data
         const studentRes = await getStudentById(studentId, schoolId);
-        if (!studentRes.success || !studentRes.data) return { success: false, error: "Student not found." };
+        if (!studentRes.success || !studentRes.data) {
+            return { success: false, error: "Student not found." };
+        }
         const student = studentRes.data;
 
-        // 2. Get class fee structure
         const structureRes = await getFeeStructure(schoolId, student.classId);
         const feeStructure = structureRes.success ? structureRes.data : null;
 
-        // 3. Get all fee heads to know their types (monthly, annual, etc.)
         const feeHeadsRes = await getFeeHeads(schoolId);
         const allFeeHeads = feeHeadsRes.success ? feeHeadsRes.data : [];
 
-        // 4. Get payment history
         const paymentsRef = collection(db, 'feeCollections');
         const q = query(paymentsRef, where('schoolId', '==', schoolId), where('studentId', '==', studentId));
         const paymentSnapshot = await getDocs(q);
@@ -265,44 +263,47 @@ export async function getStudentFeeDetails(schoolId: string, studentId: string) 
         
         paymentHistory.sort((a,b) => b.paymentDate.getTime() - a.paymentDate.getTime());
 
-        // 5. Calculate fee status (dues)
         const feeStatus: any[] = [];
-        if (feeStructure) {
+        if (feeStructure && allFeeHeads) {
             for (const structureItem of feeStructure.structure) {
                 const feeHead = allFeeHeads.find((h:any) => h.id === structureItem.feeHeadId);
                 if (!feeHead) continue;
 
-                const applicableAmount = structureItem.amount;
                 let installments = 1;
                 if (feeHead.type === 'Monthly') installments = 12;
                 if (feeHead.type === 'Quarterly') installments = 4;
                 
-                const totalPayable = applicableAmount * installments;
+                const totalPayable = (structureItem.amount || 0) * installments;
                 
-                const paymentsForThisHead = paymentHistory.flatMap(p => p.paidFor.filter((item: any) => item.feeHeadId === structureItem.feeHeadId));
-                const totalPaid = paymentsForThisHead.reduce((sum, item) => sum + item.amount, 0);
-
-                // For simplicity, summing up all discounts for this head. A more complex system might allocate discounts.
-                const totalDiscount = paymentHistory.reduce((sum, p) => {
-                    if (p.paidFor.some((item: any) => item.feeHeadId === structureItem.feeHeadId)) {
-                        return sum + (p.discount || 0);
+                const paymentsForThisHead = paymentHistory.flatMap(p => 
+                    p.paidFor.filter((item: any) => item.feeHeadId === structureItem.feeHeadId)
+                );
+                
+                const totalPaidForThisHead = paymentsForThisHead.reduce((sum, item) => sum + (item.amount || 0), 0);
+                
+                // Simplified discount allocation: distribute total discount proportionally across paid items in each transaction
+                let totalDiscountForThisHead = 0;
+                paymentHistory.forEach(p => {
+                    const paidItemInTransaction = p.paidFor.find((item: any) => item.feeHeadId === structureItem.feeHeadId);
+                    if (paidItemInTransaction && p.totalAmount > 0 && p.discount > 0) {
+                        const proportion = (paidItemInTransaction.amount || 0) / p.totalAmount;
+                        totalDiscountForThisHead += proportion * p.discount;
                     }
-                    return sum;
-                }, 0);
+                });
 
+                const due = totalPayable - totalPaidForThisHead - totalDiscountForThisHead;
 
                 feeStatus.push({
                     feeHeadId: structureItem.feeHeadId,
                     feeHeadName: structureItem.feeHeadName,
                     type: feeHead.type,
                     totalPayable: totalPayable,
-                    totalPaid: totalPaid,
-                    totalDiscount: totalDiscount,
-                    due: totalPayable - totalPaid,
+                    totalPaid: totalPaidForThisHead,
+                    totalDiscount: Math.round(totalDiscountForThisHead),
+                    due: Math.round(due > 0 ? due : 0),
                 });
             }
         }
-
 
         return { success: true, data: { student, feeStructure, paymentHistory, feeStatus } };
     } catch (error) {
@@ -338,3 +339,5 @@ export async function getFeeReceipt(receiptId: string) {
         return { success: false, error: "Failed to fetch receipt." };
     }
 }
+
+    

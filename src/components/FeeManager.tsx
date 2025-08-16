@@ -6,7 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Loader2, Search, Wallet, History, Printer, HandCoins, MinusCircle, PlusCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2, Search, History, Printer, HandCoins, MinusCircle, PlusCircle } from 'lucide-react';
 
 import { getStudentsForSchool } from '@/app/actions/academics';
 import { getStudentFeeDetails, collectFee } from '@/app/actions/finance';
@@ -123,7 +123,6 @@ function StudentSearch({ classes, schoolId, onStudentSelect }: { classes: ClassD
 function FeeDetailsDisplay({ schoolId, studentId, onClear }: { schoolId: string, studentId: string, onClear: () => void }) {
     const [details, setDetails] = useState<FeeDetails | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-
     const [state, formAction] = useFormState(collectFee, { success: false, message: null, error: null, receiptId: null });
 
     const fetchDetails = useCallback(async () => {
@@ -203,44 +202,29 @@ function FeeCollectionForm({ student, feeStatus, schoolId, formAction, state }: 
     
     const { register, handleSubmit, control, formState: { errors, isSubmitting }, watch, reset } = useForm<FeeCollectionFormValues>({
         resolver: zodResolver(FeeCollectionFormSchema),
+        defaultValues: {
+            paymentDate: new Date(),
+            paymentMode: "Cash",
+            paidFor: []
+        }
     });
 
     useEffect(() => {
-        const defaultValues = {
+        const defaultPaidFor = feeStatus.map((item: any) => ({
+            feeHeadId: item.feeHeadId,
+            feeHeadName: item.feeHeadName,
+            amount: item.due > 0 ? item.due : 0,
+            isPaid: item.due > 0,
+        }));
+        reset({
             paymentDate: new Date(),
-            paymentMode: "Cash" as const,
+            paymentMode: "Cash",
             transactionId: '',
             discount: 0,
             fine: 0,
-            paidFor: feeStatus.map((item: any) => ({ 
-                feeHeadId: item.feeHeadId, 
-                feeHeadName: item.feeHeadName, 
-                amount: item.due > 0 ? item.due : 0, 
-                isPaid: item.due > 0 
-            })),
-        };
-        reset(defaultValues);
+            paidFor: defaultPaidFor,
+        });
     }, [feeStatus, reset]);
-    
-    useEffect(() => {
-        if(state.success) {
-            const defaultValues = {
-                paymentDate: new Date(),
-                paymentMode: "Cash" as const,
-                transactionId: '',
-                discount: 0,
-                fine: 0,
-                paidFor: feeStatus.map((item: any) => ({ 
-                    feeHeadId: item.feeHeadId, 
-                    feeHeadName: item.feeHeadName, 
-                    amount: item.due > 0 ? item.due : 0, 
-                    isPaid: item.due > 0 
-                })),
-            };
-            reset(defaultValues);
-        }
-    }, [state.success, reset, feeStatus]);
-
 
     const watchPaidFor = watch('paidFor');
     const watchDiscount = watch('discount');
@@ -340,7 +324,7 @@ function PaymentHistory({ history, schoolId }: { history: any[], schoolId: strin
                         {history.map(payment => (
                             <div key={payment.id} className="border p-3 rounded-lg">
                                 <div className="flex justify-between items-start">
-                                    <div><p className="font-semibold text-lg">{payment.totalAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</p><p className="text-xs text-muted-foreground">{payment.receiptNumber}</p></div>
+                                    <div><p className="font-semibold text-lg">{((payment.totalAmount || 0) - (payment.discount || 0) + (payment.fine || 0)).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</p><p className="text-xs text-muted-foreground">{payment.receiptNumber}</p></div>
                                     <div className="text-right"><p className="text-sm font-medium">{format(payment.paymentDate, 'dd-MMM-yyyy')}</p><p className="text-xs text-muted-foreground">{payment.paymentMode}</p></div>
                                 </div>
                                 <div className="mt-2 pt-2 border-t"><p className="text-xs font-semibold mb-1">Paid For:</p><ul className="text-xs text-muted-foreground list-disc list-inside">{payment.paidFor.map((item: any) => (<li key={item.feeHeadId}>{item.feeHeadName}: {item.amount.toLocaleString('en-IN')}</li>))}</ul></div>
@@ -378,3 +362,5 @@ function FeeStatus({ studentFeeStatus }: { studentFeeStatus: any[] }) {
         </Card>
     )
 }
+
+    
