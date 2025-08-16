@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { useFormState } from 'react-dom';
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
 import { cn } from '@/lib/utils';
 import { updateExamSchedule, getExamSchedule } from '@/app/actions/academics';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 type ClassData = { id: string; name: string; sections: string[]; };
 type ExamTerm = { id: string; name: string; session: string; };
@@ -51,7 +52,7 @@ export function ExamScheduleDialog({ isOpen, setIsOpen, examTerm, schoolId, clas
     const initialState = { success: false, error: null, message: null };
     const [state, formAction] = useFormState(updateExamSchedule, initialState);
 
-    const { register, control, handleSubmit, reset, formState: { errors } } = useForm<ExamScheduleFormValues>({
+    const { register, control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ExamScheduleFormValues>({
         resolver: zodResolver(ExamScheduleFormSchema),
         defaultValues: {
             subjects: [],
@@ -68,16 +69,26 @@ export function ExamScheduleDialog({ isOpen, setIsOpen, examTerm, schoolId, clas
             if (selectedClassId) {
                 setLoading(true);
                 const result = await getExamSchedule(schoolId, examTerm.id, selectedClassId);
-                if (result.success && result.data) {
+                if (result.success && result.data?.subjects?.length > 0) {
                     reset({ subjects: result.data.subjects });
                 } else {
-                    reset({ subjects: [] });
+                    reset({ subjects: [{ subjectName: '', date: new Date(), startTime: '10:00', endTime: '13:00', maxMarks: 100 }] });
                 }
                 setLoading(false);
+            } else {
+                reset({subjects: []});
             }
         }
-        fetchSchedule();
-    }, [selectedClassId, examTerm.id, schoolId, reset]);
+        if(isOpen) {
+            fetchSchedule();
+        }
+    }, [selectedClassId, examTerm.id, schoolId, reset, isOpen]);
+
+    useEffect(() => {
+        if (state.success) {
+            setIsOpen(false);
+        }
+    }, [state.success, setIsOpen]);
 
     const onFormSubmit = (data: ExamScheduleFormValues) => {
         const formData = new FormData();
@@ -90,29 +101,36 @@ export function ExamScheduleDialog({ isOpen, setIsOpen, examTerm, schoolId, clas
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-[60%]">
+            <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle>Manage Exam Schedule: {examTerm.name}</DialogTitle>
                     <DialogDescription>
-                        Set the schedule for each subject for a selected class.
+                        Set the schedule for each subject for a selected class. Changes are saved per class.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-4">
                     <div className="space-y-2">
                         <Label>Select Class</Label>
                         <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                            <SelectTrigger><SelectValue placeholder="Select a class" /></SelectTrigger>
+                            <SelectTrigger><SelectValue placeholder="Select a class to manage its schedule" /></SelectTrigger>
                             <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
+                </div>
 
+                <div className="flex-grow overflow-y-auto -mx-6 px-6">
                     {loading ? (
-                        <div className="text-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
-                    ) : selectedClassId && (
-                        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+                        <div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                    ) : selectedClassId ? (
+                        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6 pt-4">
+                            {state.error && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{state.error}</AlertDescription>
+                                </Alert>
+                            )}
                             {fields.map((field, index) => (
-                                <div key={field.id} className="grid grid-cols-5 gap-4 items-end border-b pb-4">
-                                    <div className="space-y-2">
+                                <div key={field.id} className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end border-b pb-4">
+                                    <div className="space-y-2 md:col-span-2">
                                         <Label>Subject Name</Label>
                                         <Input {...register(`subjects.${index}.subjectName`)} />
                                         {errors.subjects?.[index]?.subjectName && <p className="text-xs text-destructive">{errors.subjects?.[index]?.subjectName?.message}</p>}
@@ -127,7 +145,7 @@ export function ExamScheduleDialog({ isOpen, setIsOpen, examTerm, schoolId, clas
                                                     <PopoverTrigger asChild>
                                                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !value && "text-muted-foreground")}>
                                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                                            {value ? format(value, "PPP") : <span>Pick a date</span>}
+                                                            {value ? format(new Date(value), "PPP") : <span>Pick a date</span>}
                                                         </Button>
                                                     </PopoverTrigger>
                                                     <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={value} onSelect={onChange} initialFocus /></PopoverContent>
@@ -139,26 +157,36 @@ export function ExamScheduleDialog({ isOpen, setIsOpen, examTerm, schoolId, clas
                                         <Label>Start Time</Label>
                                         <Input type="time" {...register(`subjects.${index}.startTime`)} />
                                     </div>
-                                    <div className="space-y-2">
+                                     <div className="space-y-2">
                                         <Label>End Time</Label>
                                         <Input type="time" {...register(`subjects.${index}.endTime`)} />
                                     </div>
-                                     <div className="space-y-2">
-                                        <Label>Max Marks</Label>
-                                        <Input type="number" {...register(`subjects.${index}.maxMarks`)} />
-                                    </div>
-                                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                     <div className="flex items-center gap-2">
+                                         <div className="space-y-2 flex-grow">
+                                            <Label>Max Marks</Label>
+                                            <Input type="number" {...register(`subjects.${index}.maxMarks`)} />
+                                        </div>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="self-end">
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                     </div>
                                 </div>
                             ))}
-                             <Button type="button" variant="outline" size="sm" onClick={() => append({ subjectName: '', date: new Date(), startTime: '', endTime: '', maxMarks: 100 })}>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Add Subject
+                             <Button type="button" variant="outline" size="sm" onClick={() => append({ subjectName: '', date: new Date(), startTime: '10:00', endTime: '13:00', maxMarks: 100 })}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Subject Row
                             </Button>
-                            <div className="flex justify-end">
-                                <Button type="submit">Save Schedule</Button>
-                            </div>
+                            <DialogFooter className="sticky bottom-0 bg-background py-4 -mx-6 px-6 border-t">
+                                <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                                <Button type="submit" disabled={isSubmitting}>
+                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    Save Schedule
+                                </Button>
+                            </DialogFooter>
                         </form>
+                    ) : (
+                        <div className="flex items-center justify-center h-full">
+                            <p className="text-muted-foreground">Please select a class to view or edit the exam schedule.</p>
+                        </div>
                     )}
                 </div>
             </DialogContent>
