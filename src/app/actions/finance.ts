@@ -324,15 +324,21 @@ export async function getFeeReceipt(receiptId: string) {
         
         const receiptData = docSnap.data();
         
-        // Convert timestamp to date before returning
         const dataWithDate = {
             ...receiptData,
             paymentDate: receiptData.paymentDate.toDate(),
         };
 
         const studentRes = await getStudentById(receiptData.studentId, receiptData.schoolId);
+        
+        const studentInfo = studentRes.success ? studentRes.data : {
+            studentName: 'Student Not Found',
+            className: 'N/A',
+            section: 'N/A'
+        };
 
-        return { success: true, data: { ...dataWithDate, student: studentRes.data } };
+
+        return { success: true, data: { ...dataWithDate, student: studentInfo } };
 
     } catch (error) {
         console.error("Error fetching fee receipt:", error);
