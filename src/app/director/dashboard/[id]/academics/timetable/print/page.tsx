@@ -11,6 +11,18 @@ import { Loader2 } from 'lucide-react';
 const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 const periods = Array.from({ length: 8 }, (_, i) => `Period ${i + 1}`);
 
+const generateEmptyTimetable = () => {
+    const emptyDay = () => Array(periods.length).fill({ subject: '', teacher: '' });
+    return {
+        monday: emptyDay(),
+        tuesday: emptyDay(),
+        wednesday: emptyDay(),
+        thursday: emptyDay(),
+        friday: emptyDay(),
+        saturday: emptyDay(),
+    };
+};
+
 function TimetablePrintView({ schoolId, classId, section }: { schoolId: string, classId: string, section: string }) {
     const [timetable, setTimetable] = useState<any>(null);
     const [school, setSchool] = useState<any>(null);
@@ -28,8 +40,9 @@ function TimetablePrintView({ schoolId, classId, section }: { schoolId: string, 
                 getClassesForSchool(schoolId)
             ]);
             
-            if (timetableRes.success && timetableRes.data) {
-                setTimetable(timetableRes.data);
+            if (timetableRes.success) {
+                // If data is null, create a blank timetable structure
+                setTimetable(timetableRes.data || generateEmptyTimetable());
             }
             if (schoolRes.school) {
                 setSchool(schoolRes.school);
@@ -53,7 +66,7 @@ function TimetablePrintView({ schoolId, classId, section }: { schoolId: string, 
     }
 
     if (!timetable || !school || !className) {
-        return <div className="p-8 text-center">Could not load timetable data.</div>;
+        return <div className="p-8 text-center">Could not load timetable data. Please ensure the class and school exist.</div>;
     }
 
     return (
@@ -96,8 +109,8 @@ function TimetablePrintView({ schoolId, classId, section }: { schoolId: string, 
                                 {periods.map((_, periodIndex) => (
                                     <TableCell key={periodIndex}>
                                         <div>
-                                            <p className="font-semibold text-sm">{timetable[day]?.[periodIndex]?.subject || '-'}</p>
-                                            <p className="text-xs text-gray-600">{timetable[day]?.[periodIndex]?.teacher}</p>
+                                            <p className="font-semibold text-sm h-4">{timetable[day]?.[periodIndex]?.subject || ''}</p>
+                                            <p className="text-xs text-gray-600 h-3">{timetable[day]?.[periodIndex]?.teacher || ''}</p>
                                         </div>
                                     </TableCell>
                                 ))}
