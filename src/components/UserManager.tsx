@@ -209,6 +209,8 @@ function AddUserDialog({ isOpen, setIsOpen, schoolId, onSuccess }: { isOpen: boo
         const formData = new FormData();
         formData.append('schoolId', schoolId);
         Object.entries(data).forEach(([key, value]) => formData.append(key, value as string));
+        // Explicitly set enabled for new users
+        formData.append('enabled', 'true');
         formAction(formData);
     };
 
