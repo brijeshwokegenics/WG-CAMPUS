@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -113,7 +114,7 @@ function SalaryFormAccordionItem({ user, schoolId, initialSalary, onSuccess }: {
     const { fields: allowanceFields, append: appendAllowance, remove: removeAllowance } = useFieldArray({ control, name: "allowances" });
     const { fields: deductionFields, append: appendDeduction, remove: removeDeduction } = useFieldArray({ control, name: "deductions" });
     
-    const [state, formAction] = useFormState(setStaffSalary, { success: false });
+    const [state, formAction] = useFormState(setStaffSalary, { success: false, message: null, error: null });
 
     const watchAllowances = watch('allowances');
     const watchDeductions = watch('deductions');
@@ -130,9 +131,9 @@ function SalaryFormAccordionItem({ user, schoolId, initialSalary, onSuccess }: {
     
     useEffect(() => {
         if(state.success) {
-            // Refetch or update state
+            onSuccess(user.id, watch());
         }
-    }, [state.success]);
+    }, [state.success, onSuccess, user.id, watch]);
 
     const onFormSubmit = (data: SalaryData) => {
         const formData = new FormData();
@@ -142,7 +143,6 @@ function SalaryFormAccordionItem({ user, schoolId, initialSalary, onSuccess }: {
         formData.append('allowances', JSON.stringify(data.allowances || []));
         formData.append('deductions', JSON.stringify(data.deductions || []));
         formAction(formData);
-        onSuccess(user.id, data);
     }
     
     return (
@@ -204,11 +204,11 @@ function SalaryFormAccordionItem({ user, schoolId, initialSalary, onSuccess }: {
                             <h4 className="text-base font-semibold mb-3 text-center">Salary Summary</h4>
                             <div className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">Basic Salary:</span>
-                                <span>{watchBasicSalary.toLocaleString('en-IN')}</span>
+                                <span>{Number(watchBasicSalary).toLocaleString('en-IN')}</span>
                             </div>
                              <div className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">Total Allowances:</span>
-                                <span>+ {totalAllowances.toLocaleString('en-IN')}</span>
+                                <span className='text-green-600'>+ {totalAllowances.toLocaleString('en-IN')}</span>
                             </div>
                              <div className="flex justify-between text-sm font-medium border-t pt-1">
                                 <span className="text-muted-foreground">Gross Salary:</span>
@@ -216,9 +216,9 @@ function SalaryFormAccordionItem({ user, schoolId, initialSalary, onSuccess }: {
                             </div>
                              <div className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">Total Deductions:</span>
-                                <span>- {totalDeductions.toLocaleString('en-IN')}</span>
+                                <span className='text-red-600'>- {totalDeductions.toLocaleString('en-IN')}</span>
                             </div>
-                            <div className="flex justify-between text-sm font-bold text-primary border-t pt-2 mt-2">
+                            <div className="flex justify-between text-lg font-bold text-primary border-t pt-2 mt-2">
                                 <span>Net Salary:</span>
                                 <span>{netSalary.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>
                             </div>

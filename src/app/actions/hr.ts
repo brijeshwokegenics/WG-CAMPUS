@@ -246,7 +246,7 @@ export async function generatePayrollForMonth(prevState: any, formData: FormData
             const totalDeductions = salaryInfo.deductions?.reduce((acc: number, curr: any) => acc + curr.amount, 0) || 0;
             
             const earnedAllowances = totalAllowances * proRataRatio;
-            const applicableDeductions = totalDeductions * proRataRatio;
+            const applicableDeductions = totalDeductions * proRataRatio; // Correctly pro-rate deductions
 
             const grossSalary = earnedBasic + earnedAllowances;
             const netSalary = grossSalary - applicableDeductions;
@@ -324,4 +324,3 @@ export async function getPayrollHistory(schoolId: string) {
         return { success: false, error: "Failed to fetch payrolls." };
       }
 }
-
