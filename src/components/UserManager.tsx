@@ -33,14 +33,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Switch } from './ui/switch';
 import { Alert, AlertDescription } from './ui/alert';
 
-import { UserSchema, createUser, getUsersForSchool, updateUser, deleteUser, updateUserPassword } from '@/app/actions/users';
+import { UserSchema, AddUserFormSchema, UpdateUserFormSchema, createUser, getUsersForSchool, updateUser, deleteUser, updateUserPassword } from '@/app/actions/users';
 
 type User = z.infer<typeof UserSchema> & { id: string };
 
-const AddUserFormSchema = UserSchema.omit({ schoolId: true, enabled: true });
 type AddUserFormValues = z.infer<typeof AddUserFormSchema>;
-
-const UpdateUserFormSchema = UserSchema.omit({ password: true, schoolId: true, userId: true });
 type UpdateUserFormValues = z.infer<typeof UpdateUserFormSchema>;
 
 
@@ -423,4 +420,3 @@ function UpdatePasswordDialog({ isOpen, setIsOpen, schoolId, user }: { isOpen: b
         </Dialog>
     )
 }
-

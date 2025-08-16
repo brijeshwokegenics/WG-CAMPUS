@@ -19,7 +19,9 @@ export const UserSchema = z.object({
   enabled: z.boolean().default(true),
 });
 
-const UpdateUserSchema = UserSchema.omit({ password: true, schoolId: true });
+export const AddUserFormSchema = UserSchema.omit({ schoolId: true, enabled: true });
+export const UpdateUserFormSchema = UserSchema.omit({ password: true, schoolId: true, userId: true });
+
 
 export async function createUser(prevState: any, formData: FormData) {
   const rawData = Object.fromEntries(formData.entries());
@@ -89,7 +91,7 @@ export async function updateUser(prevState: any, formData: FormData) {
         enabled: formData.get('enabled') === 'true',
     };
 
-    const parsed = UpdateUserSchema.omit({userId: true}).safeParse(rawData);
+    const parsed = UpdateUserFormSchema.safeParse(rawData);
     
     if (!parsed.success) {
         return { success: false, error: 'Invalid data.', details: parsed.error.flatten() };
@@ -164,4 +166,3 @@ export async function updateUserPassword(docId: string, schoolId: string, newPas
         return { success: false, error: "Failed to update password." };
     }
 }
-
