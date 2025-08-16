@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -57,6 +58,7 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
     }
 
     const { name, salaryDetails, attendanceDetails, payout } = staffData;
+    const numberToWords = require('number-to-words');
 
     return (
          <div className="bg-white min-h-screen p-4 sm:p-8 flex items-center justify-center font-sans">
@@ -130,7 +132,7 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
                                 <tfoot className="font-bold border-t-2">
                                      <tr>
                                         <td className="py-2">Total Deductions</td>
-                                        <td className="py-2 text-right">{salaryDetails.totalDeductions.toLocaleString('en-IN')}</td>
+                                        <td className="py-2 text-right">{payout.applicableDeductions.toLocaleString('en-IN')}</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -143,7 +145,7 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
                              <span>{payout.netPayable.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>
                         </div>
                          <p className="text-right text-sm capitalize">
-                            (Rupees {require('number-to-words').toWords(payout.netPayable)} Only)
+                            (Rupees {numberToWords.toWords(payout.netPayable)} Only)
                         </p>
                     </div>
 

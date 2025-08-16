@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -182,7 +183,7 @@ function ViewPayslipDialog({ record, schoolId }: { record: PayrollRecord, school
                                         </span>
                                     </TableCell>
                                     <TableCell>{data.payout?.grossSalary?.toLocaleString('en-IN') || '-'}</TableCell>
-                                    <TableCell>{data.salaryDetails?.totalDeductions?.toLocaleString('en-IN') || '-'}</TableCell>
+                                    <TableCell>{data.payout?.applicableDeductions?.toLocaleString('en-IN') || '-'}</TableCell>
                                     <TableCell className="font-semibold">{data.payout?.netPayable?.toLocaleString('en-IN') || '-'}</TableCell>
                                     <TableCell className="text-xs">
                                         P: {data.attendanceDetails?.presentDays} | 

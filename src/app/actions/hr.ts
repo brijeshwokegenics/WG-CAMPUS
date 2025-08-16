@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -236,19 +237,19 @@ export async function generatePayrollForMonth(prevState: any, formData: FormData
             const leaveDays = monthlyAttendance.filter(att => att && att[user.id] === 'Leave').length;
             const absentDays = totalDays - presentDays - leaveDays;
             
-            // Pro-rata salary calculation
-            const payableDays = presentDays + leaveDays; // Or however leaves are handled
-            const perDaySalary = salaryInfo.basicSalary / totalDays;
-            const earnedBasic = perDaySalary * payableDays;
+            const payableDays = presentDays + leaveDays; // Assumes leaves are paid
+            const proRataRatio = totalDays > 0 ? payableDays / totalDays : 0;
+
+            const earnedBasic = salaryInfo.basicSalary * proRataRatio;
 
             const totalAllowances = salaryInfo.allowances?.reduce((acc: number, curr: any) => acc + curr.amount, 0) || 0;
             const totalDeductions = salaryInfo.deductions?.reduce((acc: number, curr: any) => acc + curr.amount, 0) || 0;
             
-            // Pro-rata allowances if needed, for now using full amount
-            const earnedAllowances = (totalAllowances / totalDays) * payableDays;
+            const earnedAllowances = totalAllowances * proRataRatio;
+            const applicableDeductions = totalDeductions * proRataRatio;
 
             const grossSalary = earnedBasic + earnedAllowances;
-            const netSalary = grossSalary - totalDeductions;
+            const netSalary = grossSalary - applicableDeductions;
 
             return {
                 userId: user.id,
@@ -271,6 +272,7 @@ export async function generatePayrollForMonth(prevState: any, formData: FormData
                     earnedBasic: Math.round(earnedBasic),
                     earnedAllowances: Math.round(earnedAllowances),
                     grossSalary: Math.round(grossSalary),
+                    applicableDeductions: Math.round(applicableDeductions),
                     netPayable: Math.round(netSalary),
                 },
             };
@@ -322,3 +324,4 @@ export async function getPayrollHistory(schoolId: string) {
         return { success: false, error: "Failed to fetch payrolls." };
       }
 }
+
