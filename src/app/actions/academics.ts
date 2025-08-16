@@ -579,3 +579,5 @@ export async function getMonthlyAttendance({ schoolId, classId, section, month }
         return { success: false, error: 'Failed to fetch monthly attendance data.' };
     }
 }
+
+    
