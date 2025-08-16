@@ -16,9 +16,13 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Pencil, Trash2, Eye, Printer } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash2, Eye, Printer, UserCard, FileText, BadgeCheck } from "lucide-react"
 import { deleteStudent, getStudentsForSchool } from '@/app/actions/academics';
 import { Button } from './ui/button';
 import Link from 'next/link';
@@ -55,8 +59,12 @@ export function StudentList({ schoolId, name, admissionId, classId }: StudentLis
         }
     };
     
-    const handlePrint = (studentId: string) => {
-        window.open(`/director/dashboard/${schoolId}/academics/students/${studentId}/print`, '_blank');
+    const handlePrint = (studentId: string, type: 'profile' | 'id-card' | 'admission-card' | 'tc') => {
+        let url = `/director/dashboard/${schoolId}/academics/students/${studentId}/print`;
+        if (type !== 'profile') {
+            url += `/${type}`;
+        }
+        window.open(url, '_blank');
     };
 
     const paginatedStudents = useMemo(() => {
@@ -111,28 +119,52 @@ export function StudentList({ schoolId, name, admissionId, classId }: StudentLis
                             </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <Link href={`/director/dashboard/${schoolId}/academics/students/${student.id}`} passHref>
-                                <DropdownMenuItem>
-                                        <Eye className="mr-2 h-4 w-4" />
-                                        View Profile
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <Link href={`/director/dashboard/${schoolId}/academics/students/${student.id}`} passHref>
+                                    <DropdownMenuItem>
+                                            <Eye className="mr-2 h-4 w-4" />
+                                            View Profile
+                                    </DropdownMenuItem>
+                                </Link>
+                                <Link href={`/director/dashboard/${schoolId}/academics/students/edit/${student.id}`} passHref>
+                                    <DropdownMenuItem>
+                                            <Pencil className="mr-2 h-4 w-4" />
+                                            Edit Student
+                                    </DropdownMenuItem>
+                                </Link>
+                                
+                                <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger>
+                                        <Printer className="mr-2 h-4 w-4" />
+                                        <span>Print</span>
+                                    </DropdownMenuSubTrigger>
+                                    <DropdownMenuPortal>
+                                        <DropdownMenuSubContent>
+                                            <DropdownMenuItem onClick={() => handlePrint(student.id, 'profile')}>
+                                                <UserCard className="mr-2 h-4 w-4" />
+                                                Profile
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handlePrint(student.id, 'id-card')}>
+                                                <BadgeCheck className="mr-2 h-4 w-4" />
+                                                ID Card
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handlePrint(student.id, 'admission-card')}>
+                                                <FileText className="mr-2 h-4 w-4" />
+                                                Admission Card
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handlePrint(student.id, 'tc')}>
+                                                <FileText className="mr-2 h-4 w-4" />
+                                                Transfer Certificate
+                                            </DropdownMenuItem>
+                                        </DropdownMenuSubContent>
+                                    </DropdownMenuPortal>
+                                </DropdownMenuSub>
+
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(student.id)} disabled={isPending}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete Student
                                 </DropdownMenuItem>
-                            </Link>
-                            <Link href={`/director/dashboard/${schoolId}/academics/students/edit/${student.id}`} passHref>
-                                <DropdownMenuItem>
-                                        <Pencil className="mr-2 h-4 w-4" />
-                                        Edit Student
-                                </DropdownMenuItem>
-                            </Link>
-                            <DropdownMenuItem onClick={() => handlePrint(student.id)}>
-                                <Printer className="mr-2 h-4 w-4" />
-                                Print Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(student.id)} disabled={isPending}>
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Student
-                            </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </TableCell>
