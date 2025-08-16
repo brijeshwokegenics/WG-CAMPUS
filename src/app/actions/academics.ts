@@ -46,6 +46,7 @@ const StudentSchema = z.object({
   previousMarks: z.string().optional(),
   transportRequired: z.enum(['Yes', 'No']).optional(),
   hostelRequired: z.enum(['Yes', 'No']).optional(),
+  feesPaid: z.boolean().default(false).optional(),
 });
 
 const UpdateStudentSchema = StudentSchema.omit({schoolId: true});
@@ -194,6 +195,7 @@ export async function admitStudent(prevState: any, formData: FormData) {
       ...rawData,
       admissionDate: new Date(rawData.admissionDate as string),
       dob: new Date(rawData.dob as string),
+      feesPaid: rawData.feesPaid === 'true',
   };
   
   // Remove empty optional fields so they don't fail validation
@@ -227,7 +229,7 @@ export async function admitStudent(prevState: any, formData: FormData) {
   }
 }
 
-export async function getStudentsForSchool({ schoolId, name, admissionId, classId }: { schoolId: string, name?: string, admissionId?: string, classId?: string }) {
+export async function getStudentsForSchool({ schoolId, name, admissionId, classId, section }: { schoolId: string, name?: string, admissionId?: string, classId?: string, section?: string }) {
     if (!schoolId) {
         console.error("School ID is required.");
         return [];
@@ -239,6 +241,9 @@ export async function getStudentsForSchool({ schoolId, name, admissionId, classI
 
         if (classId) {
             queryConstraints.push(where('classId', '==', classId));
+        }
+        if (section) {
+            queryConstraints.push(where('section', '==', section));
         }
 
         let studentsQuery = query(studentsRef, ...queryConstraints);
@@ -274,6 +279,7 @@ export async function getStudentsForSchool({ schoolId, name, admissionId, classI
                 section: data.section,
                 fatherName: data.fatherName,
                 parentMobile: data.parentMobile,
+                feesPaid: data.feesPaid || false,
             };
         }));
         
@@ -352,6 +358,7 @@ export async function updateStudent(prevState: any, formData: FormData) {
       ...rawData,
       admissionDate: new Date(rawData.admissionDate as string),
       dob: new Date(rawData.dob as string),
+      feesPaid: rawData.feesPaid === 'on' || rawData.feesPaid === 'true',
   };
 
   // Remove empty optional fields so they don't fail validation

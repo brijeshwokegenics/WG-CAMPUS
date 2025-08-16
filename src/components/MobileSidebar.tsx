@@ -4,7 +4,7 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, School, ChevronDown, GraduationCap, Briefcase, Building, MessageSquare, PersonStanding, BookUser, LayoutDashboard, Users } from "lucide-react";
+import { Menu, School, ChevronDown, GraduationCap, Briefcase, Building, MessageSquare, PersonStanding, BookUser, LayoutDashboard, Users, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ const directorSidebarNavItems = (schoolId: string) => [
       { title: "Admissions", href: `/director/dashboard/${schoolId}/academics/admissions` },
       { title: "Students", href: `/director/dashboard/${schoolId}/academics/students` },
       { title: "Promote Students", href: `/director/dashboard/${schoolId}/academics/promote` },
+      { title: "Print Center", href: `/director/dashboard/${schoolId}/academics/print` },
       { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance` },
       { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable` },
       { title: "Exams", href: `/director/dashboard/${schoolId}/academics/exams` },
@@ -93,14 +94,15 @@ const directorSidebarNavItems = (schoolId: string) => [
 
 type MobileSidebarProps = {
   schoolId?: string;
+  navItems?: { title: string; href: string; icon: React.ReactNode }[];
 };
 
-export function MobileSidebar({ schoolId }: MobileSidebarProps) {
+export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: MobileSidebarProps) {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
-    const navItems = useMemo(() => (schoolId ? directorSidebarNavItems(schoolId) : []), [schoolId]);
+    const directorNavItems = useMemo(() => (schoolId ? directorSidebarNavItems(schoolId) : []), [schoolId]);
 
     const toggleSection = (section: string) => {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -111,7 +113,8 @@ export function MobileSidebar({ schoolId }: MobileSidebarProps) {
     ];
     
     // Determine which set of nav items to use
-    const mainNavItems = schoolId ? navItems : [];
+    const mainNavItems = schoolId ? directorNavItems : superAdminNavItems || [];
+    const isDirector = !!schoolId;
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
@@ -146,7 +149,7 @@ export function MobileSidebar({ schoolId }: MobileSidebarProps) {
                                 {item.title}
                             </Link>
                         ))}
-                         {mainNavItems.map((section, index) => (
+                         {isDirector ? mainNavItems.map((section, index) => (
                             <div key={index} className="space-y-1">
                                 <Button
                                     variant="ghost"
@@ -179,7 +182,23 @@ export function MobileSidebar({ schoolId }: MobileSidebarProps) {
                                     </div>
                                 )}
                             </div>
-                        ))}
+                        )) : mainNavItems.map((item: any) => (
+                             !item.isSection && (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={() => setOpen(false)}
+                                    className={cn(
+                                        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                                        pathname === item.href && "bg-muted text-primary"
+                                    )}
+                                >
+                                    {item.icon}
+                                    {item.title}
+                                </Link>
+                             )
+                        ))
+                        }
                     </div>
                 </nav>
             </SheetContent>

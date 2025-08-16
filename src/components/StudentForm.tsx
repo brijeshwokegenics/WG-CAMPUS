@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { FileUpload } from './FileUpload';
+import { Checkbox } from './ui/checkbox';
 
 
 const FormSchema = z.object({
@@ -53,6 +54,7 @@ const FormSchema = z.object({
   previousMarks: z.string().optional(),
   transportRequired: z.enum(['Yes', 'No']).optional(),
   hostelRequired: z.enum(['Yes', 'No']).optional(),
+  feesPaid: z.boolean().default(false).optional(),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -66,6 +68,7 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
       ...studentData,
       studentId: studentData.id,
       schoolId: schoolId,
+      feesPaid: studentData.feesPaid || false,
   };
     
   const { register, handleSubmit, control, formState: { errors, isSubmitting }, watch, reset, setValue } = useForm<FormValues>({
@@ -104,6 +107,8 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
     Object.entries(data).forEach(([key, value]) => {
       if (value instanceof Date) {
         formData.append(key, value.toISOString());
+      } else if (typeof value === 'boolean') {
+        formData.append(key, String(value));
       } else if (value) {
         formData.append(key, value as string);
       }
@@ -167,6 +172,22 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
              )} />
             {errors.section && <p className="text-sm text-destructive">{errors.section.message}</p>}
           </div>
+           <div className="flex items-center space-x-2 pt-8">
+                <Controller
+                    name="feesPaid"
+                    control={control}
+                    render={({ field }) => (
+                        <Checkbox
+                            id="feesPaid"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                        />
+                    )}
+                />
+                <Label htmlFor="feesPaid" className="text-sm font-medium leading-none">
+                    Fees Paid?
+                </Label>
+            </div>
         </fieldset>
 
         {/* Student Details */}
