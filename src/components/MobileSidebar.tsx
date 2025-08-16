@@ -41,8 +41,8 @@ const directorSidebarNavItems = (schoolId: string) => [
     icon: <Building className="h-5 w-5" />,
     items: [
       { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users` },
-      { title: "Fees", href: `/director/dashboard/${schoolId}/admin/fees` },
       { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure` },
+      { title: "Fees", href: `/director/dashboard/${schoolId}/admin/fees` },
       { title: "Inventory", href: `/director/dashboard/${schoolId}/admin/inventory` },
       { title: "Transport", href: `/director/dashboard/${schoolId}/admin/transport` },
       { title: "Library", href: `/director/dashboard/${schoolId}/admin/library` },
