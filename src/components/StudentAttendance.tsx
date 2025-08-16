@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useFormState } from 'react-dom';
-import { format, parseISO, getDaysInMonth, startOfMonth } from 'date-fns';
+import { format, parseISO, getDaysInMonth } from 'date-fns';
 import { Calendar as CalendarIcon, Loader2, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -140,7 +140,9 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
                 const dateStr = format(date, 'yyyy-MM-dd');
                 const dayHeader = format(date, 'dd-MMM');
                 const attendanceRecord = attendance.find((att: any) => att.date === dateStr);
-                studentRow[dayHeader] = attendanceRecord?.attendance[student.id]?.charAt(0) || '-';
+                
+                // Get the first character of the status, or '-' if no record or no status for the student
+                studentRow[dayHeader] = attendanceRecord?.attendance?.[student.id]?.charAt(0) || '-';
             }
             return studentRow;
         });
