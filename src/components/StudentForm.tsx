@@ -55,6 +55,7 @@ const FormSchema = z.object({
   transportRequired: z.enum(['Yes', 'No']).optional(),
   hostelRequired: z.enum(['Yes', 'No']).optional(),
   feesPaid: z.boolean().default(false).optional(),
+  passedFinalExam: z.boolean().default(false).optional(),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -69,6 +70,7 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
       studentId: studentData.id,
       schoolId: schoolId,
       feesPaid: studentData.feesPaid || false,
+      passedFinalExam: studentData.passedFinalExam || false,
   };
     
   const { register, handleSubmit, control, formState: { errors, isSubmitting }, watch, reset, setValue } = useForm<FormValues>({
@@ -172,21 +174,39 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
              )} />
             {errors.section && <p className="text-sm text-destructive">{errors.section.message}</p>}
           </div>
-           <div className="flex items-center space-x-2 pt-8">
-                <Controller
-                    name="feesPaid"
-                    control={control}
-                    render={({ field }) => (
-                        <Checkbox
-                            id="feesPaid"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                        />
-                    )}
-                />
-                <Label htmlFor="feesPaid" className="text-sm font-medium leading-none">
-                    Fees Paid?
-                </Label>
+           <div className="flex flex-col space-y-4 pt-2">
+               <div className="flex items-center space-x-2">
+                    <Controller
+                        name="feesPaid"
+                        control={control}
+                        render={({ field }) => (
+                            <Checkbox
+                                id="feesPaid"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                        )}
+                    />
+                    <Label htmlFor="feesPaid" className="text-sm font-medium leading-none">
+                        Fees Paid?
+                    </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Controller
+                        name="passedFinalExam"
+                        control={control}
+                        render={({ field }) => (
+                            <Checkbox
+                                id="passedFinalExam"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                        )}
+                    />
+                    <Label htmlFor="passedFinalExam" className="text-sm font-medium leading-none">
+                       Passed Final Exam?
+                    </Label>
+                </div>
             </div>
         </fieldset>
 

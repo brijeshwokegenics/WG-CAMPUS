@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
 type ClassData = { id: string; name: string; sections: string[]; };
-type StudentData = { id: string; studentName: string; section: string; fatherName: string; };
+type StudentData = { id: string; studentName: string; section: string; fatherName: string; passedFinalExam: boolean; };
 
 export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, classes: ClassData[] }) {
     const [fromClassId, setFromClassId] = useState('');
@@ -25,6 +25,7 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
     const [selectedStudents, setSelectedStudents] = useState<Record<string, boolean>>({});
     const [selectAll, setSelectAll] = useState(false);
     const [loadingStudents, setLoadingStudents] = useState(false);
+    const [showPassedOnly, setShowPassedOnly] = useState(false);
 
     const initialState = { success: false, error: null, message: null, details: null };
     const [state, formAction] = useFormState(promoteStudents, initialState);
@@ -36,7 +37,12 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
         async function fetchStudents() {
             if (fromClassId && fromSection) {
                 setLoadingStudents(true);
-                const studentData = await getStudentsForSchool({ schoolId, classId: fromClassId, section: fromSection });
+                const studentData = await getStudentsForSchool({ 
+                    schoolId, 
+                    classId: fromClassId, 
+                    section: fromSection,
+                    passedOnly: showPassedOnly,
+                });
                 setStudents(studentData);
                 setSelectedStudents({});
                 setSelectAll(false);
@@ -46,7 +52,7 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
             }
         }
         fetchStudents();
-    }, [schoolId, fromClassId, fromSection]);
+    }, [schoolId, fromClassId, fromSection, showPassedOnly]);
 
     useEffect(() => {
         const newSelection: Record<string, boolean> = {};
@@ -132,6 +138,19 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
                 </div>
             </div>
 
+            {fromClassId && fromSection && (
+                 <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="showPassed"
+                        checked={showPassedOnly}
+                        onCheckedChange={(checked) => setShowPassedOnly(Boolean(checked))}
+                    />
+                    <Label htmlFor="showPassed" className="font-medium">
+                        Show only students who passed the final exam
+                    </Label>
+                </div>
+            )}
+
             {loadingStudents && (
                  <div className="text-center py-4">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto" />
@@ -139,6 +158,12 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
                  </div>
             )}
             
+            {!loadingStudents && fromClassId && fromSection && students.length === 0 && (
+                 <div className="text-center py-10 border rounded-lg">
+                    <p className="text-muted-foreground">No students found for the selected criteria.</p>
+                </div>
+            )}
+
             {students.length > 0 && !loadingStudents && (
                 <div className="border rounded-lg">
                      <Table>
@@ -152,6 +177,7 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
                                 </TableHead>
                                 <TableHead>Student Name</TableHead>
                                 <TableHead>Father's Name</TableHead>
+                                <TableHead>Exam Status</TableHead>
                                 <TableHead>Admission ID</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -167,6 +193,11 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
                                     </TableCell>
                                     <TableCell className="font-medium">{student.studentName}</TableCell>
                                     <TableCell>{student.fatherName}</TableCell>
+                                    <TableCell>
+                                        <span className={`px-2 py-1 text-xs rounded-full ${student.passedFinalExam ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
+                                            {student.passedFinalExam ? 'Passed' : 'Not Marked'}
+                                        </span>
+                                    </TableCell>
                                     <TableCell className="font-mono text-xs">{student.id}</TableCell>
                                 </TableRow>
                             ))}
@@ -187,4 +218,3 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
         </form>
     );
 }
-
