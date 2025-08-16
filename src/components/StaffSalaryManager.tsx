@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -120,11 +119,13 @@ function SalaryFormAccordionItem({ user, schoolId, initialSalary, onSuccess }: {
     const watchDeductions = watch('deductions');
     const watchBasicSalary = watch('basicSalary');
     
-    const netSalary = useMemo(() => {
+    const { grossSalary, netSalary, totalAllowances, totalDeductions } = useMemo(() => {
         const basic = Number(watchBasicSalary) || 0;
-        const totalAllowances = watchAllowances?.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0) || 0;
-        const totalDeductions = watchDeductions?.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0) || 0;
-        return basic + totalAllowances - totalDeductions;
+        const allowances = watchAllowances?.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0) || 0;
+        const deductions = watchDeductions?.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0) || 0;
+        const gross = basic + allowances;
+        const net = gross - deductions;
+        return { grossSalary: gross, netSalary: net, totalAllowances: allowances, totalDeductions: deductions };
     }, [watchBasicSalary, watchAllowances, watchDeductions]);
     
     useEffect(() => {
@@ -160,21 +161,21 @@ function SalaryFormAccordionItem({ user, schoolId, initialSalary, onSuccess }: {
                         <AlertDescription>{state.message || state.error}</AlertDescription>
                         </Alert>
                     )}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                         {/* Basic Salary */}
-                        <div className='space-y-2'>
-                           <Label htmlFor={`basic-${user.id}`} className='text-lg font-semibold'>Basic Salary</Label>
+                        <div className='space-y-2 lg:col-span-1'>
+                           <Label htmlFor={`basic-${user.id}`} className='text-base font-semibold'>Basic Salary</Label>
                            <Input id={`basic-${user.id}`} type="number" {...register('basicSalary')} />
                            {errors.basicSalary && <p className="text-sm text-destructive">{errors.basicSalary.message}</p>}
                         </div>
 
                         {/* Allowances */}
-                        <div className="space-y-4">
-                            <h4 className='text-lg font-semibold'>Allowances</h4>
+                        <div className="space-y-4 lg:col-span-1">
+                            <h4 className='text-base font-semibold'>Allowances</h4>
                              {allowanceFields.map((field, index) => (
                                 <div key={field.id} className="flex gap-2 items-end">
-                                    <Input {...register(`allowances.${index}.name`)} placeholder="Allowance Name" />
-                                    <Input type="number" {...register(`allowances.${index}.amount`)} placeholder="Amount" />
+                                    <Input {...register(`allowances.${index}.name`)} placeholder="Allowance Name" className="text-xs h-9"/>
+                                    <Input type="number" {...register(`allowances.${index}.amount`)} placeholder="Amount" className="text-xs h-9" />
                                     <Button type="button" variant="ghost" size="icon" onClick={() => removeAllowance(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                 </div>
                             ))}
@@ -184,18 +185,43 @@ function SalaryFormAccordionItem({ user, schoolId, initialSalary, onSuccess }: {
                         </div>
                         
                         {/* Deductions */}
-                        <div className="space-y-4">
-                            <h4 className='text-lg font-semibold'>Deductions</h4>
+                        <div className="space-y-4 lg:col-span-1">
+                            <h4 className='text-base font-semibold'>Deductions</h4>
                             {deductionFields.map((field, index) => (
                                 <div key={field.id} className="flex gap-2 items-end">
-                                    <Input {...register(`deductions.${index}.name`)} placeholder="Deduction Name" />
-                                    <Input type="number" {...register(`deductions.${index}.amount`)} placeholder="Amount" />
+                                    <Input {...register(`deductions.${index}.name`)} placeholder="Deduction Name" className="text-xs h-9" />
+                                    <Input type="number" {...register(`deductions.${index}.amount`)} placeholder="Amount" className="text-xs h-9" />
                                     <Button type="button" variant="ghost" size="icon" onClick={() => removeDeduction(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                 </div>
                             ))}
                             <Button type="button" variant="outline" size="sm" onClick={() => appendDeduction({ name: '', amount: 0 })}>
                                 <PlusCircle className='h-4 w-4 mr-2' /> Add Deduction
                             </Button>
+                        </div>
+
+                        {/* Summary */}
+                        <div className="space-y-2 bg-background p-4 rounded-lg border lg:col-span-1">
+                            <h4 className="text-base font-semibold mb-3 text-center">Salary Summary</h4>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Basic Salary:</span>
+                                <span>{watchBasicSalary.toLocaleString('en-IN')}</span>
+                            </div>
+                             <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Total Allowances:</span>
+                                <span>+ {totalAllowances.toLocaleString('en-IN')}</span>
+                            </div>
+                             <div className="flex justify-between text-sm font-medium border-t pt-1">
+                                <span className="text-muted-foreground">Gross Salary:</span>
+                                <span>{grossSalary.toLocaleString('en-IN')}</span>
+                            </div>
+                             <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Total Deductions:</span>
+                                <span>- {totalDeductions.toLocaleString('en-IN')}</span>
+                            </div>
+                            <div className="flex justify-between text-sm font-bold text-primary border-t pt-2 mt-2">
+                                <span>Net Salary:</span>
+                                <span>{netSalary.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>
+                            </div>
                         </div>
                     </div>
                      <div className="flex justify-end mt-6">

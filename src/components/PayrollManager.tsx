@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useFormState } from 'react-dom';
 import { format } from 'date-fns';
-import { Loader2, FileText, ChevronRight, Eye } from 'lucide-react';
+import { Loader2, Eye, Printer } from 'lucide-react';
 import { z } from 'zod';
 import { generatePayrollForMonth, getPayrollHistory } from '@/app/actions/hr';
 import { Button } from './ui/button';
@@ -87,8 +86,8 @@ export function PayrollManager({ schoolId }: { schoolId: string }) {
                                     max={format(new Date(), 'yyyy-MM')}
                                 />
                             </div>
-                            <Button type="submit" className="w-full">
-                                <ChevronRight className="mr-2 h-4 w-4" />
+                            <Button type="submit" className="w-full" disabled={!month}>
+                                {state.success === false && state.error ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                                 Generate Payroll
                             </Button>
                         </form>
@@ -117,12 +116,12 @@ export function PayrollManager({ schoolId }: { schoolId: string }) {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {history.map(record => (
+                                        {history.sort((a,b) => new Date(b.month).getTime() - new Date(a.month).getTime()).map(record => (
                                             <TableRow key={record.id}>
-                                                <TableCell className="font-medium">{format(new Date(record.month), 'MMMM yyyy')}</TableCell>
+                                                <TableCell className="font-medium">{format(new Date(`${record.month}-02`), 'MMMM yyyy')}</TableCell>
                                                 <TableCell>{format(new Date(record.generatedOn), 'dd MMM, yyyy hh:mm a')}</TableCell>
                                                 <TableCell className="text-right">
-                                                    <ViewPayslipDialog record={record} />
+                                                    <ViewPayslipDialog record={record} schoolId={schoolId} />
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -139,17 +138,23 @@ export function PayrollManager({ schoolId }: { schoolId: string }) {
     );
 }
 
-function ViewPayslipDialog({ record }: { record: PayrollRecord }) {
+function ViewPayslipDialog({ record, schoolId }: { record: PayrollRecord, schoolId: string }) {
+
+    const handlePrint = (userId: string) => {
+        const printUrl = `/director/dashboard/${schoolId}/hr/payroll/print?month=${record.month}&userId=${userId}`;
+        window.open(printUrl, '_blank');
+    };
+
     return (
          <Dialog>
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
-                    <Eye className="mr-2 h-4 w-4" /> View
+                    <Eye className="mr-2 h-4 w-4" /> View Details
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl">
+            <DialogContent className="max-w-5xl">
                 <DialogHeader>
-                    <DialogTitle>Payroll Details: {format(new Date(record.month), 'MMMM yyyy')}</DialogTitle>
+                    <DialogTitle>Payroll Details: {format(new Date(`${record.month}-02`), 'MMMM yyyy')}</DialogTitle>
                     <DialogDescription>
                         Generated on {format(new Date(record.generatedOn), 'dd MMM, yyyy hh:mm a')}
                     </DialogDescription>
@@ -164,6 +169,7 @@ function ViewPayslipDialog({ record }: { record: PayrollRecord }) {
                                 <TableHead>Deductions</TableHead>
                                 <TableHead>Net Payable</TableHead>
                                 <TableHead>Attendance</TableHead>
+                                <TableHead className="text-right">Payslip</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -182,6 +188,16 @@ function ViewPayslipDialog({ record }: { record: PayrollRecord }) {
                                         P: {data.attendanceDetails?.presentDays} | 
                                         A: {data.attendanceDetails?.absentDays} | 
                                         L: {data.attendanceDetails?.leaveDays}
+                                    </TableCell>
+                                     <TableCell className="text-right">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            onClick={() => handlePrint(data.userId)}
+                                            disabled={!!data.error}
+                                        >
+                                            <Printer className="h-4 w-4" />
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))}

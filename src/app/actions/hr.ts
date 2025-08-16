@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -66,6 +65,20 @@ export async function getStaffSalaries(schoolId: string) {
     console.error("Error fetching staff salaries:", error);
     return { success: false, error: "Failed to fetch salaries." };
   }
+}
+
+export async function getStaffSalaryByUserId(schoolId: string, userId: string) {
+    try {
+        const salaryDocRef = doc(db, 'staffSalaries', `${schoolId}_${userId}`);
+        const docSnap = await getDoc(salaryDocRef);
+        if (docSnap.exists()) {
+            return { success: true, data: docSnap.data() };
+        }
+        return { success: false, error: 'Salary not found' };
+    } catch(e) {
+        console.error("Error fetching staff salary:", e);
+        return { success: false, error: "Failed to fetch salary." };
+    }
 }
 
 
@@ -243,7 +256,9 @@ export async function generatePayrollForMonth(prevState: any, formData: FormData
                 status: 'Processed',
                 salaryDetails: {
                     basic: salaryInfo.basicSalary,
+                    allowances: salaryInfo.allowances || [],
                     totalAllowances,
+                    deductions: salaryInfo.deductions || [],
                     totalDeductions,
                 },
                 attendanceDetails: {
@@ -279,6 +294,21 @@ export async function generatePayrollForMonth(prevState: any, formData: FormData
         return { success: false, error: `An unexpected error occurred: ${e.message}` };
     }
 }
+
+export async function getPayrollForMonth(schoolId: string, month: string) {
+    try {
+        const payrollDocRef = doc(db, 'payrolls', `${schoolId}_${month}`);
+        const docSnap = await getDoc(payrollDocRef);
+        if (docSnap.exists()) {
+            return { success: true, data: docSnap.data() };
+        }
+        return { success: false, error: "Payroll record not found for this month." };
+    } catch (error) {
+        console.error("Error fetching payroll:", error);
+        return { success: false, error: "Failed to fetch payroll." };
+    }
+}
+
 
 export async function getPayrollHistory(schoolId: string) {
      try {
