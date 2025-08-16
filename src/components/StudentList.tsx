@@ -26,7 +26,7 @@ import { MoreHorizontal, Pencil, Trash2, Eye, Printer, UserCard, FileText, Badge
 import { deleteStudent, getStudentsForSchool } from '@/app/actions/academics';
 import { Button } from './ui/button';
 import Link from 'next/link';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type StudentListProps = {
     schoolId: string;
