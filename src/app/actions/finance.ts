@@ -3,8 +3,9 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, setDoc, getDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
+import { getStudentById } from './academics';
 
 // ========== FEE HEADS ==========
 
@@ -162,3 +163,126 @@ export async function getFeeStructure(schoolId: string, classId: string) {
         return { success: false, error: "Failed to fetch fee structure." };
     }
 }
+
+
+// ========== FEE COLLECTION ==========
+const FeePaymentItemSchema = z.object({
+  feeHeadId: z.string(),
+  feeHeadName: z.string(),
+  amount: z.coerce.number().min(0),
+});
+
+const FeeCollectionSchema = z.object({
+    schoolId: z.string(),
+    studentId: z.string(),
+    classId: z.string(),
+    paymentDate: z.date(),
+    paymentMode: z.enum(['Cash', 'Cheque', 'UPI', 'Card', 'Bank Transfer']),
+    transactionId: z.string().optional(),
+    totalAmount: z.coerce.number().min(1, "Total amount must be greater than 0."),
+    paidFor: z.array(FeePaymentItemSchema),
+    receiptNumber: z.string().optional(), // Will be generated on server
+});
+
+export async function collectFee(prevState: any, formData: FormData) {
+    const rawData = {
+        schoolId: formData.get('schoolId'),
+        studentId: formData.get('studentId'),
+        classId: formData.get('classId'),
+        paymentDate: new Date(formData.get('paymentDate') as string),
+        paymentMode: formData.get('paymentMode'),
+        transactionId: formData.get('transactionId'),
+        totalAmount: formData.get('totalAmount'),
+        paidFor: JSON.parse(formData.get('paidFor') as string),
+    };
+
+    const parsed = FeeCollectionSchema.safeParse(rawData);
+
+    if (!parsed.success) {
+        return { success: false, error: 'Invalid data provided.', details: parsed.error.flatten() };
+    }
+
+    const { schoolId, studentId } = parsed.data;
+
+    try {
+        const counterRef = doc(db, 'counters', `${schoolId}_feeReceipt`);
+        
+        const newReceiptNumber = await runTransaction(db, async (transaction) => {
+            const counterDoc = await transaction.get(counterRef);
+            const currentNumber = counterDoc.exists() ? counterDoc.data().currentNumber : 0;
+            const newNumber = currentNumber + 1;
+            transaction.set(counterRef, { currentNumber: newNumber }, { merge: true });
+            return newNumber.toString().padStart(6, '0');
+        });
+        
+        const dataToSave = {
+            ...parsed.data,
+            receiptNumber: `RCPT-${newReceiptNumber}`,
+            createdAt: serverTimestamp(),
+        };
+
+        const newDocRef = await addDoc(collection(db, 'feeCollections'), dataToSave);
+        
+        revalidatePath(`/director/dashboard/${schoolId}/admin/fees`);
+        
+        return { success: true, message: `Fee collected successfully. Receipt No: ${dataToSave.receiptNumber}`, receiptId: newDocRef.id };
+
+    } catch (error) {
+        console.error("Error collecting fee:", error);
+        return { success: false, error: 'An unexpected error occurred while collecting the fee.' };
+    }
+}
+
+export async function getStudentFeeDetails(schoolId: string, studentId: string) {
+    try {
+        // 1. Get student data
+        const studentRes = await getStudentById(studentId, schoolId);
+        if (!studentRes.success) return { success: false, error: "Student not found." };
+        const student = studentRes.data;
+
+        // 2. Get class fee structure
+        const structureRes = await getFeeStructure(schoolId, student.classId);
+        const feeStructure = structureRes.success ? structureRes.data : null;
+
+        // 3. Get payment history
+        const paymentsRef = collection(db, 'feeCollections');
+        const q = query(paymentsRef, where('schoolId', '==', schoolId), where('studentId', '==', studentId));
+        const paymentSnapshot = await getDocs(q);
+        const paymentHistory = paymentSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            paymentDate: doc.data().paymentDate.toDate(),
+        }));
+        
+        paymentHistory.sort((a,b) => b.paymentDate.getTime() - a.paymentDate.getTime());
+
+        return { success: true, data: { student, feeStructure, paymentHistory } };
+    } catch (error) {
+        console.error("Error fetching student fee details:", error);
+        return { success: false, error: "Failed to fetch fee details." };
+    }
+}
+
+
+export async function getFeeReceipt(receiptId: string) {
+    try {
+        const docRef = doc(db, 'feeCollections', receiptId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+            return { success: false, error: "Receipt not found." };
+        }
+        
+        const receiptData = docSnap.data();
+
+        const studentRes = await getStudentById(receiptData.studentId, receiptData.schoolId);
+
+        return { success: true, data: { ...receiptData, student: studentRes.data } };
+
+    } catch (error) {
+        console.error("Error fetching fee receipt:", error);
+        return { success: false, error: "Failed to fetch receipt." };
+    }
+}
+
+    

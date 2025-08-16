@@ -226,3 +226,5 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
     </div>
   );
 }
+
+    
