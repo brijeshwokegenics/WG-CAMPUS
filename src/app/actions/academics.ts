@@ -132,6 +132,30 @@ const MarksEntrySchema = z.object({
     marks: z.array(StudentMarksSchema),
 });
 
+const StudyMaterialSchema = z.object({
+  schoolId: z.string().min(1),
+  classId: z.string().min(1, "Class is required."),
+  section: z.string().min(1, "Section is required."),
+  date: z.date(),
+  title: z.string().min(3, "Title is required."),
+  description: z.string().optional(),
+  fileUrl: z.string().url("A valid file URL is required."),
+});
+
+const HomeworkSchema = z.object({
+  schoolId: z.string().min(1),
+  classId: z.string().min(1, "Class is required."),
+  section: z.string().min(1, "Section is required."),
+  date: z.date(),
+  submissionDate: z.date(),
+  title: z.string().min(3, "Title is required."),
+  description: z.string().optional(),
+  fileUrl: z.string().url("A valid file URL is required."),
+}).refine(data => data.submissionDate >= data.date, {
+  message: "Submission date cannot be before the assignment date.",
+  path: ["submissionDate"],
+});
+
 
 export async function getClassesForSchool(schoolId: string) {
   if (!schoolId) {
@@ -876,4 +900,92 @@ export async function getMarksForStudent(schoolId: string, examTermId: string, s
         console.error("Error fetching marks:", error);
         return { success: false, error: "Failed to fetch marks." };
     }
+}
+
+export async function addStudyMaterial(prevState: any, formData: FormData) {
+  const rawData = {
+    ...Object.fromEntries(formData.entries()),
+    date: new Date(formData.get('date') as string),
+  };
+  const parsed = StudyMaterialSchema.safeParse(rawData);
+
+  if (!parsed.success) {
+    console.error(parsed.error.flatten());
+    return { success: false, error: 'Invalid data provided for study material.' };
+  }
+
+  try {
+    await addDoc(collection(db, 'studyMaterials'), parsed.data);
+    revalidatePath(`/director/dashboard/${parsed.data.schoolId}/academics/elearning`);
+    return { success: true, message: 'Study material added successfully.' };
+  } catch (error) {
+    console.error('Error adding study material:', error);
+    return { success: false, error: 'An unexpected error occurred.' };
+  }
+}
+
+export async function getStudyMaterials({ schoolId, classId, section }: { schoolId: string; classId: string; section: string }) {
+  try {
+    const q = query(
+      collection(db, 'studyMaterials'),
+      where('schoolId', '==', schoolId),
+      where('classId', '==', classId),
+      where('section', '==', section)
+    );
+    const snapshot = await getDocs(q);
+    const materials = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      date: doc.data().date.toDate(),
+    }));
+    return { success: true, data: materials };
+  } catch (error) {
+    console.error('Error fetching study materials:', error);
+    return { success: false, error: 'Failed to fetch study materials.' };
+  }
+}
+
+export async function addHomework(prevState: any, formData: FormData) {
+  const rawData = {
+    ...Object.fromEntries(formData.entries()),
+    date: new Date(formData.get('date') as string),
+    submissionDate: new Date(formData.get('submissionDate') as string),
+  };
+  const parsed = HomeworkSchema.safeParse(rawData);
+
+  if (!parsed.success) {
+    console.error(parsed.error.flatten());
+    return { success: false, error: 'Invalid data provided for homework.', details: parsed.error.flatten() };
+  }
+
+  try {
+    await addDoc(collection(db, 'homework'), parsed.data);
+    revalidatePath(`/director/dashboard/${parsed.data.schoolId}/academics/elearning`);
+    return { success: true, message: 'Homework added successfully.' };
+  } catch (error) {
+    console.error('Error adding homework:', error);
+    return { success: false, error: 'An unexpected error occurred.' };
+  }
+}
+
+export async function getHomework({ schoolId, classId, section }: { schoolId: string; classId: string; section: string }) {
+  try {
+    const q = query(
+      collection(db, 'homework'),
+      where('schoolId', '==', schoolId),
+      where('classId', '==', classId),
+      where('section', '==', section)
+    );
+    const snapshot = await getDocs(q);
+    const homeworks = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      date: doc.data().date.toDate(),
+      submissionDate: doc.data().submissionDate.toDate(),
+    }));
+    return { success: true, data: homeworks };
+  } catch (error) {
+    console.error('Error fetching homework:', error);
+    return { success: false, error: 'Failed to fetch homework.' };
+  }
 }
