@@ -19,6 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 
 import { getStudentFeeDetails, collectFee } from '@/app/actions/finance';
 import { getStudentsForSchool } from '@/app/actions/academics';
@@ -33,6 +35,7 @@ const FeePaymentItemSchema = z.object({
   feeHeadId: z.string(),
   feeHeadName: z.string(),
   amount: z.coerce.number().min(0),
+  installmentName: z.string().optional(),
 });
 
 const FeeCollectionFormSchema = z.object({
@@ -67,8 +70,7 @@ export function FeeManager({ schoolId, classes }: { schoolId: string, classes: C
         });
     }
 
-    const handleSelectStudent = useCallback(async (student: StudentData) => {
-        setSelectedStudent(student);
+    const fetchStudentDetails = useCallback(async (student: StudentData) => {
         setLoadingDetails(true);
         const res = await getStudentFeeDetails(schoolId, student.id);
         if (res.success) {
@@ -79,6 +81,12 @@ export function FeeManager({ schoolId, classes }: { schoolId: string, classes: C
         }
         setLoadingDetails(false);
     }, [schoolId]);
+
+
+    const handleSelectStudent = useCallback((student: StudentData) => {
+        setSelectedStudent(student);
+        fetchStudentDetails(student);
+    }, [fetchStudentDetails]);
     
     return (
         <div className="space-y-6">
@@ -118,11 +126,11 @@ export function FeeManager({ schoolId, classes }: { schoolId: string, classes: C
                 <div className="text-center p-8"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></div>
             ) : selectedStudent && details ? (
                 <FeeDetailsDisplay 
-                    key={selectedStudent.id}
+                    key={selectedStudent.id} // Add key to force re-mount on student change
                     student={selectedStudent} 
                     details={details}
                     schoolId={schoolId}
-                    onPaymentSuccess={() => handleSelectStudent(selectedStudent)}
+                    onPaymentSuccess={() => fetchStudentDetails(selectedStudent)}
                 />
             ) : selectedStudent ? (
                  <p className="text-center text-muted-foreground py-8 border rounded-lg">Could not load fee details for the selected student.</p>
@@ -133,10 +141,19 @@ export function FeeManager({ schoolId, classes }: { schoolId: string, classes: C
     )
 }
 
-
+// Parent component that holds state for the form action
 function FeeDetailsDisplay({ student, details, schoolId, onPaymentSuccess }: { student: any, details: any, schoolId: string, onPaymentSuccess: () => void }) {
     const { feeStatus, paymentHistory } = details;
-    const totalDue = feeStatus.reduce((acc: number, item: any) => acc + item.due, 0);
+    const totalDue = feeStatus.reduce((acc: number, item: any) => acc + item.totalDue, 0);
+
+    const initialState = { success: false, error: null, message: null, receiptId: null };
+    const [state, formAction] = useFormState(collectFee, initialState);
+    
+    useEffect(() => {
+        if (state.success) {
+            onPaymentSuccess();
+        }
+    }, [state.success, onPaymentSuccess]);
 
     return (
         <div className="space-y-6">
@@ -146,54 +163,78 @@ function FeeDetailsDisplay({ student, details, schoolId, onPaymentSuccess }: { s
                     <CardDescription>Total Outstanding Balance: <span className='font-bold text-lg text-primary'>{totalDue.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span></CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader><TableRow><TableHead>Fee Head</TableHead><TableHead>Total Payable</TableHead><TableHead>Paid</TableHead><TableHead>Discount</TableHead><TableHead>Due</TableHead></TableRow></TableHeader>
-                        <TableBody>
-                            {feeStatus.map((item: any) => (
-                                <TableRow key={item.feeHeadId}>
-                                    <TableCell className="font-medium">{item.feeHeadName}</TableCell>
-                                    <TableCell>{item.totalPayable.toLocaleString('en-IN')}</TableCell>
-                                    <TableCell>{item.totalPaid.toLocaleString('en-IN')}</TableCell>
-                                    <TableCell>{item.totalDiscount.toLocaleString('en-IN')}</TableCell>
-                                    <TableCell className="font-semibold">{item.due.toLocaleString('en-IN')}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                     <Accordion type="single" collapsible className="w-full">
+                        {feeStatus.map((item: any) => (
+                             <AccordionItem value={item.feeHeadId} key={item.feeHeadId}>
+                                <AccordionTrigger>
+                                    <div className='flex justify-between w-full pr-4'>
+                                        <span className='font-medium'>{item.feeHeadName}</span>
+                                        <span className={cn('font-semibold', item.totalDue > 0 ? 'text-destructive' : 'text-green-600')}>
+                                            Due: {item.totalDue.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                        </span>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <Table>
+                                        <TableHeader><TableRow><TableHead>Installment</TableHead><TableHead>Payable</TableHead><TableHead>Paid</TableHead><TableHead>Due</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                                        <TableBody>
+                                        {item.installments.map((inst: any) => (
+                                            <TableRow key={inst.name}>
+                                                <TableCell>{inst.name}</TableCell>
+                                                <TableCell>{inst.payable.toLocaleString('en-IN')}</TableCell>
+                                                <TableCell>{inst.paid.toLocaleString('en-IN')}</TableCell>
+                                                <TableCell className='font-semibold'>{inst.due.toLocaleString('en-IN')}</TableCell>
+                                                <TableCell>
+                                                     <span className={`px-2 py-1 text-xs rounded-full ${inst.status === 'Paid' ? 'bg-green-100 text-green-800' : inst.status === 'Partial' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                                                        {inst.status}
+                                                    </span>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                        </TableBody>
+                                    </Table>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
                 </CardContent>
             </Card>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                 <FeeCollectionForm student={student} feeStatus={feeStatus} schoolId={schoolId} onPaymentSuccess={onPaymentSuccess}/>
+                 <FeeCollectionForm student={student} feeStatus={feeStatus} schoolId={schoolId} state={state} formAction={formAction} />
                  <PaymentHistory history={paymentHistory} schoolId={schoolId} />
             </div>
         </div>
     );
 }
 
-function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: { student: any, feeStatus: any[], schoolId: string, onPaymentSuccess: () => void }) {
-    const { control, handleSubmit, watch, setValue, reset, formState: { errors, isSubmitting } } = useForm<FeeCollectionFormValues>({
+function FeeCollectionForm({ student, feeStatus, schoolId, state, formAction }: { student: any, feeStatus: any[], schoolId: string, state: any, formAction: any }) {
+    const { control, handleSubmit, watch, setValue, formState: { errors, isSubmitting }, reset } = useForm<FeeCollectionFormValues>({
         resolver: zodResolver(FeeCollectionFormSchema),
         defaultValues: { paymentDate: new Date(), paymentMode: 'Cash', paidFor: [], discount: 0, fine: 0 }
     });
     
-    const [state, formAction] = useFormState(collectFee, { success: false, error: null, message: null, receiptId: null });
-
+    // This effect will run once when the component mounts with new feeStatus
     useEffect(() => {
-        const defaultPaidFor = feeStatus.filter(item => item.due > 0).map(item => ({
-            feeHeadId: item.feeHeadId,
-            feeHeadName: item.feeHeadName,
-            amount: item.due,
-        }));
+        const defaultPaidFor = feeStatus.flatMap((head: any) => 
+            head.installments
+                .filter((inst: any) => inst.due > 0)
+                .map((inst: any) => ({
+                    feeHeadId: head.feeHeadId,
+                    feeHeadName: head.feeHeadName,
+                    installmentName: inst.name,
+                    amount: inst.due,
+                }))
+        ).slice(0, 1); // Default to selecting just the first due installment
         setValue('paidFor', defaultPaidFor);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [feeStatus, setValue]);
     
     useEffect(() => {
         if(state.success) {
-            onPaymentSuccess();
             reset({ paymentDate: new Date(), paymentMode: 'Cash', paidFor: [], discount: 0, fine: 0 });
         }
-    }, [state.success, onPaymentSuccess, reset]);
+    }, [state.success, reset]);
 
     const watchedPaidFor = watch('paidFor');
     const watchedDiscount = watch('discount') || 0;
@@ -240,38 +281,43 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
 
                     <div className='border rounded-md p-4 space-y-3 max-h-60 overflow-y-auto'>
                         <h4 className='text-sm font-medium'>Select Fee Items to Pay</h4>
-                        {feeStatus.map(item => (
-                            item.due > 0 &&
-                            <div key={item.feeHeadId} className="flex items-center gap-4">
-                               <Controller
-                                    name="paidFor"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Checkbox
-                                            checked={field.value?.some(v => v.feeHeadId === item.feeHeadId)}
-                                            onCheckedChange={(checked) => {
-                                                const currentItems = field.value || [];
-                                                if (checked) {
-                                                    field.onChange([...currentItems, { feeHeadId: item.feeHeadId, feeHeadName: item.feeHeadName, amount: item.due }]);
-                                                } else {
-                                                    field.onChange(currentItems.filter(v => v.feeHeadId !== item.feeHeadId));
-                                                }
-                                            }}
+                        {feeStatus.map((head: any) => (
+                            <div key={head.feeHeadId}>
+                                <h5 className='font-semibold text-xs uppercase text-muted-foreground'>{head.feeHeadName}</h5>
+                                {head.installments.map((item: any) => (
+                                    item.due > 0 &&
+                                    <div key={item.name} className="flex items-center gap-4 pl-2 py-1">
+                                        <Controller
+                                            name="paidFor"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Checkbox
+                                                    checked={field.value?.some(v => v.installmentName === item.name && v.feeHeadId === head.feeHeadId)}
+                                                    onCheckedChange={(checked) => {
+                                                        const currentItems = field.value || [];
+                                                        if (checked) {
+                                                            field.onChange([...currentItems, { feeHeadId: head.feeHeadId, feeHeadName: head.feeHeadName, installmentName: item.name, amount: item.due }]);
+                                                        } else {
+                                                            field.onChange(currentItems.filter(v => !(v.installmentName === item.name && v.feeHeadId === head.feeHeadId)));
+                                                        }
+                                                    }}
+                                                />
+                                            )}
                                         />
-                                    )}
-                                />
-                                <Label className="flex-grow font-medium">{item.feeHeadName}</Label>
-                                <Input 
-                                    type="number" 
-                                    className="w-32" 
-                                    value={watchedPaidFor.find(v => v.feeHeadId === item.feeHeadId)?.amount || ''}
-                                    onChange={(e) => {
-                                        const newValue = Number(e.target.value);
-                                        const newPaidFor = watchedPaidFor.map(v => v.feeHeadId === item.feeHeadId ? { ...v, amount: newValue } : v);
-                                        setValue('paidFor', newPaidFor, { shouldValidate: true });
-                                    }}
-                                    disabled={!watchedPaidFor.some(v => v.feeHeadId === item.feeHeadId)}
-                                />
+                                        <Label className="flex-grow font-medium">{item.name} <span className="text-muted-foreground text-xs">(Due: {item.due})</span></Label>
+                                        <Input 
+                                            type="number" 
+                                            className="w-32" 
+                                            value={watchedPaidFor.find(v => v.installmentName === item.name && v.feeHeadId === head.feeHeadId)?.amount || ''}
+                                            onChange={(e) => {
+                                                const newValue = Number(e.target.value);
+                                                const newPaidFor = watchedPaidFor.map(v => (v.installmentName === item.name && v.feeHeadId === head.feeHeadId) ? { ...v, amount: newValue } : v);
+                                                setValue('paidFor', newPaidFor, { shouldValidate: true });
+                                            }}
+                                            disabled={!watchedPaidFor.some(v => v.installmentName === item.name && v.feeHeadId === head.feeHeadId)}
+                                        />
+                                    </div>
+                                ))}
                             </div>
                         ))}
                          {errors.paidFor && <p className="text-sm text-destructive">{errors.paidFor.message}</p>}
@@ -341,5 +387,3 @@ function PaymentHistory({ history, schoolId }: { history: any[], schoolId: strin
         </Card>
     )
 }
-
-    

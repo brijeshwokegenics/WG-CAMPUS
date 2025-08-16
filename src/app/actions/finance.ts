@@ -170,6 +170,7 @@ const FeePaymentItemSchema = z.object({
   feeHeadId: z.string(),
   feeHeadName: z.string(),
   amount: z.coerce.number().min(0),
+  installmentName: z.string().optional(), // e.g., "April" or "Quarter 1"
 });
 
 const FeeCollectionSchema = z.object({
@@ -240,6 +241,7 @@ export async function collectFee(prevState: any, formData: FormData) {
 
 export async function getStudentFeeDetails(schoolId: string, studentId: string) {
     try {
+        // --- 1. Fetch all necessary base data in parallel ---
         const studentRes = await getStudentById(studentId, schoolId);
         if (!studentRes.success || !studentRes.data) {
             return { success: false, error: "Student not found." };
@@ -247,41 +249,47 @@ export async function getStudentFeeDetails(schoolId: string, studentId: string) 
         const student = studentRes.data;
 
         const structureRes = await getFeeStructure(schoolId, student.classId);
-        const feeStructure = structureRes.success ? structureRes.data : null;
-
         const feeHeadsRes = await getFeeHeads(schoolId);
-        const allFeeHeads = feeHeadsRes.success ? feeHeadsRes.data : [];
 
         const paymentsRef = collection(db, 'feeCollections');
         const q = query(paymentsRef, where('schoolId', '==', schoolId), where('studentId', '==', studentId));
         const paymentSnapshot = await getDocs(q);
+
+        // --- 2. Process the fetched data ---
+        const feeStructure = structureRes.success ? structureRes.data : null;
+        const allFeeHeads = feeHeadsRes.success ? feeHeadsRes.data : [];
         const paymentHistory = paymentSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
             paymentDate: doc.data().paymentDate.toDate(),
-        }));
-        
-        paymentHistory.sort((a,b) => b.paymentDate.getTime() - a.paymentDate.getTime());
+        })).sort((a,b) => a.paymentDate.getTime() - b.paymentDate.getTime()); // Sort oldest first for allocation
 
+        // --- 3. Calculate Fee Status with Installment Logic ---
         const feeStatus: any[] = [];
         if (feeStructure && allFeeHeads) {
             for (const structureItem of feeStructure.structure) {
-                const feeHead = allFeeHeads.find((h:any) => h.id === structureItem.feeHeadId);
+                const feeHead = allFeeHeads.find((h: any) => h.id === structureItem.feeHeadId);
                 if (!feeHead) continue;
 
-                let installments = 1;
-                if (feeHead.type === 'Monthly') installments = 12;
-                if (feeHead.type === 'Quarterly') installments = 4;
+                let installments: { name: string; amount: number }[] = [];
+                const amountPerInstallment = structureItem.amount || 0;
+
+                if (feeHead.type === 'Monthly') {
+                    const months = ["April", "May", "June", "July", "August", "September", "October", "November", "December", "January", "February", "March"];
+                    installments = months.map(m => ({ name: m, amount: amountPerInstallment }));
+                } else if (feeHead.type === 'Quarterly') {
+                    const quarters = ["Quarter 1 (Apr-Jun)", "Quarter 2 (Jul-Sep)", "Quarter 3 (Oct-Dec)", "Quarter 4 (Jan-Mar)"];
+                    installments = quarters.map(q => ({ name: q, amount: amountPerInstallment }));
+                } else { // One-time or Annual
+                    installments = [{ name: feeHead.name, amount: amountPerInstallment }];
+                }
                 
-                const totalPayable = (structureItem.amount || 0) * installments;
-                
+                // Get all payments and discounts specifically for this fee head
                 const paymentsForThisHead = paymentHistory.flatMap(p => 
                     p.paidFor.filter((item: any) => item.feeHeadId === structureItem.feeHeadId)
                 );
+                let totalPaidForThisHead = paymentsForThisHead.reduce((sum, item) => sum + (item.amount || 0), 0);
                 
-                const totalPaidForThisHead = paymentsForThisHead.reduce((sum, item) => sum + (item.amount || 0), 0);
-                
-                // Simplified discount allocation: distribute total discount proportionally across paid items in each transaction
                 let totalDiscountForThisHead = 0;
                 paymentHistory.forEach(p => {
                     const paidItemInTransaction = p.paidFor.find((item: any) => item.feeHeadId === structureItem.feeHeadId);
@@ -290,22 +298,41 @@ export async function getStudentFeeDetails(schoolId: string, studentId: string) 
                         totalDiscountForThisHead += proportion * p.discount;
                     }
                 });
+                
+                let remainingPaid = totalPaidForThisHead + totalDiscountForThisHead;
 
-                const due = totalPayable - totalPaidForThisHead - totalDiscountForThisHead;
-
+                const detailedInstallments = installments.map(inst => {
+                    const paidForThisInstallment = Math.min(remainingPaid, inst.amount);
+                    remainingPaid -= paidForThisInstallment;
+                    const due = inst.amount - paidForThisInstallment;
+                    
+                    return {
+                        name: inst.name,
+                        payable: inst.amount,
+                        paid: paidForThisInstallment,
+                        due: Math.round(due > 0 ? due : 0),
+                        status: due <= 0 ? 'Paid' : (paidForThisInstallment > 0 ? 'Partial' : 'Unpaid'),
+                    };
+                });
+                
                 feeStatus.push({
                     feeHeadId: structureItem.feeHeadId,
                     feeHeadName: structureItem.feeHeadName,
                     type: feeHead.type,
-                    totalPayable: totalPayable,
+                    installments: detailedInstallments,
+                    totalPayable: detailedInstallments.reduce((acc, i) => acc + i.payable, 0),
                     totalPaid: totalPaidForThisHead,
                     totalDiscount: Math.round(totalDiscountForThisHead),
-                    due: Math.round(due > 0 ? due : 0),
+                    totalDue: detailedInstallments.reduce((acc, i) => acc + i.due, 0),
                 });
             }
         }
+        
+        // Sort payment history for display (newest first)
+        paymentHistory.sort((a,b) => b.paymentDate.getTime() - a.paymentDate.getTime());
 
         return { success: true, data: { student, feeStructure, paymentHistory, feeStatus } };
+
     } catch (error) {
         console.error("Error fetching student fee details:", error);
         return { success: false, error: "Failed to fetch fee details." };
@@ -334,7 +361,9 @@ export async function getFeeReceipt(receiptId: string) {
         const studentInfo = studentRes.success ? studentRes.data : {
             studentName: 'Student Not Found',
             className: 'N/A',
-            section: 'N/A'
+            section: 'N/A',
+            fatherName: 'N/A',
+            motherName: 'N/A'
         };
 
 
@@ -345,7 +374,3 @@ export async function getFeeReceipt(receiptId: string) {
         return { success: false, error: "Failed to fetch receipt." };
     }
 }
-
-    
-
-    
