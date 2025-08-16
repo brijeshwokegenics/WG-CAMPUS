@@ -3,8 +3,9 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 
 const ClassSchema = z.object({
   name: z.string().min(1, 'Class name cannot be empty.'),
@@ -540,5 +541,41 @@ export async function getStudentAttendance({ schoolId, classId, section, date }:
     } catch (error) {
         console.error('Error fetching attendance:', error);
         return { success: false, error: 'Failed to fetch attendance data.' };
+    }
+}
+
+export async function getMonthlyAttendance({ schoolId, classId, section, month }: { schoolId: string, classId: string, section: string, month: string }) {
+    if (!schoolId || !classId || !section || !month) {
+        return { success: false, error: 'Missing required fields to fetch attendance report.' };
+    }
+
+    try {
+        const [year, monthIndex] = month.split('-').map(Number);
+        const startDate = startOfMonth(new Date(year, monthIndex));
+        const endDate = endOfMonth(new Date(year, monthIndex));
+
+        // Get all students for the class first
+        const students = await getStudentsForSchool({ schoolId, classId, section });
+        if (students.length === 0) {
+            return { success: true, data: { students: [], attendance: [] } };
+        }
+
+        const attendanceRef = collection(db, 'attendance');
+        const q = query(attendanceRef, and(
+            where('schoolId', '==', schoolId),
+            where('classId', '==', classId),
+            where('section', '==', section),
+            where('date', '>=', format(startDate, 'yyyy-MM-dd')),
+            where('date', '<=', format(endDate, 'yyyy-MM-dd'))
+        ));
+
+        const querySnapshot = await getDocs(q);
+        const attendanceRecords = querySnapshot.docs.map(doc => doc.data());
+        
+        return { success: true, data: { students, attendance: attendanceRecords } };
+
+    } catch (error) {
+        console.error('Error fetching monthly attendance:', error);
+        return { success: false, error: 'Failed to fetch monthly attendance data.' };
     }
 }

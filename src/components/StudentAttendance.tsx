@@ -3,10 +3,12 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useFormState } from 'react-dom';
-import { format, parseISO } from 'date-fns';
-import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
+import { format, parseISO, getDaysInMonth, startOfMonth } from 'date-fns';
+import { Calendar as CalendarIcon, Loader2, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
+
 import { cn } from '@/lib/utils';
-import { saveStudentAttendance, getStudentAttendance, getStudentsForSchool } from '@/app/actions/academics';
+import { saveStudentAttendance, getStudentAttendance, getStudentsForSchool, getMonthlyAttendance } from '@/app/actions/academics';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,8 +17,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 
-type ClassData = { id: string; name: string; sections: string[] };
+type ClassData = { id: string; name: string; sections: string[]; };
 type StudentData = { id: string; studentName: string };
 type AttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Half Day';
 type AttendanceRecord = Record<string, AttendanceStatus>;
@@ -28,6 +31,10 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
   const [students, setStudents] = useState<StudentData[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord>({});
   const [loading, setLoading] = useState(false);
+  
+  const [reportMonth, setReportMonth] = useState(format(new Date(), 'yyyy-MM'));
+  const [generatingReport, setGeneratingReport] = useState(false);
+
 
   const initialState = { success: false, error: null, message: null };
   const [state, formAction] = useFormState(saveStudentAttendance, initialState);
@@ -96,6 +103,43 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
     formAction(formData);
   };
   
+  const handleGenerateReport = async () => {
+    if (!selectedClassId || !selectedSection || !reportMonth) {
+        alert("Please select a class, section, and month for the report.");
+        return;
+    }
+    setGeneratingReport(true);
+    const result = await getMonthlyAttendance({ schoolId, classId: selectedClassId, section: selectedSection, month: reportMonth });
+
+    if (result.success && result.data) {
+        const { students, attendance } = result.data;
+
+        const monthDate = parseISO(`${reportMonth}-01`);
+        const daysInMonth = getDaysInMonth(monthDate);
+        const dateHeaders = Array.from({ length: daysInMonth }, (_, i) => format(new Date(monthDate.getFullYear(), monthDate.getMonth(), i + 1), 'dd-MMM'));
+        
+        const reportData = students.map(student => {
+            const studentRow: Record<string, any> = { 'Admission ID': student.id, 'Student Name': student.studentName };
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateStr = format(new Date(monthDate.getFullYear(), monthDate.getMonth(), i), 'yyyy-MM-dd');
+                const dayHeader = format(new Date(dateStr), 'dd-MMM');
+                const attendanceRecord = attendance.find((att: any) => att.date === dateStr);
+                studentRow[dayHeader] = attendanceRecord?.attendance[student.id] || '-';
+            }
+            return studentRow;
+        });
+
+        const ws = XLSX.utils.json_to_sheet(reportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+        XLSX.writeFile(wb, `Attendance_${selectedClass?.name}_${selectedSection}_${format(monthDate, 'MMMM_yyyy')}.xlsx`);
+    } else {
+        alert(`Error generating report: ${result.error}`);
+    }
+    setGeneratingReport(false);
+  };
+  
   const canTakeAttendance = selectedClassId && selectedSection && selectedDate;
 
   return (
@@ -138,6 +182,29 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
           </Popover>
         </div>
       </div>
+      
+        <Card>
+            <CardHeader>
+                <CardTitle>Monthly Report</CardTitle>
+                <CardDescription>Generate a monthly attendance report in Excel format.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col md:flex-row gap-4 items-end">
+                <div className="space-y-2 flex-grow">
+                    <Label htmlFor="report-month">Report Month</Label>
+                    <Input 
+                        id="report-month"
+                        type="month" 
+                        value={reportMonth} 
+                        onChange={(e) => setReportMonth(e.target.value)}
+                        max={format(new Date(), 'yyyy-MM')}
+                    />
+                </div>
+                 <Button onClick={handleGenerateReport} disabled={!selectedClassId || !selectedSection || generatingReport}>
+                    {generatingReport ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    {generatingReport ? 'Generating...' : 'Download Report'}
+                </Button>
+            </CardContent>
+        </Card>
 
       {state.message && (
         <Alert className={cn(state.success ? 'border-green-500 text-green-700' : 'border-destructive text-destructive')}>
