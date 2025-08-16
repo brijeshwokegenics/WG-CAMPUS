@@ -47,9 +47,18 @@ const StudentSchema = z.object({
   transportRequired: z.enum(['Yes', 'No']).optional(),
   hostelRequired: z.enum(['Yes', 'No']).optional(),
   feesPaid: z.boolean().default(false).optional(),
+  currentSession: z.string().optional(),
 });
 
 const UpdateStudentSchema = StudentSchema.omit({schoolId: true});
+
+const PromoteStudentSchema = z.object({
+    schoolId: z.string(),
+    fromClassId: z.string(),
+    toClassId: z.string(),
+    toSection: z.string(),
+    studentIds: z.array(z.string()).min(1, "Please select at least one student to promote."),
+});
 
 
 export async function getClassesForSchool(schoolId: string) {
@@ -417,5 +426,47 @@ export async function deleteStudent({ studentId, schoolId }: { studentId: string
     } catch (error) {
         console.error("Error deleting student:", error);
         return { success: false, error: "An unexpected error occurred while deleting the student." };
+    }
+}
+
+
+export async function promoteStudents(prevState: any, formData: FormData) {
+    const rawData = {
+        schoolId: formData.get('schoolId'),
+        fromClassId: formData.get('fromClassId'),
+        toClassId: formData.get('toClassId'),
+        toSection: formData.get('toSection'),
+        studentIds: formData.getAll('studentIds'),
+    };
+
+    const parsed = PromoteStudentSchema.safeParse(rawData);
+
+    if (!parsed.success) {
+        return { success: false, error: "Invalid data provided.", details: parsed.error.flatten() };
+    }
+    
+    const { schoolId, toClassId, toSection, studentIds } = parsed.data;
+
+    try {
+        const batch = writeBatch(db);
+
+        studentIds.forEach(studentId => {
+            const studentDocRef = doc(db, 'students', studentId);
+            batch.update(studentDocRef, {
+                classId: toClassId,
+                section: toSection,
+            });
+        });
+
+        await batch.commit();
+
+        revalidatePath(`/director/dashboard/${schoolId}/academics/students`);
+        revalidatePath(`/director/dashboard/${schoolId}/academics/promote`);
+        
+        return { success: true, message: `Successfully promoted ${studentIds.length} students.` };
+
+    } catch (error) {
+        console.error("Error promoting students:", error);
+        return { success: false, error: "An unexpected error occurred while promoting students." };
     }
 }
