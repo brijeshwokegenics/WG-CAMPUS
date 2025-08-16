@@ -125,7 +125,16 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
                 {selectedDate ? format(selectedDate, 'PPP') : <span>Pick a date</span>}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} initialFocus /></PopoverContent>
+            <PopoverContent className="w-auto p-0">
+                <Calendar 
+                    mode="single" 
+                    selected={selectedDate} 
+                    onSelect={setSelectedDate} 
+                    toDate={new Date()}
+                    disabled={(date) => date > new Date()}
+                    initialFocus 
+                />
+            </PopoverContent>
           </Popover>
         </div>
       </div>
