@@ -561,16 +561,21 @@ export async function getMonthlyAttendance({ schoolId, classId, section, month }
         }
 
         const attendanceRef = collection(db, 'attendance');
-        const q = query(attendanceRef, and(
+        // Firestore limitation: Cannot have inequality filters on multiple fields.
+        // We will query for the class and date range, then filter by section in code.
+        const q = query(attendanceRef,
             where('schoolId', '==', schoolId),
             where('classId', '==', classId),
-            where('section', '==', section),
             where('date', '>=', format(startDate, 'yyyy-MM-dd')),
             where('date', '<=', format(endDate, 'yyyy-MM-dd'))
-        ));
+        );
 
         const querySnapshot = await getDocs(q);
-        const attendanceRecords = querySnapshot.docs.map(doc => doc.data());
+        
+        // Filter by section in the code
+        const attendanceRecords = querySnapshot.docs
+            .map(doc => doc.data())
+            .filter(data => data.section === section);
         
         return { success: true, data: { students, attendance: attendanceRecords } };
 
@@ -579,5 +584,3 @@ export async function getMonthlyAttendance({ schoolId, classId, section, month }
         return { success: false, error: 'Failed to fetch monthly attendance data.' };
     }
 }
-
-    
