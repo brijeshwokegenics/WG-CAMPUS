@@ -116,7 +116,7 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
                     <Card>
                         <CardHeader>
                             <CardTitle>Select a Student</CardTitle>
-                             <CardDescription>Click 'Select' to choose a student.</CardDescription>
+                             <CardDescription>Click 'Select' to choose a student for the report.</CardDescription>
                         </CardHeader>
                         <CardContent>
                              <div className="max-h-96 overflow-y-auto">
@@ -124,6 +124,7 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Student Name</TableHead>
+                                            <TableHead>Father's Name</TableHead>
                                             <TableHead className="text-right">Action</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -134,6 +135,7 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
                                                 className={selectedStudent?.id === student.id ? 'bg-muted' : ''}
                                             >
                                                 <TableCell className="font-medium">{student.studentName}</TableCell>
+                                                <TableCell>{student.fatherName}</TableCell>
                                                 <TableCell className="text-right">
                                                     <Button 
                                                         size="sm" 
