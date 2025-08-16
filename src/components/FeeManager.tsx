@@ -193,7 +193,12 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
             transactionId: '',
             discount: 0,
             fine: 0,
-            paidFor: feeStatus?.map((item: any) => ({ feeHeadId: item.feeHeadId, feeHeadName: item.feeHeadName, amount: 0, isPaid: false })) || [],
+            paidFor: feeStatus?.map((item: any) => ({ 
+                feeHeadId: item.feeHeadId, 
+                feeHeadName: item.feeHeadName, 
+                amount: item.due > 0 ? item.due : 0, 
+                isPaid: item.due > 0 
+            })) || [],
         },
     });
 
