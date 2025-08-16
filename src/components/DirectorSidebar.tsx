@@ -74,7 +74,6 @@ const directorSidebarNavItems = (schoolId: string) => [
     items: [
       { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users`, icon: <UserCog className="h-4 w-4" /> },
       { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure`, icon: <Banknote className="h-4 w-4" /> },
-      { title: "Fees Management", href: `/director/dashboard/${schoolId}/admin/fees`, icon: <Wallet className="h-4 w-4" /> },
       { title: "Inventory", href: `/director/dashboard/${schoolId}/admin/inventory`, icon: <Warehouse className="h-4 w-4" /> },
       { title: "Transport", href: `/director/dashboard/${schoolId}/admin/transport`, icon: <Bus className="h-4 w-4" /> },
       { title: "Library", href: `/director/dashboard/${schoolId}/admin/library`, icon: <Library className="h-4 w-4" /> },
@@ -96,7 +95,6 @@ const directorSidebarNavItems = (schoolId: string) => [
     section: "Accountant Menu",
     icon: <PersonStanding className="h-5 w-5" />,
     items: [
-      { title: "Fees Management", href: `/director/dashboard/${schoolId}/accountant/fees`, icon: <Wallet className="h-4 w-4" /> },
       { title: "Fee Structure", href: `/director/dashboard/${schoolId}/accountant/fee-structure`, icon: <Banknote className="h-4 w-4" /> },
       { title: "Payroll Processing", href: `/director/dashboard/${schoolId}/accountant/payroll`, icon: <Wallet className="h-4 w-4" /> },
     ],
@@ -226,5 +224,3 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
     </div>
   );
 }
-
-    
