@@ -43,6 +43,14 @@ const FormSchema = z.object({
   photoUrl: z.string().url("Must be a valid URL.").optional().or(z.literal('')),
   aadharUrl: z.string().url("Must be a valid URL.").optional().or(z.literal('')),
   birthCertificateUrl: z.string().url("Must be a valid URL.").optional().or(z.literal('')),
+  
+  // New Fields
+  aadharNumber: z.string().optional(),
+  previousSchool: z.string().optional(),
+  previousClass: z.string().optional(),
+  previousMarks: z.string().optional(),
+  transportRequired: z.enum(['Yes', 'No']).optional(),
+  hostelRequired: z.enum(['Yes', 'No']).optional(),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -192,6 +200,10 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
             <Label htmlFor="bloodGroup">Blood Group (Optional)</Label>
             <Input id="bloodGroup" {...register("bloodGroup")} />
           </div>
+           <div className="space-y-2">
+            <Label htmlFor="aadharNumber">Aadhar Number (Optional)</Label>
+            <Input id="aadharNumber" {...register("aadharNumber")} />
+          </div>
         </fieldset>
 
         {/* Parent Details */}
@@ -244,6 +256,52 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
               {errors.zipcode && <p className="text-sm text-destructive">{errors.zipcode.message}</p>}
             </div>
           </div>
+        </fieldset>
+
+        {/* Previous Academic Details */}
+        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-3">
+            <legend className="-ml-1 px-1 text-sm font-medium">Previous Academic Details</legend>
+            <div className="space-y-2">
+                <Label htmlFor="previousSchool">Previous School (Optional)</Label>
+                <Input id="previousSchool" {...register("previousSchool")} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="previousClass">Previous Class (Optional)</Label>
+                <Input id="previousClass" {...register("previousClass")} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="previousMarks">Marks/Grade % (Optional)</Label>
+                <Input id="previousMarks" {...register("previousMarks")} />
+            </div>
+        </fieldset>
+
+        {/* Other Details */}
+        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-2">
+            <legend className="-ml-1 px-1 text-sm font-medium">Other Details</legend>
+            <div className="space-y-2">
+                <Label>Transport Required?</Label>
+                <Controller name="transportRequired" control={control} render={({ field }) => (
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger><SelectValue placeholder="Select an option" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="No">No</SelectItem>
+                            <SelectItem value="Yes">Yes</SelectItem>
+                        </SelectContent>
+                    </Select>
+                )} />
+            </div>
+            <div className="space-y-2">
+                <Label>Hostel Required?</Label>
+                <Controller name="hostelRequired" control={control} render={({ field }) => (
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger><SelectValue placeholder="Select an option" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="No">No</SelectItem>
+                            <SelectItem value="Yes">Yes</SelectItem>
+                        </SelectContent>
+                    </Select>
+                )} />
+            </div>
         </fieldset>
 
          {/* Document URLs */}

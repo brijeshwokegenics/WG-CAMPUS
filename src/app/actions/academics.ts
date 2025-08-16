@@ -38,6 +38,14 @@ const StudentSchema = z.object({
   photoUrl: z.string().url().optional().or(z.literal('')),
   aadharUrl: z.string().url().optional().or(z.literal('')),
   birthCertificateUrl: z.string().url().optional().or(z.literal('')),
+
+  // New Fields
+  aadharNumber: z.string().optional(),
+  previousSchool: z.string().optional(),
+  previousClass: z.string().optional(),
+  previousMarks: z.string().optional(),
+  transportRequired: z.enum(['Yes', 'No']).optional(),
+  hostelRequired: z.enum(['Yes', 'No']).optional(),
 });
 
 const UpdateStudentSchema = StudentSchema.omit({schoolId: true});

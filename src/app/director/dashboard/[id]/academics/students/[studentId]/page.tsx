@@ -65,6 +65,7 @@ export default async function StudentProfilePage({ params }: { params: { id: str
                             <ProfileDetail label="Gender" value={student.gender} />
                             <ProfileDetail label="Blood Group" value={student.bloodGroup} />
                             <ProfileDetail label="Admission Date" value={format(student.admissionDate, 'PPP')} />
+                            <ProfileDetail label="Aadhar Number" value={student.aadharNumber} />
                         </div>
                     </div>
 
@@ -87,6 +88,25 @@ export default async function StudentProfilePage({ params }: { params: { id: str
                             <ProfileDetail label="City" value={student.city} />
                             <ProfileDetail label="State" value={student.state} />
                             <ProfileDetail label="Zip Code" value={student.zipcode} />
+                        </div>
+                    </div>
+
+                    {/* Previous Academic Details */}
+                    <div className="mt-8 border-t pt-6">
+                        <h3 className="text-xl font-semibold mb-4">Previous Academic Details</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <ProfileDetail label="Previous School" value={student.previousSchool} />
+                            <ProfileDetail label="Previous Class" value={student.previousClass} />
+                            <ProfileDetail label="Marks/Grade" value={student.previousMarks} />
+                        </div>
+                    </div>
+                    
+                    {/* Other Details */}
+                    <div className="mt-8 border-t pt-6">
+                        <h3 className="text-xl font-semibold mb-4">Other Details</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <ProfileDetail label="Transport Required" value={student.transportRequired} />
+                            <ProfileDetail label="Hostel Required" value={student.hostelRequired} />
                         </div>
                     </div>
 

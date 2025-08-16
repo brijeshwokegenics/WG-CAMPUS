@@ -38,6 +38,14 @@ const FormSchema = z.object({
   city: z.string().min(2, "City is required."),
   state: z.string().min(2, "State is required."),
   zipcode: z.string().min(5, "Zip code is required."),
+
+  // New Fields
+  aadharNumber: z.string().optional(),
+  previousSchool: z.string().optional(),
+  previousClass: z.string().optional(),
+  previousMarks: z.string().optional(),
+  transportRequired: z.enum(['Yes', 'No']).optional(),
+  hostelRequired: z.enum(['Yes', 'No']).optional(),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -190,6 +198,10 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
             <Label htmlFor="bloodGroup">Blood Group (Optional)</Label>
             <Input id="bloodGroup" {...register("bloodGroup")} />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="aadharNumber">Aadhar Number (Optional)</Label>
+            <Input id="aadharNumber" {...register("aadharNumber")} />
+          </div>
         </fieldset>
 
         {/* Parent Details */}
@@ -242,6 +254,75 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
               {errors.zipcode && <p className="text-sm text-destructive">{errors.zipcode.message}</p>}
             </div>
           </div>
+        </fieldset>
+
+        {/* Previous Academic Details */}
+        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-3">
+            <legend className="-ml-1 px-1 text-sm font-medium">Previous Academic Details</legend>
+            <div className="space-y-2">
+                <Label htmlFor="previousSchool">Previous School (Optional)</Label>
+                <Input id="previousSchool" {...register("previousSchool")} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="previousClass">Previous Class (Optional)</Label>
+                <Input id="previousClass" {...register("previousClass")} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="previousMarks">Marks/Grade % (Optional)</Label>
+                <Input id="previousMarks" {...register("previousMarks")} />
+            </div>
+        </fieldset>
+
+        {/* Other Details */}
+        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-2">
+            <legend className="-ml-1 px-1 text-sm font-medium">Other Details</legend>
+            <div className="space-y-2">
+                <Label>Transport Required?</Label>
+                <Controller name="transportRequired" control={control} render={({ field }) => (
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger><SelectValue placeholder="Select an option" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="No">No</SelectItem>
+                            <SelectItem value="Yes">Yes</SelectItem>
+                        </SelectContent>
+                    </Select>
+                )} />
+            </div>
+            <div className="space-y-2">
+                <Label>Hostel Required?</Label>
+                <Controller name="hostelRequired" control={control} render={({ field }) => (
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger><SelectValue placeholder="Select an option" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="No">No</SelectItem>
+                            <SelectItem value="Yes">Yes</SelectItem>
+                        </SelectContent>
+                    </Select>
+                )} />
+            </div>
+        </fieldset>
+
+         {/* Document Uploads */}
+        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-3">
+            <legend className="-ml-1 px-1 text-sm font-medium">Upload Documents</legend>
+             <p className="md:col-span-3 text-sm text-muted-foreground -mt-2 mb-2">
+                Note: File upload functionality is not fully integrated. Please upload your file to a cloud service (like Google Drive) and paste the public URL here.
+            </p>
+            <div className="space-y-2">
+                <Label htmlFor="photoUrl">Student Photo</Label>
+                <Input id="photoUrl" type="file" />
+                <p className="text-xs text-muted-foreground">Paste URL in the text box that appears after selection.</p>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="aadharUrl">Aadhar Card</Label>
+                <Input id="aadharUrl" type="file" />
+                 <p className="text-xs text-muted-foreground">Paste URL in the text box that appears after selection.</p>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="birthCertificateUrl">Birth Certificate</Label>
+                <Input id="birthCertificateUrl" type="file" />
+                 <p className="text-xs text-muted-foreground">Paste URL in the text box that appears after selection.</p>
+            </div>
         </fieldset>
         
         <div className="flex justify-end">
