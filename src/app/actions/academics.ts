@@ -551,10 +551,10 @@ export async function getMonthlyAttendance({ schoolId, classId, section, month }
 
     try {
         const [year, monthIndex] = month.split('-').map(Number);
-        const startDate = startOfMonth(new Date(year, monthIndex));
-        const endDate = endOfMonth(new Date(year, monthIndex));
+        const startDate = startOfMonth(new Date(year, monthIndex - 1));
+        const endDate = endOfMonth(new Date(year, monthIndex - 1));
 
-        // Get all students for the class first
+        // Get all students for the class and section first
         const students = await getStudentsForSchool({ schoolId, classId, section });
         if (students.length === 0) {
             return { success: true, data: { students: [], attendance: [] } };

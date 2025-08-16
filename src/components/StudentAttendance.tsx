@@ -127,17 +127,18 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
     if (result.success && result.data) {
         const { students, attendance } = result.data;
         const className = classes.find(c => c.id === reportClassId)?.name;
+        const sectionName = reportSection;
 
         const monthDate = parseISO(`${reportMonth}-01`);
         const daysInMonth = getDaysInMonth(monthDate);
-        const dateHeaders = Array.from({ length: daysInMonth }, (_, i) => format(new Date(monthDate.getFullYear(), monthDate.getMonth(), i + 1), 'dd-MMM'));
         
-        const reportData = students.map(student => {
+        const reportData = students.map((student: any) => {
             const studentRow: Record<string, any> = { 'Admission ID': student.id, 'Student Name': student.studentName };
             
             for (let i = 1; i <= daysInMonth; i++) {
-                const dateStr = format(new Date(monthDate.getFullYear(), monthDate.getMonth(), i), 'yyyy-MM-dd');
-                const dayHeader = format(new Date(dateStr), 'dd-MMM');
+                const date = new Date(monthDate.getFullYear(), monthDate.getMonth(), i);
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const dayHeader = format(date, 'dd-MMM');
                 const attendanceRecord = attendance.find((att: any) => att.date === dateStr);
                 studentRow[dayHeader] = attendanceRecord?.attendance[student.id]?.charAt(0) || '-';
             }
@@ -147,7 +148,7 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
         const ws = XLSX.utils.json_to_sheet(reportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-        XLSX.writeFile(wb, `Attendance_${className}_${reportSection}_${format(monthDate, 'MMMM_yyyy')}.xlsx`);
+        XLSX.writeFile(wb, `Attendance_${className}_${sectionName}_${format(monthDate, 'MMMM_yyyy')}.xlsx`);
         setIsReportModalOpen(false);
     } else {
         alert(`Error generating report: ${result.error}`);
