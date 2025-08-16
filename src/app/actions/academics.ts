@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
 const ClassSchema = z.object({
@@ -59,6 +59,17 @@ const PromoteStudentSchema = z.object({
     toClassId: z.string(),
     toSection: z.string(),
     studentIds: z.array(z.string()).min(1, "Please select at least one student to promote."),
+});
+
+const AttendanceStatusSchema = z.enum(["Present", "Absent", "Late", "Half Day"]);
+const StudentAttendanceSchema = z.record(z.string(), AttendanceStatusSchema);
+
+const AttendanceSchema = z.object({
+    schoolId: z.string(),
+    classId: z.string(),
+    section: z.string(),
+    date: z.string(), // YYYY-MM-DD
+    attendance: StudentAttendanceSchema,
 });
 
 
@@ -476,5 +487,58 @@ export async function promoteStudents(prevState: any, formData: FormData) {
     } catch (error) {
         console.error("Error promoting students:", error);
         return { success: false, error: "An unexpected error occurred while promoting students." };
+    }
+}
+
+export async function saveStudentAttendance(prevState: any, formData: FormData) {
+    const rawData = {
+        schoolId: formData.get('schoolId'),
+        classId: formData.get('classId'),
+        section: formData.get('section'),
+        date: formData.get('date'),
+        attendance: JSON.parse(formData.get('attendance') as string),
+    };
+
+    const parsed = AttendanceSchema.safeParse(rawData);
+    
+    if (!parsed.success) {
+        return { success: false, error: 'Invalid data provided for attendance.', details: parsed.error.flatten() };
+    }
+
+    const { schoolId, classId, section, date, attendance } = parsed.data;
+    const docId = `${schoolId}_${classId}_${section}_${date}`;
+
+    try {
+        const attendanceRef = doc(db, 'attendance', docId);
+        await setDoc(attendanceRef, { schoolId, classId, section, date, attendance });
+        
+        revalidatePath(`/director/dashboard/${schoolId}/academics/attendance`);
+        return { success: true, message: 'Attendance saved successfully!' };
+
+    } catch (error) {
+        console.error('Error saving attendance:', error);
+        return { success: false, error: 'An unexpected error occurred while saving attendance.' };
+    }
+}
+
+export async function getStudentAttendance({ schoolId, classId, section, date }: { schoolId: string, classId: string, section: string, date: string }) {
+    if (!schoolId || !classId || !section || !date) {
+        return { success: false, error: 'Missing required fields to fetch attendance.' };
+    }
+    
+    const docId = `${schoolId}_${classId}_${section}_${date}`;
+    
+    try {
+        const attendanceRef = doc(db, 'attendance', docId);
+        const docSnap = await getDoc(attendanceRef);
+
+        if (docSnap.exists()) {
+            return { success: true, data: docSnap.data().attendance };
+        } else {
+            return { success: true, data: null }; // No record found for this date is not an error
+        }
+    } catch (error) {
+        console.error('Error fetching attendance:', error);
+        return { success: false, error: 'Failed to fetch attendance data.' };
     }
 }
