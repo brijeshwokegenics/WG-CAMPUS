@@ -1,14 +1,29 @@
 
 import { StudentList } from "@/components/StudentList";
+import { StudentFilters } from "@/components/StudentFilters";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search } from "@/components/ui/search";
+import { getClassesForSchool } from "@/app/actions/academics";
 import { Suspense } from "react";
 
 
-export default function StudentsPage({ params, searchParams }: { params: { id: string }, searchParams?: { query?: string; }}) {
+export default async function StudentsPage({ 
+  params, 
+  searchParams 
+}: { 
+  params: { id: string }, 
+  searchParams?: { 
+    name?: string; 
+    admissionId?: string;
+    classId?: string;
+  }
+}) {
   const schoolId = params.id;
-  const query = searchParams?.query || '';
+  const name = searchParams?.name || '';
+  const admissionId = searchParams?.admissionId || '';
+  const classId = searchParams?.classId || '';
 
+  const classResult = await getClassesForSchool(schoolId);
+  const classes = classResult.success ? classResult.data : [];
 
   return (
     <>
@@ -22,11 +37,16 @@ export default function StudentsPage({ params, searchParams }: { params: { id: s
             <CardDescription>A complete list of all students currently enrolled.</CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="mb-4">
-              <Search placeholder="Search students by name, admission ID, or class..." />
+            <div className="mb-6">
+              <StudentFilters classes={classes || []} />
             </div>
             <Suspense fallback={<p>Loading students...</p>}>
-                <StudentList schoolId={schoolId} query={query} />
+                <StudentList 
+                    schoolId={schoolId} 
+                    name={name}
+                    admissionId={admissionId}
+                    classId={classId}
+                />
             </Suspense>
         </CardContent>
       </Card>

@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
 const ClassSchema = z.object({
@@ -227,7 +227,7 @@ export async function admitStudent(prevState: any, formData: FormData) {
   }
 }
 
-export async function getStudentsForSchool(schoolId: string, searchTerm: string) {
+export async function getStudentsForSchool({ schoolId, name, admissionId, classId }: { schoolId: string, name?: string, admissionId?: string, classId?: string }) {
     if (!schoolId) {
         console.error("School ID is required.");
         return [];
@@ -235,8 +235,13 @@ export async function getStudentsForSchool(schoolId: string, searchTerm: string)
     
     try {
         const studentsRef = collection(db, 'students');
-        let studentsQuery = query(studentsRef, where('schoolId', '==', schoolId));
-        
+        const queryConstraints: QueryConstraint[] = [where('schoolId', '==', schoolId)];
+
+        if (classId) {
+            queryConstraints.push(where('classId', '==', classId));
+        }
+
+        let studentsQuery = query(studentsRef, ...queryConstraints);
         const studentsSnapshot = await getDocs(studentsQuery);
 
         if (studentsSnapshot.empty) {
@@ -244,16 +249,16 @@ export async function getStudentsForSchool(schoolId: string, searchTerm: string)
         }
 
         const classCache = new Map();
-        const getClassName = async (classId: string) => {
-            if (classCache.has(classId)) {
-                return classCache.get(classId);
+        const getClassName = async (cId: string) => {
+            if (classCache.has(cId)) {
+                return classCache.get(cId);
             }
-            if (!classId) return 'N/A';
-            const classDocRef = doc(db, 'classes', classId);
+            if (!cId) return 'N/A';
+            const classDocRef = doc(db, 'classes', cId);
             const classDoc = await getDoc(classDocRef);
             if (classDoc.exists() && classDoc.data().schoolId === schoolId) {
                 const className = classDoc.data().name;
-                classCache.set(classId, className);
+                classCache.set(cId, className);
                 return className;
             }
             return 'N/A';
@@ -271,16 +276,19 @@ export async function getStudentsForSchool(schoolId: string, searchTerm: string)
                 parentMobile: data.parentMobile,
             };
         }));
-
-        if (searchTerm) {
-            const lowercasedTerm = searchTerm.toLowerCase();
+        
+        // Manual client-side filtering for non-indexed fields (name, admissionId)
+        if (name) {
             studentsData = studentsData.filter(student =>
-                student.studentName.toLowerCase().includes(lowercasedTerm) ||
-                student.id.toLowerCase().includes(lowercasedTerm) ||
-                student.className.toLowerCase().includes(lowercasedTerm) ||
-                student.fatherName.toLowerCase().includes(lowercasedTerm)
+                student.studentName.toLowerCase().includes(name.toLowerCase())
             );
         }
+        if (admissionId) {
+            studentsData = studentsData.filter(student =>
+                student.id.toLowerCase().includes(admissionId.toLowerCase())
+            );
+        }
+
 
         return studentsData;
     } catch (error) {
