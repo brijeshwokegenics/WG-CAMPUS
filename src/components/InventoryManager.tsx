@@ -53,182 +53,6 @@ const StockUpdateSchema = z.object({
 type StockUpdateFormValues = z.infer<typeof StockUpdateSchema>;
 
 
-// ========== DIALOG COMPONENTS ==========
-
-// Add Item Dialog
-function AddItemDialog({ isOpen, setIsOpen, schoolId, categories, onSuccess }: { isOpen: boolean, setIsOpen: (v: boolean) => void, schoolId: string, categories: Category[], onSuccess: () => void }) {
-    const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset } = useForm<ItemFormValues>({ resolver: zodResolver(ItemSchema) });
-    const [state, formAction] = useFormState(createInventoryItem, { success: false });
-
-    useEffect(() => {
-        if(state.success) {
-            reset();
-            setIsOpen(false);
-            onSuccess();
-        }
-    }, [state.success, reset, onSuccess, setIsOpen]);
-
-    const onFormSubmit = (data: ItemFormValues) => {
-        const formData = new FormData();
-        formData.append('name', data.name);
-        formData.append('categoryId', data.categoryId);
-        if(data.reorderLevel) formData.append('reorderLevel', String(data.reorderLevel));
-        formData.append('schoolId', schoolId);
-        formAction(formData);
-    };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent>
-                <DialogHeader><DialogTitle>Add New Inventory Item</DialogTitle></DialogHeader>
-                <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 pt-4">
-                    {state.error && <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>}
-                    <div className="space-y-2">
-                        <Label>Category</Label>
-                        <Controller name="categoryId" control={control} render={({ field }) => (
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
-                                <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                            </Select>
-                        )} />
-                        {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Item Name</Label>
-                        <Input {...register('name')} />
-                        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Reorder Level (Optional)</Label>
-                        <Input type="number" {...register('reorderLevel')} placeholder="e.g., 10" />
-                        <p className='text-xs text-muted-foreground'>Get a warning when stock falls to this level.</p>
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>} Create Item</Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-// Update Stock Dialog
-function UpdateStockDialog({ isOpen, setIsOpen, item, schoolId, onSuccess }: { isOpen: boolean, setIsOpen: (v: boolean) => void, item: Item, schoolId: string, onSuccess: () => void }) {
-    const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset } = useForm<StockUpdateFormValues>({ 
-        resolver: zodResolver(StockUpdateSchema),
-        defaultValues: { type: 'in' }
-    });
-    const [state, formAction] = useFormState(updateStock, { success: false });
-
-    useEffect(() => {
-        if(state.success) {
-            reset();
-            setIsOpen(false);
-            onSuccess();
-        }
-    }, [state.success, reset, onSuccess, setIsOpen]);
-
-    const onFormSubmit = (data: StockUpdateFormValues) => {
-        const formData = new FormData();
-        formData.append('itemId', item.id);
-        formData.append('schoolId', schoolId);
-        formData.append('type', data.type);
-        formData.append('quantity', String(data.quantity));
-        if(data.notes) formData.append('notes', data.notes);
-        formAction(formData);
-    };
-
-     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Update Stock for: {item.name}</DialogTitle>
-                    <DialogDescription>Current quantity: {item.quantity}</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 pt-4">
-                    {state.error && <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>}
-                     <div className="space-y-2">
-                        <Label>Action</Label>
-                         <Controller name="type" control={control} render={({ field }) => (
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <SelectTrigger><SelectValue placeholder="Select an action" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="in">Add Stock (Receive)</SelectItem>
-                                    <SelectItem value="out">Issue Stock</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        )} />
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Quantity</Label>
-                        <Input type="number" {...register('quantity')} />
-                        {errors.quantity && <p className="text-sm text-destructive">{errors.quantity.message}</p>}
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Notes (Optional)</Label>
-                        <Textarea {...register('notes')} placeholder="e.g., Issued to Science Dept, Received from Supplier X" />
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>} Update Stock</Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-// Item History Dialog
-function ItemHistoryDialog({ isOpen, setIsOpen, item, schoolId }: { isOpen: boolean, setIsOpen: (v: boolean) => void, item: Item, schoolId: string }) {
-    const [history, setHistory] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        async function fetchHistory() {
-            if (isOpen) {
-                setLoading(true);
-                const res = await getInventoryItemHistory(item.id, schoolId);
-                if (res.success && res.data) {
-                    setHistory(res.data);
-                }
-                setLoading(false);
-            }
-        }
-        fetchHistory();
-    }, [isOpen, item.id, schoolId]);
-
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="max-w-2xl">
-                <DialogHeader><DialogTitle>Stock History: {item.name}</DialogTitle></DialogHeader>
-                <div className="max-h-[60vh] overflow-y-auto">
-                    {loading ? <Loader2 className="mx-auto my-8 h-8 w-8 animate-spin" /> :
-                        <Table>
-                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Qty</TableHead><TableHead>Notes</TableHead></TableRow></TableHeader>
-                            <TableBody>
-                                {history.length > 0 ? history.map(h => (
-                                    <TableRow key={h.id}>
-                                        <TableCell className="text-xs">{format(h.date, 'dd-MMM-yy hh:mm a')}</TableCell>
-                                        <TableCell>
-                                            <span className={`font-semibold ${h.type === 'in' ? 'text-green-600' : 'text-red-600'}`}>
-                                                {h.type.toUpperCase()}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="font-bold">{h.quantity}</TableCell>
-                                        <TableCell>{h.notes}</TableCell>
-                                    </TableRow>
-                                )) : <TableRow><TableCell colSpan={4} className="h-24 text-center">No history for this item.</TableCell></TableRow>}
-                            </TableBody>
-                        </Table>
-                    }
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-
 // ========== MANAGER COMPONENTS ==========
 
 function CategoryManager({ schoolId, categories, onUpdate }: { schoolId: string, categories: Category[], onUpdate: () => void }) {
@@ -320,6 +144,179 @@ function ItemManager({ schoolId, items, categories, onUpdate }: { schoolId: stri
      const handleOpenHistoryModal = (item: Item) => {
         setSelectedItem(item);
         setIsHistoryModalOpen(true);
+    }
+
+    // Add Item Dialog
+    const AddItemDialog = ({ isOpen, setIsOpen, schoolId, categories, onSuccess }: { isOpen: boolean, setIsOpen: (v: boolean) => void, schoolId: string, categories: Category[], onSuccess: () => void }) => {
+        const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset } = useForm<ItemFormValues>({ resolver: zodResolver(ItemSchema) });
+        const [state, formAction] = useFormState(createInventoryItem, { success: false });
+
+        useEffect(() => {
+            if(state.success) {
+                reset();
+                setIsOpen(false);
+                onSuccess();
+            }
+        }, [state.success, reset, onSuccess, setIsOpen]);
+
+        const onFormSubmit = (data: ItemFormValues) => {
+            const formData = new FormData();
+            formData.append('name', data.name);
+            formData.append('categoryId', data.categoryId);
+            if(data.reorderLevel) formData.append('reorderLevel', String(data.reorderLevel));
+            formData.append('schoolId', schoolId);
+            formAction(formData);
+        };
+
+        return (
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Add New Inventory Item</DialogTitle></DialogHeader>
+                    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 pt-4">
+                        {state.error && <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>}
+                        <div className="space-y-2">
+                            <Label>Category</Label>
+                            <Controller name="categoryId" control={control} render={({ field }) => (
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
+                                    <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                                </Select>
+                            )} />
+                            {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Item Name</Label>
+                            <Input {...register('name')} />
+                            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Reorder Level (Optional)</Label>
+                            <Input type="number" {...register('reorderLevel')} placeholder="e.g., 10" />
+                            <p className='text-xs text-muted-foreground'>Get a warning when stock falls to this level.</p>
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                            <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>} Create Item</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        );
+    }
+
+    // Update Stock Dialog
+    const UpdateStockDialog = ({ isOpen, setIsOpen, item, schoolId, onSuccess }: { isOpen: boolean, setIsOpen: (v: boolean) => void, item: Item, schoolId: string, onSuccess: () => void }) => {
+        const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset } = useForm<StockUpdateFormValues>({ 
+            resolver: zodResolver(StockUpdateSchema),
+            defaultValues: { type: 'in' }
+        });
+        const [state, formAction] = useFormState(updateStock, { success: false });
+
+        useEffect(() => {
+            if(state.success) {
+                reset();
+                setIsOpen(false);
+                onSuccess();
+            }
+        }, [state.success, reset, onSuccess, setIsOpen]);
+
+        const onFormSubmit = (data: StockUpdateFormValues) => {
+            const formData = new FormData();
+            formData.append('itemId', item.id);
+            formData.append('schoolId', schoolId);
+            formData.append('type', data.type);
+            formData.append('quantity', String(data.quantity));
+            if(data.notes) formData.append('notes', data.notes);
+            formAction(formData);
+        };
+
+        return (
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Update Stock for: {item.name}</DialogTitle>
+                        <DialogDescription>Current quantity: {item.quantity}</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 pt-4">
+                        {state.error && <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>}
+                        <div className="space-y-2">
+                            <Label>Action</Label>
+                            <Controller name="type" control={control} render={({ field }) => (
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <SelectTrigger><SelectValue placeholder="Select an action" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="in">Add Stock (Receive)</SelectItem>
+                                        <SelectItem value="out">Issue Stock</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            )} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Quantity</Label>
+                            <Input type="number" {...register('quantity')} />
+                            {errors.quantity && <p className="text-sm text-destructive">{errors.quantity.message}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Notes (Optional)</Label>
+                            <Textarea {...register('notes')} placeholder="e.g., Issued to Science Dept, Received from Supplier X" />
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                            <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>} Update Stock</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        );
+    }
+
+    // Item History Dialog
+    const ItemHistoryDialog = ({ isOpen, setIsOpen, item, schoolId }: { isOpen: boolean, setIsOpen: (v: boolean) => void, item: Item, schoolId: string }) => {
+        const [history, setHistory] = useState<any[]>([]);
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+            async function fetchHistory() {
+                if (isOpen) {
+                    setLoading(true);
+                    const res = await getInventoryItemHistory(item.id, schoolId);
+                    if (res.success && res.data) {
+                        setHistory(res.data);
+                    }
+                    setLoading(false);
+                }
+            }
+            fetchHistory();
+        }, [isOpen, item.id, schoolId]);
+
+        return (
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader><DialogTitle>Stock History: {item.name}</DialogTitle></DialogHeader>
+                    <div className="max-h-[60vh] overflow-y-auto">
+                        {loading ? <Loader2 className="mx-auto my-8 h-8 w-8 animate-spin" /> :
+                            <Table>
+                                <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Qty</TableHead><TableHead>Notes</TableHead></TableRow></TableHeader>
+                                <TableBody>
+                                    {history.length > 0 ? history.map(h => (
+                                        <TableRow key={h.id}>
+                                            <TableCell className="text-xs">{format(h.date, 'dd-MMM-yy hh:mm a')}</TableCell>
+                                            <TableCell>
+                                                <span className={`font-semibold ${h.type === 'in' ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {h.type.toUpperCase()}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="font-bold">{h.quantity}</TableCell>
+                                            <TableCell>{h.notes}</TableCell>
+                                        </TableRow>
+                                    )) : <TableRow><TableCell colSpan={4} className="h-24 text-center">No history for this item.</TableCell></TableRow>}
+                                </TableBody>
+                            </Table>
+                        }
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
     }
 
     return (
