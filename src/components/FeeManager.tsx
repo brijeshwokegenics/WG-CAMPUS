@@ -38,8 +38,14 @@ const FeeCollectionFormSchema = z.object({
     transactionId: z.string().optional(),
     discount: z.coerce.number().min(0).optional(),
     fine: z.coerce.number().min(0).optional(),
-    paidFor: z.array(FeePaymentItemSchema).min(1, "At least one fee head must be selected."),
+    paidFor: z.array(z.object({
+        feeHeadId: z.string(),
+        feeHeadName: z.string(),
+        amount: z.coerce.number().min(0),
+        isPaid: z.boolean(),
+    })).min(1, "At least one fee head must be selected for payment.").refine(items => items.some(item => item.isPaid), { message: "Please select at least one fee head to pay for."}),
 });
+
 
 type FeeCollectionFormValues = z.infer<typeof FeeCollectionFormSchema>;
 
@@ -211,11 +217,10 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
     const watchFine = watch('fine');
     
     const totalAmount = useMemo(() => {
-        return watchPaidFor.reduce((acc, curr, index) => {
-            const item = (fields[index] as any);
-            return item.isPaid ? acc + Number(curr.amount || 0) : acc;
+        return watchPaidFor.reduce((acc, curr) => {
+            return curr.isPaid ? acc + Number(curr.amount || 0) : acc;
         }, 0);
-    }, [watchPaidFor, fields]);
+    }, [watchPaidFor]);
     
     const netAmount = useMemo(() => {
         return totalAmount - (Number(watchDiscount) || 0) + (Number(watchFine) || 0);
@@ -239,7 +244,10 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
         formData.append('discount', String(data.discount || 0));
         formData.append('fine', String(data.fine || 0));
         
-        const paidItems = data.paidFor.filter((item, index) => (fields[index] as any).isPaid);
+        const paidItems = data.paidFor
+            .filter(item => item.isPaid)
+            .map(({ feeHeadId, feeHeadName, amount }) => ({ feeHeadId, feeHeadName, amount }));
+
         if(paidItems.length === 0) {
             alert("Please select at least one fee item to pay.");
             return;
@@ -287,12 +295,12 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
                                         <TableRow key={field.id}>
                                             <TableCell>
                                                 <Controller
-                                                    name={`paidFor.${index}.isPaid` as any}
+                                                    name={`paidFor.${index}.isPaid`}
                                                     control={control}
                                                     render={({ field: checkboxField }) => <Checkbox checked={checkboxField.value} onCheckedChange={checkboxField.onChange} />}
                                                 />
                                             </TableCell>
-                                            <TableCell className="font-medium">{watchPaidFor[index].feeHeadName}</TableCell>
+                                            <TableCell className="font-medium">{field.feeHeadName}</TableCell>
                                             <TableCell className="text-right">
                                                 <Controller
                                                     name={`paidFor.${index}.amount`}
