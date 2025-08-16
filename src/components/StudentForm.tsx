@@ -76,6 +76,14 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
   const watchedClassId = watch("classId");
 
   useEffect(() => {
+    if (studentData.classId) {
+      const initialClass = classes.find(c => c.id === studentData.classId);
+      setSelectedClass(initialClass || null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentData.classId, classes]);
+
+  useEffect(() => {
     const newSelectedClass = classes.find(c => c.id === watchedClassId) || null;
     setSelectedClass(newSelectedClass);
     if(newSelectedClass && !newSelectedClass.sections.includes(watch('section'))){
@@ -98,6 +106,17 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
         formData.append(key, value as string);
       }
     });
+    // This is a workaround to handle file inputs in a form that submits URLs.
+    // In a real app, you'd handle file uploads to a service like Firebase Storage.
+    const photoUrl = (document.getElementById('photoUrl-input') as HTMLInputElement)?.value;
+    if (photoUrl) formData.set('photoUrl', photoUrl);
+    
+    const aadharUrl = (document.getElementById('aadharUrl-input') as HTMLInputElement)?.value;
+    if (aadharUrl) formData.set('aadharUrl', aadharUrl);
+
+    const birthCertificateUrl = (document.getElementById('birthCertificateUrl-input') as HTMLInputElement)?.value;
+    if (birthCertificateUrl) formData.set('birthCertificateUrl', birthCertificateUrl);
+
     formAction(formData);
   };
   
@@ -148,7 +167,7 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
           <div className="space-y-2">
              <Label>Section</Label>
              <Controller name="section" control={control} render={({ field }) => (
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedClass}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedClass}>
                   <SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger>
                   <SelectContent>
                     {selectedClass?.sections.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -304,23 +323,29 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
             </div>
         </fieldset>
 
-         {/* Document URLs */}
+         {/* Document Uploads */}
         <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-3">
-            <legend className="-ml-1 px-1 text-sm font-medium">Document URLs</legend>
+            <legend className="-ml-1 px-1 text-sm font-medium">Upload Documents</legend>
+            <p className="md:col-span-3 text-sm text-muted-foreground -mt-2 mb-2">
+                Note: File upload functionality is not fully integrated. Please upload your file to a cloud service (like Google Drive) and paste the public URL here.
+            </p>
             <div className="space-y-2">
-                <Label htmlFor="photoUrl">Photo URL</Label>
-                <Input id="photoUrl" {...register("photoUrl")} placeholder="https://example.com/photo.jpg" />
-                {errors.photoUrl && <p className="text-sm text-destructive">{errors.photoUrl.message}</p>}
+                <Label htmlFor="photoUrl">Student Photo</Label>
+                <Input id="photoUrl" type="file" onChange={e => setValue('photoUrl', e.target.value)} />
+                <Input id="photoUrl-input" {...register("photoUrl")} placeholder="Paste URL here..." className="mt-2" />
+                {errors.photoUrl && <p className="text-sm text-destructive mt-1">{errors.photoUrl.message}</p>}
             </div>
             <div className="space-y-2">
-                <Label htmlFor="aadharUrl">Aadhar Card URL</Label>
-                <Input id="aadharUrl" {...register("aadharUrl")} placeholder="https://example.com/aadhar.pdf" />
-                {errors.aadharUrl && <p className="text-sm text-destructive">{errors.aadharUrl.message}</p>}
+                <Label htmlFor="aadharUrl">Aadhar Card</Label>
+                <Input id="aadharUrl" type="file" onChange={e => setValue('aadharUrl', e.target.value)} />
+                <Input id="aadharUrl-input" {...register("aadharUrl")} placeholder="Paste URL here..." className="mt-2" />
+                {errors.aadharUrl && <p className="text-sm text-destructive mt-1">{errors.aadharUrl.message}</p>}
             </div>
             <div className="space-y-2">
-                <Label htmlFor="birthCertificateUrl">Birth Certificate URL</Label>
-                <Input id="birthCertificateUrl" {...register("birthCertificateUrl")} placeholder="https://example.com/birth_cert.pdf" />
-                {errors.birthCertificateUrl && <p className="text-sm text-destructive">{errors.birthCertificateUrl.message}</p>}
+                <Label htmlFor="birthCertificateUrl">Birth Certificate</Label>
+                <Input id="birthCertificateUrl" type="file" onChange={e => setValue('birthCertificateUrl', e.target.value)} />
+                <Input id="birthCertificateUrl-input" {...register("birthCertificateUrl")} placeholder="Paste URL here..." className="mt-2" />
+                {errors.birthCertificateUrl && <p className="text-sm text-destructive mt-1">{errors.birthCertificateUrl.message}</p>}
             </div>
         </fieldset>
         
@@ -334,3 +359,5 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
     </>
   );
 }
+
+    
