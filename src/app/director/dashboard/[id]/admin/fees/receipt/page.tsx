@@ -75,7 +75,7 @@ function FeeReceiptView({ receiptId }: { receiptId: string }) {
 
                     <div className="mb-4 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                         <p><strong>Receipt No:</strong> <span className='font-mono'>{receipt.receiptNumber}</span></p>
-                        <p><strong>Date:</strong> {format(receipt.paymentDate.toDate(), 'dd-MMM-yyyy')}</p>
+                        <p><strong>Date:</strong> {format(receipt.paymentDate, 'dd-MMM-yyyy')}</p>
                         <p><strong>Student Name:</strong> <span className='font-semibold'>{receipt.student.studentName}</span></p>
                         <p><strong>Admission ID:</strong> {receipt.studentId}</p>
                         <p><strong>Class:</strong> {receipt.student.className} - {receipt.student.section}</p>
