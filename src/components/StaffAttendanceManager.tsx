@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useFormState } from 'react-dom';
-import { format, getDaysInMonth, parseISO } from 'date-fns';
+import { format, getDaysInMonth, parseISO, isSunday } from 'date-fns';
 import { Calendar as CalendarIcon, Loader2, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -54,7 +54,7 @@ export function StaffAttendanceManager({ schoolId }: { schoolId: string }) {
   // Fetch attendance data when date or staff list changes
   useEffect(() => {
     async function fetchAttendance() {
-      if (selectedDate && staff.length > 0) {
+      if (selectedDate && staff.length > 0 && !isSunday(selectedDate)) {
         setLoading(true);
         const dateString = format(selectedDate, 'yyyy-MM-dd');
         const result = await getStaffAttendanceForDate({ schoolId, date: dateString });
@@ -67,7 +67,12 @@ export function StaffAttendanceManager({ schoolId }: { schoolId: string }) {
         setLoading(false);
       }
     }
-    fetchAttendance();
+    
+    if(selectedDate && isSunday(selectedDate)){
+      setAttendance({});
+    } else {
+      fetchAttendance();
+    }
   }, [staff, selectedDate, schoolId]);
 
   const handleStatusChange = (userId: string, status: AttendanceStatus) => {
@@ -129,6 +134,8 @@ export function StaffAttendanceManager({ schoolId }: { schoolId: string }) {
     }
     setGeneratingReport(false);
   };
+  
+  const isDateHoliday = selectedDate ? isSunday(selectedDate) : false;
 
   return (
     <div className="space-y-6">
@@ -149,7 +156,7 @@ export function StaffAttendanceManager({ schoolId }: { schoolId: string }) {
                     selected={selectedDate} 
                     onSelect={setSelectedDate} 
                     toDate={new Date()}
-                    disabled={(date) => date > new Date()}
+                    disabled={(date) => date > new Date() || isSunday(date)}
                     initialFocus 
                 />
             </PopoverContent>
@@ -201,6 +208,10 @@ export function StaffAttendanceManager({ schoolId }: { schoolId: string }) {
       {/* Attendance Table */}
       {loading ? (
         <div className="text-center py-10"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></div>
+      ) : isDateHoliday ? (
+        <div className="text-center py-10 border rounded-lg bg-muted/50">
+            <p className="text-muted-foreground font-semibold">Today is Sunday, which is a holiday.</p>
+        </div>
       ) : staff.length > 0 ? (
         <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex items-center justify-end gap-2">
