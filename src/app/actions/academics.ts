@@ -73,6 +73,25 @@ const AttendanceSchema = z.object({
     attendance: StudentAttendanceSchema,
 });
 
+const PeriodSchema = z.object({
+  subject: z.string().optional(),
+  teacher: z.string().optional(),
+});
+
+const TimetableDaySchema = z.array(PeriodSchema);
+
+const TimetableSchema = z.object({
+    schoolId: z.string(),
+    classId: z.string(),
+    section: z.string(),
+    monday: TimetableDaySchema,
+    tuesday: TimetableDaySchema,
+    wednesday: TimetableDaySchema,
+    thursday: TimetableDaySchema,
+    friday: TimetableDaySchema,
+    saturday: TimetableDaySchema,
+});
+
 
 export async function getClassesForSchool(schoolId: string) {
   if (!schoolId) {
@@ -582,5 +601,63 @@ export async function getMonthlyAttendance({ schoolId, classId, section, month }
     } catch (error) {
         console.error('Error fetching monthly attendance:', error);
         return { success: false, error: 'Failed to fetch monthly attendance data.' };
+    }
+}
+
+export async function saveTimetable(prevState: any, formData: FormData) {
+    const rawData = {
+        schoolId: formData.get('schoolId'),
+        classId: formData.get('classId'),
+        section: formData.get('section'),
+        monday: JSON.parse(formData.get('monday') as string),
+        tuesday: JSON.parse(formData.get('tuesday') as string),
+        wednesday: JSON.parse(formData.get('wednesday') as string),
+        thursday: JSON.parse(formData.get('thursday') as string),
+        friday: JSON.parse(formData.get('friday') as string),
+        saturday: JSON.parse(formData.get('saturday') as string),
+    };
+
+    const parsed = TimetableSchema.safeParse(rawData);
+
+    if (!parsed.success) {
+        console.log(parsed.error.flatten());
+        return { success: false, error: 'Invalid timetable data provided.', details: parsed.error.flatten() };
+    }
+
+    const { schoolId, classId, section } = parsed.data;
+    const docId = `${schoolId}_${classId}_${section}`;
+
+    try {
+        const timetableRef = doc(db, 'timetables', docId);
+        await setDoc(timetableRef, parsed.data, { merge: true });
+
+        revalidatePath(`/director/dashboard/${schoolId}/academics/timetable`);
+        return { success: true, message: 'Timetable saved successfully!' };
+
+    } catch (error) {
+        console.error('Error saving timetable:', error);
+        return { success: false, error: 'An unexpected error occurred while saving the timetable.' };
+    }
+}
+
+export async function getTimetable({ schoolId, classId, section }: { schoolId: string, classId: string, section: string }) {
+    if (!schoolId || !classId || !section) {
+        return { success: false, error: 'Missing required fields to fetch timetable.' };
+    }
+
+    const docId = `${schoolId}_${classId}_${section}`;
+
+    try {
+        const timetableRef = doc(db, 'timetables', docId);
+        const docSnap = await getDoc(timetableRef);
+
+        if (docSnap.exists()) {
+            return { success: true, data: docSnap.data() };
+        } else {
+            return { success: true, data: null }; // No record found is not an error
+        }
+    } catch (error) {
+        console.error('Error fetching timetable:', error);
+        return { success: false, error: 'Failed to fetch timetable data.' };
     }
 }
