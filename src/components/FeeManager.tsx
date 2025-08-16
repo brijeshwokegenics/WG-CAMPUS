@@ -2,8 +2,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useTransition, useCallback } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useForm, useFormState, Controller } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import { useFormState } from 'react-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -21,7 +21,8 @@ import { Calendar } from './ui/calendar';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 import { getStudentFeeDetails, collectFee } from '@/app/actions/finance';
-import { Loader2, Search, CalendarIcon, Wallet, FileText, Receipt, Printer, X, PlusCircle } from 'lucide-react';
+import { getStudentsForSchool } from '@/app/actions/academics';
+import { Loader2, Search, CalendarIcon, Wallet, FileText, Receipt, Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -45,19 +46,31 @@ const FeeCollectionFormSchema = z.object({
 type FeeCollectionFormValues = z.infer<typeof FeeCollectionFormSchema>;
 
 
-export function FeeManager({ schoolId, classes, initialStudents }: { schoolId: string, classes: ClassData[], initialStudents: any[] }) {
-    const [students, setStudents] = useState(initialStudents);
+export function FeeManager({ schoolId, classes }: { schoolId: string, classes: ClassData[] }) {
+    const [name, setName] = useState('');
+    const [admissionId, setAdmissionId] = useState('');
+    const [classId, setClassId] = useState('');
+    
+    const [searchedStudents, setSearchedStudents] = useState<any[]>([]);
+    const [loadingSearch, startSearchTransition] = useTransition();
+
     const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
     const [details, setDetails] = useState<any>(null);
-    const [loadingStudents, setLoadingStudents] = useState(false);
     const [loadingDetails, setLoadingDetails] = useState(false);
-    const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
 
-    const fetchDetails = useCallback(async (studentId: string) => {
+    const handleSearch = () => {
+        startSearchTransition(async () => {
+            const studentData = await getStudentsForSchool({ schoolId, name, admissionId, classId });
+            setSearchedStudents(studentData);
+            setSelectedStudent(null);
+            setDetails(null);
+        });
+    }
+
+    const handleSelectStudent = useCallback(async (student: StudentData) => {
+        setSelectedStudent(student);
         setLoadingDetails(true);
-        const res = await getStudentFeeDetails(schoolId, studentId);
+        const res = await getStudentFeeDetails(schoolId, student.id);
         if (res.success) {
             setDetails(res.data);
         } else {
@@ -66,22 +79,41 @@ export function FeeManager({ schoolId, classes, initialStudents }: { schoolId: s
         }
         setLoadingDetails(false);
     }, [schoolId]);
-
-    const handlePaymentSuccess = () => {
-        if (selectedStudent) {
-            fetchDetails(selectedStudent.id);
-        }
-    };
     
     return (
         <div className="space-y-6">
-            <StudentSearch 
-                classes={classes}
-                onSelectStudent={(student) => {
-                    setSelectedStudent(student);
-                    fetchDetails(student.id);
-                }}
-            />
+            <Card>
+                <CardHeader>
+                    <CardTitle>Find Student</CardTitle>
+                    <CardDescription>Search for a student by name, admission ID, or class to manage their fees.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className='flex flex-col md:flex-row gap-4 items-end'>
+                        <div className='flex-grow w-full'><Label>Name</Label><Input placeholder="Search by Name" value={name} onChange={e => setName(e.target.value)} /></div>
+                        <div className='flex-grow w-full'><Label>Admission ID</Label><Input placeholder="Search by Admission ID" value={admissionId} onChange={e => setAdmissionId(e.target.value)} /></div>
+                        <div className='flex-grow w-full'><Label>Class</Label><Combobox options={classes.map(c => ({label: c.name, value: c.id}))} value={classId} onChange={setClassId} placeholder="Filter by class..." /></div>
+                        <Button onClick={handleSearch} disabled={loadingSearch} className='w-full md:w-auto'>{loadingSearch ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Search className="mr-2 h-4 w-4"/>} Search</Button>
+                    </div>
+                    {searchedStudents.length > 0 && (
+                        <div className="mt-4 border rounded-lg max-h-60 overflow-y-auto">
+                            <Table>
+                                <TableHeader><TableRow><TableHead>Admission ID</TableHead><TableHead>Student Name</TableHead><TableHead>Class</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
+                                <TableBody>
+                                    {searchedStudents.map(s => (
+                                        <TableRow key={s.id} className={cn(selectedStudent?.id === s.id && 'bg-muted/50')}>
+                                            <TableCell>{s.id}</TableCell>
+                                            <TableCell>{s.studentName}</TableCell>
+                                            <TableCell>{s.className} - {s.section}</TableCell>
+                                            <TableCell><Button size="sm" onClick={() => handleSelectStudent(s)}>Select</Button></TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
             {loadingDetails ? (
                 <div className="text-center p-8"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></div>
             ) : selectedStudent && details ? (
@@ -90,7 +122,7 @@ export function FeeManager({ schoolId, classes, initialStudents }: { schoolId: s
                     student={selectedStudent} 
                     details={details}
                     schoolId={schoolId}
-                    onPaymentSuccess={handlePaymentSuccess}
+                    onPaymentSuccess={() => handleSelectStudent(selectedStudent)}
                 />
             ) : selectedStudent ? (
                  <p className="text-center text-muted-foreground py-8 border rounded-lg">Could not load fee details for the selected student.</p>
@@ -101,59 +133,6 @@ export function FeeManager({ schoolId, classes, initialStudents }: { schoolId: s
     )
 }
 
-function StudentSearch({ classes, onSelectStudent }: { classes: ClassData[], onSelectStudent: (student: any) => void }) {
-    const [name, setName] = useState('');
-    const [admissionId, setAdmissionId] = useState('');
-    const [classId, setClassId] = useState('');
-    const [loading, startTransition] = useTransition();
-    const [students, setStudents] = useState<any[]>([]);
-
-    const handleSearch = () => {
-        startTransition(async () => {
-            const { getStudentsForSchool } = await import('@/app/actions/academics');
-            const result = await getStudentsForSchool({ schoolId: '', name, admissionId, classId });
-            setStudents(result);
-        });
-    }
-    
-    return (
-        <Card>
-            <CardHeader><CardTitle>Find Student</CardTitle></CardHeader>
-            <CardContent>
-                <div className='flex gap-4 items-end'>
-                    <Input placeholder="Search by Name" value={name} onChange={e => setName(e.target.value)} />
-                    <Input placeholder="Search by Admission ID" value={admissionId} onChange={e => setAdmissionId(e.target.value)} />
-                    <Combobox options={classes.map(c => ({label: c.name, value: c.id}))} value={classId} onChange={setClassId} placeholder="Filter by class..." />
-                    <Button onClick={handleSearch} disabled={loading}>{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Search className="mr-2 h-4 w-4"/>} Search</Button>
-                </div>
-                 {students.length > 0 && (
-                    <div className="mt-4 border rounded-lg max-h-60 overflow-y-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Admission ID</TableHead>
-                                    <TableHead>Student Name</TableHead>
-                                    <TableHead>Class</TableHead>
-                                    <TableHead>Action</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {students.map(s => (
-                                    <TableRow key={s.id}>
-                                        <TableCell>{s.id}</TableCell>
-                                        <TableCell>{s.studentName}</TableCell>
-                                        <TableCell>{s.className} - {s.section}</TableCell>
-                                        <TableCell><Button size="sm" onClick={() => onSelectStudent(s)}>Select</Button></TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                 )}
-            </CardContent>
-        </Card>
-    );
-}
 
 function FeeDetailsDisplay({ student, details, schoolId, onPaymentSuccess }: { student: any, details: any, schoolId: string, onPaymentSuccess: () => void }) {
     const { feeStatus, paymentHistory } = details;
@@ -163,20 +142,12 @@ function FeeDetailsDisplay({ student, details, schoolId, onPaymentSuccess }: { s
         <div className="space-y-6">
              <Card>
                 <CardHeader>
-                    <CardTitle className='flex items-center gap-2'><FileText className="h-6 w-6"/> Fee Status</CardTitle>
-                    <CardDescription>Outstanding dues for {student.studentName}</CardDescription>
+                    <CardTitle className='flex items-center gap-2'><FileText className="h-6 w-6"/> Fee Status for {student.studentName}</CardTitle>
+                    <CardDescription>Total Outstanding Balance: <span className='font-bold text-lg text-primary'>{totalDue.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span></CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Fee Head</TableHead>
-                                <TableHead>Total Payable</TableHead>
-                                <TableHead>Paid</TableHead>
-                                <TableHead>Discount</TableHead>
-                                <TableHead>Due</TableHead>
-                            </TableRow>
-                        </TableHeader>
+                        <TableHeader><TableRow><TableHead>Fee Head</TableHead><TableHead>Total Payable</TableHead><TableHead>Paid</TableHead><TableHead>Discount</TableHead><TableHead>Due</TableHead></TableRow></TableHeader>
                         <TableBody>
                             {feeStatus.map((item: any) => (
                                 <TableRow key={item.feeHeadId}>
@@ -188,12 +159,6 @@ function FeeDetailsDisplay({ student, details, schoolId, onPaymentSuccess }: { s
                                 </TableRow>
                             ))}
                         </TableBody>
-                        <TableRow className="font-bold bg-muted">
-                            <TableCell colSpan={4} className="text-right">Total Outstanding Dues</TableCell>
-                            <TableCell className="text-lg">
-                                {totalDue.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                            </TableCell>
-                        </TableRow>
                     </Table>
                 </CardContent>
             </Card>
@@ -212,10 +177,9 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
         defaultValues: { paymentDate: new Date(), paymentMode: 'Cash', paidFor: [], discount: 0, fine: 0 }
     });
     
-    const [state, formAction] = useFormState(collectFee, { success: false });
+    const [state, formAction] = useFormState(collectFee, { success: false, error: null, message: null, receiptId: null });
 
     useEffect(() => {
-        // This effect will run when the feeStatus changes (i.e. a new student is selected)
         const defaultPaidFor = feeStatus.filter(item => item.due > 0).map(item => ({
             feeHeadId: item.feeHeadId,
             feeHeadName: item.feeHeadName,
@@ -227,7 +191,7 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
     useEffect(() => {
         if(state.success) {
             onPaymentSuccess();
-            reset();
+            reset({ paymentDate: new Date(), paymentMode: 'Cash', paidFor: [], discount: 0, fine: 0 });
         }
     }, [state.success, onPaymentSuccess, reset]);
 
@@ -260,7 +224,7 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
-                     {state.message && (
+                    {state.message && (
                         <Alert className={cn(state.success ? "border-green-500 text-green-700" : "border-destructive text-destructive")}>
                             <AlertTitle>{state.success ? 'Success!' : 'Error!'}</AlertTitle>
                             <AlertDescription>
@@ -274,7 +238,8 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
                         </Alert>
                     )}
 
-                    <div className='border rounded-md p-4 space-y-3'>
+                    <div className='border rounded-md p-4 space-y-3 max-h-60 overflow-y-auto'>
+                        <h4 className='text-sm font-medium'>Select Fee Items to Pay</h4>
                         {feeStatus.map(item => (
                             item.due > 0 &&
                             <div key={item.feeHeadId} className="flex items-center gap-4">
@@ -299,7 +264,7 @@ function FeeCollectionForm({ student, feeStatus, schoolId, onPaymentSuccess }: {
                                 <Input 
                                     type="number" 
                                     className="w-32" 
-                                    value={watchedPaidFor.find(v => v.feeHeadId === item.feeHeadId)?.amount || 0}
+                                    value={watchedPaidFor.find(v => v.feeHeadId === item.feeHeadId)?.amount || ''}
                                     onChange={(e) => {
                                         const newValue = Number(e.target.value);
                                         const newPaidFor = watchedPaidFor.map(v => v.feeHeadId === item.feeHeadId ? { ...v, amount: newValue } : v);
