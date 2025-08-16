@@ -54,6 +54,10 @@ export function StudentList({ schoolId, name, admissionId, classId }: StudentLis
             });
         }
     };
+    
+    const handlePrint = (studentId: string) => {
+        window.open(`/director/dashboard/${schoolId}/academics/students/${studentId}/print`, '_blank');
+    };
 
     const paginatedStudents = useMemo(() => {
         const startIndex = (currentPage - 1) * rowsPerPage;
@@ -120,20 +124,10 @@ export function StudentList({ schoolId, name, admissionId, classId }: StudentLis
                                         Edit Student
                                 </DropdownMenuItem>
                             </Link>
-                            <DropdownMenuSeparator />
-                             <DropdownMenuLabel>Print</DropdownMenuLabel>
-                                <DropdownMenuItem>
-                                    <Printer className="mr-2 h-4 w-4" />
-                                    Print ID Card
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                    <Printer className="mr-2 h-4 w-4" />
-                                    Print Admission Card
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                    <Printer className="mr-2 h-4 w-4" />
-                                    Print Transfer Certificate
-                                </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handlePrint(student.id)}>
+                                <Printer className="mr-2 h-4 w-4" />
+                                Print Profile
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(student.id)} disabled={isPending}>
                                     <Trash2 className="mr-2 h-4 w-4" />
