@@ -2,14 +2,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormState } from 'react-dom';
+import { useForm, useFormState } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createExamTerm, getExamTerms } from '@/app/actions/academics';
+import { createExamTerm, getExamTerms, updateExamTerm } from '@/app/actions/academics';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Loader2, CalendarRange, Edit, FilePenLine } from 'lucide-react';
+import { PlusCircle, Loader2, CalendarRange, Edit, FilePenLine, X, Pencil } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { cn } from '@/lib/utils';
 import { ExamScheduleDialog } from './ExamScheduleDialog';
@@ -18,15 +19,18 @@ import { MarksEntrySheet } from './MarksEntrySheet';
 type ClassData = { id: string; name: string; sections: string[]; };
 type ExamTerm = { id: string; name: string; session: string; };
 
-const ExamTermSchema = z.object({
+const ExamTermFormSchema = z.object({
     name: z.string().min(3, 'Exam name is required'),
     session: z.string().min(4, 'Session is required'),
 });
+
+type ExamTermFormValues = z.infer<typeof ExamTermFormSchema>;
 
 export function ExamManager({ schoolId, classes }: { schoolId: string, classes: ClassData[] }) {
     const [terms, setTerms] = useState<ExamTerm[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
+    const [editingTerm, setEditingTerm] = useState<ExamTerm | null>(null);
     
     // State for schedule dialog
     const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
@@ -35,9 +39,6 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
     // State for marks entry sheet
     const [isMarksSheetOpen, setIsMarksSheetOpen] = useState(false);
     const [selectedTermForMarks, setSelectedTermForMarks] = useState<ExamTerm | null>(null);
-
-    const initialState = { success: false, error: null, message: null };
-    const [state, formAction] = useFormState(createExamTerm, initialState);
 
     const fetchTerms = async () => {
         setLoading(true);
@@ -52,12 +53,11 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
         fetchTerms();
     }, [schoolId]);
 
-    useEffect(() => {
-        if (state.success) {
-            setIsFormOpen(false);
-            fetchTerms();
-        }
-    }, [state]);
+    const handleFormSuccess = () => {
+        setIsFormOpen(false);
+        setEditingTerm(null);
+        fetchTerms();
+    };
 
     const handleOpenScheduleDialog = (term: ExamTerm) => {
         setSelectedTermForSchedule(term);
@@ -67,57 +67,59 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
     const handleOpenMarksSheet = (term: ExamTerm) => {
         setSelectedTermForMarks(term);
         setIsMarksSheetOpen(true);
-    }
+    };
+    
+    const handleEditClick = (term: ExamTerm) => {
+        setEditingTerm(term);
+        setIsFormOpen(true);
+    };
+
+    const handleAddNewClick = () => {
+        setEditingTerm(null);
+        setIsFormOpen(true);
+    };
+    
+    const handleCancelForm = () => {
+        setIsFormOpen(false);
+        setEditingTerm(null);
+    };
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Exam Terms</h2>
-                <Button onClick={() => setIsFormOpen(!isFormOpen)}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    {isFormOpen ? 'Cancel' : 'Create Exam Term'}
-                </Button>
+                {!isFormOpen && (
+                    <Button onClick={handleAddNewClick}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create Exam Term
+                    </Button>
+                )}
             </div>
 
             {isFormOpen && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Create New Exam Term</CardTitle>
-                        <CardDescription>Define a new examination term for the school.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form action={formAction} className="space-y-4">
-                            {state.error && (
-                                <Alert variant="destructive">
-                                    <AlertTitle>Error</AlertTitle>
-                                    <AlertDescription>{state.error}</AlertDescription>
-                                </Alert>
-                            )}
-                            <input type="hidden" name="schoolId" value={schoolId} />
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Exam Name</Label>
-                                <Input id="name" name="name" placeholder="e.g., Mid-Term, Final Exam" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="session">Session</Label>
-                                <Input id="session" name="session" placeholder="e.g., 2024-2025" defaultValue={`${new Date().getFullYear()}-${new Date().getFullYear() + 1}`} />
-                            </div>
-                            <Button type="submit">Create Term</Button>
-                        </form>
-                    </CardContent>
-                </Card>
+                <ExamTermForm
+                    schoolId={schoolId}
+                    onSuccess={handleFormSuccess}
+                    onCancel={handleCancelForm}
+                    editingTerm={editingTerm}
+                />
             )}
 
             {loading ? (
-                <div className="text-center py-4"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                <div className="text-center py-4"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
             ) : terms.length === 0 ? (
-                <p className="text-muted-foreground text-center">No exam terms created yet.</p>
+                <p className="text-muted-foreground text-center py-8">No exam terms created yet.</p>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {terms.map(term => (
                         <Card key={term.id}>
                             <CardHeader>
-                                <CardTitle>{term.name}</CardTitle>
+                                <CardTitle className="flex justify-between items-start">
+                                    {term.name}
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(term)}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                </CardTitle>
                                 <CardDescription>{term.session}</CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col space-y-2">
@@ -153,5 +155,74 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
                 />
             )}
         </div>
+    );
+}
+
+// Sub-component for the form to handle create and edit
+function ExamTermForm({ schoolId, onSuccess, onCancel, editingTerm }: { schoolId: string, onSuccess: () => void, onCancel: () => void, editingTerm: ExamTerm | null }) {
+    const initialState = { success: false, error: null, message: null };
+    const action = editingTerm ? updateExamTerm : createExamTerm;
+    const [state, formAction] = useFormState(action, initialState);
+
+    const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<ExamTermFormValues>({
+        resolver: zodResolver(ExamTermFormSchema),
+        defaultValues: {
+            name: editingTerm?.name || '',
+            session: editingTerm?.session || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
+        }
+    });
+
+    useEffect(() => {
+        if (state.success) {
+            onSuccess();
+        }
+    }, [state.success, onSuccess]);
+    
+    const onFormSubmit = (data: ExamTermFormValues) => {
+        const formData = new FormData();
+        formData.append('schoolId', schoolId);
+        if (editingTerm) {
+            formData.append('examTermId', editingTerm.id);
+        }
+        formData.append('name', data.name);
+        formData.append('session', data.session);
+        formAction(formData);
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>{editingTerm ? 'Edit Exam Term' : 'Create New Exam Term'}</CardTitle>
+                <CardDescription>{editingTerm ? 'Update the details for this exam term.' : 'Define a new examination term for the school.'}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+                    {state.error && (
+                        <Alert variant="destructive">
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{state.error}</AlertDescription>
+                        </Alert>
+                    )}
+                    
+                    <div className="space-y-2">
+                        <Label htmlFor="name">Exam Name</Label>
+                        <Input id="name" {...register('name')} placeholder="e.g., Mid-Term, Final Exam" />
+                        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="session">Session</Label>
+                        <Input id="session" {...register('session')} placeholder="e.g., 2024-2025" />
+                        {errors.session && <p className="text-sm text-destructive">{errors.session.message}</p>}
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                            {editingTerm ? 'Save Changes' : 'Create Term'}
+                        </Button>
+                    </div>
+                </form>
+            </CardContent>
+        </Card>
     );
 }

@@ -98,6 +98,11 @@ const ExamTermSchema = z.object({
     session: z.string().min(4, "Session is required, e.g., 2024-2025."),
 });
 
+const UpdateExamTermSchema = z.object({
+    name: z.string().min(3, "Exam name must be at least 3 characters."),
+    session: z.string().min(4, "Session is required, e.g., 2024-2025."),
+});
+
 const SubjectScheduleSchema = z.object({
   subjectName: z.string().min(1, "Subject name is required."),
   date: z.date(),
@@ -728,6 +733,41 @@ export async function getExamTerms(schoolId: string) {
     } catch (error) {
         console.error("Error fetching exam terms:", error);
         return { success: false, error: "Failed to fetch exam terms." };
+    }
+}
+
+export async function updateExamTerm(prevState: any, formData: FormData) {
+    const examTermId = formData.get('examTermId') as string;
+    const schoolId = formData.get('schoolId') as string;
+
+    if (!examTermId || !schoolId) {
+        return { success: false, error: 'Exam Term ID and School ID are required.' };
+    }
+
+    const parsed = UpdateExamTermSchema.safeParse({
+        name: formData.get('name'),
+        session: formData.get('session'),
+    });
+
+    if (!parsed.success) {
+        return { success: false, error: "Invalid data.", details: parsed.error.flatten() };
+    }
+    
+    try {
+        const termDocRef = doc(db, 'examTerms', examTermId);
+        
+        const termDoc = await getDoc(termDocRef);
+        if (!termDoc.exists() || termDoc.data().schoolId !== schoolId) {
+            return { success: false, error: "Exam term not found or permission denied." };
+        }
+
+        await updateDoc(termDocRef, parsed.data);
+
+        revalidatePath(`/director/dashboard/${schoolId}/academics/exams`);
+        return { success: true, message: 'Exam term updated successfully!' };
+    } catch (error) {
+        console.error('Error updating exam term:', error);
+        return { success: false, error: 'An unexpected error occurred.' };
     }
 }
 
