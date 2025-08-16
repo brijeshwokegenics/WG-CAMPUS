@@ -17,7 +17,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
 
 type ClassData = { id: string; name: string; sections: string[]; };
@@ -35,6 +35,7 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
   
   const [reportMonth, setReportMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [generatingReport, setGeneratingReport] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
 
   const initialState = { success: false, error: null, message: null };
@@ -106,7 +107,7 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
   
   const handleGenerateReport = async () => {
     if (!selectedClassId || !selectedSection || !reportMonth) {
-        alert("Please select a class, section, and month for the report.");
+        alert("Please select a class and section first.");
         return;
     }
     setGeneratingReport(true);
@@ -135,6 +136,7 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Attendance");
         XLSX.writeFile(wb, `Attendance_${selectedClass?.name}_${selectedSection}_${format(monthDate, 'MMMM_yyyy')}.xlsx`);
+        setIsReportModalOpen(false);
     } else {
         alert(`Error generating report: ${result.error}`);
     }
@@ -145,6 +147,40 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
 
   return (
     <div className="space-y-6">
+        <div className="flex justify-end">
+            <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline">
+                        <Download className="mr-2 h-4 w-4" />
+                        Generate Monthly Report
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Generate Monthly Attendance Report</DialogTitle>
+                        <DialogDescription>
+                            Select a class, section, and month to download the attendance report in Excel format.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                       <div className="space-y-2 flex-grow">
+                            <Label htmlFor="report-month">Report Month</Label>
+                            <Input 
+                                id="report-month"
+                                type="month" 
+                                value={reportMonth} 
+                                onChange={(e) => setReportMonth(e.target.value)}
+                                max={format(new Date(), 'yyyy-MM')}
+                            />
+                        </div>
+                        <Button onClick={handleGenerateReport} disabled={!selectedClassId || !selectedSection || generatingReport} className="w-full">
+                            {generatingReport ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                            {generatingReport ? 'Generating...' : 'Download Report'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </div>
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg">
         <div className="space-y-2">
@@ -183,29 +219,6 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
           </Popover>
         </div>
       </div>
-      
-        <Card>
-            <CardHeader>
-                <CardTitle>Monthly Report</CardTitle>
-                <CardDescription>Generate a monthly attendance report in Excel format.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col md:flex-row gap-4 items-end">
-                <div className="space-y-2 flex-grow">
-                    <Label htmlFor="report-month">Report Month</Label>
-                    <Input 
-                        id="report-month"
-                        type="month" 
-                        value={reportMonth} 
-                        onChange={(e) => setReportMonth(e.target.value)}
-                        max={format(new Date(), 'yyyy-MM')}
-                    />
-                </div>
-                 <Button onClick={handleGenerateReport} disabled={!selectedClassId || !selectedSection || generatingReport}>
-                    {generatingReport ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                    {generatingReport ? 'Generating...' : 'Download Report'}
-                </Button>
-            </CardContent>
-        </Card>
 
       {state.message && (
         <Alert className={cn(state.success ? 'border-green-500 text-green-700' : 'border-destructive text-destructive')}>
