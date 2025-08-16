@@ -2,8 +2,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { useFormState } from 'react-dom';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { saveFeeStructure, getFeeStructure } from '@/app/actions/finance';
 import { Button } from '@/components/ui/button';
@@ -22,9 +23,11 @@ const FeeStructureEntrySchema = z.object({
   feeHeadName: z.string(),
   amount: z.coerce.number().min(0),
 });
+
 const FeeStructureFormSchema = z.object({
   structure: z.array(FeeStructureEntrySchema),
 });
+
 type FeeStructureFormValues = z.infer<typeof FeeStructureFormSchema>;
 
 interface ClassFeeStructureProps {
@@ -37,9 +40,11 @@ export function ClassFeeStructure({ schoolId, allClasses, feeHeads }: ClassFeeSt
     const [selectedClassId, setSelectedClassId] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const { control, handleSubmit, reset, formState: { isSubmitting, errors } } = useForm<FeeStructureFormValues>({
+    const { control, handleSubmit, reset, formState: { isSubmitting }, register } = useForm<FeeStructureFormValues>({
+        resolver: zodResolver(FeeStructureFormSchema),
         defaultValues: { structure: [] },
     });
+
     const { fields } = useFieldArray({ control, name: 'structure' });
     
     const [state, formAction] = useFormState(saveFeeStructure, { success: false, error: null });
@@ -114,7 +119,7 @@ export function ClassFeeStructure({ schoolId, allClasses, feeHeads }: ClassFeeSt
                                         <TableRow key={field.id}>
                                             <TableCell className="font-medium">{field.feeHeadName}</TableCell>
                                             <TableCell>
-                                                <Input type="number" {...control.register(`structure.${index}.amount`)} />
+                                                <Input type="number" {...register(`structure.${index}.amount`)} />
                                             </TableCell>
                                         </TableRow>
                                     )) : (

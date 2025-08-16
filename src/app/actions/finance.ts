@@ -8,14 +8,14 @@ import { revalidatePath } from 'next/cache';
 
 // ========== FEE HEADS ==========
 
-export const FeeHeadSchema = z.object({
+const FeeHeadSchema = z.object({
   name: z.string().min(3, "Fee head name must be at least 3 characters."),
   description: z.string().optional(),
   type: z.enum(["One-time", "Annual", "Monthly", "Quarterly"]),
   schoolId: z.string().min(1),
 });
 
-export const UpdateFeeHeadSchema = FeeHeadSchema.omit({ schoolId: true });
+const UpdateFeeHeadSchema = FeeHeadSchema.omit({ schoolId: true });
 
 export async function createFeeHead(prevState: any, formData: FormData) {
   const parsed = FeeHeadSchema.safeParse(Object.fromEntries(formData.entries()));

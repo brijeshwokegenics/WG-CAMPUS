@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFormState } from 'react-dom';
@@ -183,17 +183,23 @@ function FeeHeadFormDialog({ isOpen, setIsOpen, schoolId, editingFeeHead, onSucc
                     </div>
                     <div className="space-y-2">
                         <Label>Type</Label>
-                        <Select onValueChange={(value) => control._getController('type').field.onChange(value)} defaultValue={control._getController('type').field.value}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select fee type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="One-time">One-time</SelectItem>
-                                <SelectItem value="Annual">Annual</SelectItem>
-                                <SelectItem value="Monthly">Monthly</SelectItem>
-                                <SelectItem value="Quarterly">Quarterly</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <Controller
+                            name="type"
+                            control={control}
+                            render={({ field }) => (
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select fee type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="One-time">One-time</SelectItem>
+                                        <SelectItem value="Annual">Annual</SelectItem>
+                                        <SelectItem value="Monthly">Monthly</SelectItem>
+                                        <SelectItem value="Quarterly">Quarterly</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        />
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
@@ -207,4 +213,3 @@ function FeeHeadFormDialog({ isOpen, setIsOpen, schoolId, editingFeeHead, onSucc
         </Dialog>
     );
 }
-
