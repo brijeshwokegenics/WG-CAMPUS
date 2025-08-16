@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache';
 
 const UserRole = z.enum(["Teacher", "Accountant", "Librarian", "Admin"]);
 
-export const UserSchema = z.object({
+const UserSchema = z.object({
   schoolId: z.string().min(1, 'School ID is required.'),
   name: z.string().min(2, 'User name must be at least 2 characters.'),
   email: z.string().email("Invalid email address.").optional().or(z.literal('')),
@@ -19,8 +19,8 @@ export const UserSchema = z.object({
   enabled: z.boolean().default(true),
 });
 
-export const AddUserFormSchema = UserSchema.omit({ schoolId: true, enabled: true });
-export const UpdateUserFormSchema = UserSchema.omit({ password: true, schoolId: true, userId: true });
+const AddUserFormSchema = UserSchema.omit({ schoolId: true, enabled: true });
+const UpdateUserFormSchema = UserSchema.omit({ password: true, schoolId: true, userId: true });
 
 
 export async function createUser(prevState: any, formData: FormData) {

@@ -33,9 +33,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Switch } from './ui/switch';
 import { Alert, AlertDescription } from './ui/alert';
 
-import { UserSchema, AddUserFormSchema, UpdateUserFormSchema, createUser, getUsersForSchool, updateUser, deleteUser, updateUserPassword } from '@/app/actions/users';
+import { createUser, getUsersForSchool, updateUser, deleteUser, updateUserPassword } from '@/app/actions/users';
 
-type User = z.infer<typeof UserSchema> & { id: string };
+const UserRole = z.enum(["Teacher", "Accountant", "Librarian", "Admin"]);
+
+const BaseUserSchema = z.object({
+  name: z.string().min(2, 'User name must be at least 2 characters.'),
+  email: z.string().email("Invalid email address.").optional().or(z.literal('')),
+  phone: z.string().min(10, "A valid 10-digit mobile number is required."),
+  role: UserRole,
+  enabled: z.boolean().default(true),
+});
+
+const AddUserFormSchema = BaseUserSchema.extend({
+  userId: z.string().min(3, 'User ID must be at least 3 characters.'),
+  password: z.string().min(6, 'Password must be at least 6 characters.'),
+});
+
+const UpdateUserFormSchema = BaseUserSchema;
+
+type User = z.infer<typeof BaseUserSchema> & { id: string, userId: string };
 
 type AddUserFormValues = z.infer<typeof AddUserFormSchema>;
 type UpdateUserFormValues = z.infer<typeof UpdateUserFormSchema>;
@@ -55,7 +72,7 @@ export function UserManager({ schoolId }: { schoolId: string }) {
     setLoading(true);
     const result = await getUsersForSchool(schoolId);
     if (result.success && result.data) {
-      setUsers(result.data);
+      setUsers(result.data as User[]);
     } else {
       console.error(result.error);
     }
