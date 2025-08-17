@@ -43,6 +43,7 @@ const directorSidebarNavItems = (schoolId: string) => [
       { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users` },
       { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure` },
       { title: "Fees Management", href: `/director/dashboard/${schoolId}/admin/fees` },
+      { title: "Inventory", href: `/director/dashboard/${schoolId}/admin/inventory` },
       { title: "Transport", href: `/director/dashboard/${schoolId}/admin/transport` },
       { title: "Library", href: `/director/dashboard/${schoolId}/admin/library` },
       { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel` },
