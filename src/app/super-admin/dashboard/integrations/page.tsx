@@ -36,28 +36,28 @@ export default function SuperAdminIntegrationsPage() {
           <CardContent className="space-y-4">
               <div className="space-y-2">
                   <Label htmlFor="smtp-host">SMTP Host</Label>
-                  <Input id="smtp-host" placeholder="e.g., smtp.sendgrid.net" disabled />
+                  <Input id="smtp-host" placeholder="e.g., smtp.sendgrid.net" />
               </div>
                <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-2">
                     <Label htmlFor="smtp-port">SMTP Port</Label>
-                    <Input id="smtp-port" placeholder="e.g., 587" disabled />
+                    <Input id="smtp-port" placeholder="e.g., 587" />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="smtp-user">SMTP Username</Label>
-                    <Input id="smtp-user" placeholder="e.g., apikey" disabled />
+                    <Input id="smtp-user" placeholder="e.g., apikey" />
                 </div>
               </div>
                <div className="space-y-2">
                   <Label htmlFor="smtp-pass">SMTP Password / API Key</Label>
-                  <Input id="smtp-pass" type="password" placeholder="******************" disabled />
+                  <Input id="smtp-pass" type="password" placeholder="******************" />
               </div>
                <div className="space-y-2">
                   <Label htmlFor="from-email">Default "From" Email</Label>
-                  <Input id="from-email" placeholder="e.g., no-reply@yourschool.com" disabled />
+                  <Input id="from-email" placeholder="e.g., no-reply@yourschool.com" />
               </div>
                <div className="flex justify-end">
-                  <Button disabled>Save Email Configuration</Button>
+                  <Button>Save Email Configuration</Button>
               </div>
           </CardContent>
         </Card>
@@ -73,22 +73,22 @@ export default function SuperAdminIntegrationsPage() {
           <CardContent className="space-y-4">
                <div className="space-y-2">
                   <Label htmlFor="sms-provider">SMS Provider</Label>
-                  <Input id="sms-provider" placeholder="e.g., Twilio, Vonage" disabled />
+                  <Input id="sms-provider" placeholder="e.g., Twilio, Vonage" />
               </div>
                <div className="space-y-2">
                   <Label htmlFor="sms-sid">Account SID</Label>
-                  <Input id="sms-sid" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxx" disabled />
+                  <Input id="sms-sid" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxx" />
               </div>
                <div className="space-y-2">
                   <Label htmlFor="sms-token">Auth Token</Label>
-                  <Input id="sms-token" type="password" placeholder="******************" disabled />
+                  <Input id="sms-token" type="password" placeholder="******************" />
               </div>
                <div className="space-y-2">
                   <Label htmlFor="sms-number">Provider Phone Number</Label>
-                  <Input id="sms-number" placeholder="e.g., +14155238886" disabled />
+                  <Input id="sms-number" placeholder="e.g., +14155238886" />
               </div>
                <div className="flex justify-end">
-                  <Button disabled>Save SMS Configuration</Button>
+                  <Button>Save SMS Configuration</Button>
               </div>
           </CardContent>
         </Card>
