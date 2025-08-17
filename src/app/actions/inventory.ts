@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -15,15 +16,19 @@ export async function createItemCategory(prevState: any, formData: FormData) {
   const parsed = ItemCategorySchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { success: false, error: 'Invalid data' };
   try {
-    await addDoc(collection(db, 'inventoryCategories'), parsed.data);
+    const docRef = await addDoc(collection(db, 'inventoryCategories'), parsed.data);
+    const docSnap = await getDoc(docRef);
     revalidatePath(`/director/dashboard/${parsed.data.schoolId}/admin/inventory`);
-    return { success: true, message: 'Category created.' };
+    return { success: true, message: 'Category created.', data: { id: docSnap.id, ...docSnap.data() } };
   } catch (e) { return { success: false, error: 'Failed to create.' }; }
 }
 export async function getItemCategories(schoolId: string) {
-  const q = query(collection(db, 'inventoryCategories'), where('schoolId', '==', schoolId), orderBy('name'));
+  const q = query(collection(db, 'inventoryCategories'), where('schoolId', '==', schoolId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  // Sort manually to avoid composite index
+  categories.sort((a, b) => a.name.localeCompare(b.name));
+  return categories;
 }
 export async function updateItemCategory(prevState: any, formData: FormData) {
     const id = formData.get('id') as string;
@@ -40,11 +45,16 @@ export async function updateItemCategory(prevState: any, formData: FormData) {
     } catch (e) { return { success: false, error: 'Failed to update.' }; }
 }
 export async function deleteItemCategory(id: string, schoolId: string) {
-    const docRef = doc(db, 'inventoryCategories', id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return;
-    await deleteDoc(docRef);
-    revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
+    try {
+        const docRef = doc(db, 'inventoryCategories', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return { success: false, error: 'Permission denied.'};
+        await deleteDoc(docRef);
+        revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
+        return { success: true };
+    } catch(e) {
+        return { success: false, error: 'Failed to delete.' };
+    }
 }
 
 
@@ -61,15 +71,18 @@ export async function createVendor(prevState: any, formData: FormData) {
   const parsed = VendorSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { success: false, error: 'Invalid data' };
   try {
-    await addDoc(collection(db, 'inventoryVendors'), parsed.data);
+    const docRef = await addDoc(collection(db, 'inventoryVendors'), parsed.data);
+    const docSnap = await getDoc(docRef);
     revalidatePath(`/director/dashboard/${parsed.data.schoolId}/admin/inventory`);
-    return { success: true, message: 'Vendor created.' };
+    return { success: true, message: 'Vendor created.', data: { id: docSnap.id, ...docSnap.data() } };
   } catch (e) { return { success: false, error: 'Failed to create.' }; }
 }
 export async function getVendors(schoolId: string) {
-  const q = query(collection(db, 'inventoryVendors'), where('schoolId', '==', schoolId), orderBy('name'));
+  const q = query(collection(db, 'inventoryVendors'), where('schoolId', '==', schoolId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const vendors = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  vendors.sort((a, b) => a.name.localeCompare(b.name));
+  return vendors;
 }
 export async function updateVendor(prevState: any, formData: FormData) {
     const id = formData.get('id') as string;
@@ -86,11 +99,16 @@ export async function updateVendor(prevState: any, formData: FormData) {
     } catch (e) { return { success: false, error: 'Failed to update.' }; }
 }
 export async function deleteVendor(id: string, schoolId: string) {
-    const docRef = doc(db, 'inventoryVendors', id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return;
-    await deleteDoc(docRef);
-    revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
+    try {
+        const docRef = doc(db, 'inventoryVendors', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return { success: false, error: 'Permission denied.'};
+        await deleteDoc(docRef);
+        revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
+        return { success: true };
+    } catch(e) {
+        return { success: false, error: 'Failed to delete.' };
+    }
 }
 
 // ========== UNITS ==========
@@ -101,21 +119,29 @@ const UnitSchema = z.object({
 export async function createUnit(prevState: any, formData: FormData) {
     const parsed = UnitSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) return { success: false, error: "Invalid data" };
-    await addDoc(collection(db, 'inventoryUnits'), parsed.data);
+    const docRef = await addDoc(collection(db, 'inventoryUnits'), parsed.data);
     revalidatePath(`/director/dashboard/${parsed.data.schoolId}/admin/inventory`);
-    return { success: true, message: 'Unit created.' };
+    const docSnap = await getDoc(docRef);
+    return { success: true, message: 'Unit created.', data: { id: docSnap.id, ...docSnap.data() } };
 }
 export async function getUnits(schoolId: string) {
-    const q = query(collection(db, 'inventoryUnits'), where('schoolId', '==', schoolId), orderBy('name'));
+    const q = query(collection(db, 'inventoryUnits'), where('schoolId', '==', schoolId));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const units = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    units.sort((a, b) => a.name.localeCompare(b.name));
+    return units;
 }
 export async function deleteUnit(id: string, schoolId: string) {
-    const docRef = doc(db, 'inventoryUnits', id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return;
-    await deleteDoc(docRef);
-    revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
+    try {
+        const docRef = doc(db, 'inventoryUnits', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return { success: false, error: 'Permission denied.' };
+        await deleteDoc(docRef);
+        revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
+        return { success: true };
+    } catch(e) {
+        return { success: false, error: 'Failed to delete.' };
+    }
 }
 
 // ========== LOCATIONS ==========
@@ -126,21 +152,29 @@ const LocationSchema = z.object({
 export async function createLocation(prevState: any, formData: FormData) {
     const parsed = LocationSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) return { success: false, error: "Invalid data" };
-    await addDoc(collection(db, 'inventoryLocations'), parsed.data);
+    const docRef = await addDoc(collection(db, 'inventoryLocations'), parsed.data);
     revalidatePath(`/director/dashboard/${parsed.data.schoolId}/admin/inventory`);
-    return { success: true, message: 'Location created.' };
+    const docSnap = await getDoc(docRef);
+    return { success: true, message: 'Location created.', data: { id: docSnap.id, ...docSnap.data() } };
 }
 export async function getLocations(schoolId: string) {
-    const q = query(collection(db, 'inventoryLocations'), where('schoolId', '==', schoolId), orderBy('name'));
+    const q = query(collection(db, 'inventoryLocations'), where('schoolId', '==', schoolId));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const locations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    locations.sort((a,b) => a.name.localeCompare(b.name));
+    return locations;
 }
 export async function deleteLocation(id: string, schoolId: string) {
-    const docRef = doc(db, 'inventoryLocations', id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return;
-    await deleteDoc(docRef);
-    revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
+    try {
+        const docRef = doc(db, 'inventoryLocations', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return { success: false, error: 'Permission denied.'};
+        await deleteDoc(docRef);
+        revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
+        return { success: true };
+    } catch(e) {
+        return { success: false, error: 'Failed to delete.' };
+    }
 }
 
 
@@ -258,3 +292,5 @@ export async function getItemHistory(schoolId: string, itemId: string) {
         };
     });
 }
+
+    
