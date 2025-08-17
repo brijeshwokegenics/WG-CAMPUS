@@ -1,8 +1,11 @@
 
 import { getDashboardSummary } from "@/app/actions/academics";
+import { getNotices, getEvents } from "@/app/actions/communication";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, GraduationCap, Briefcase, BarChart3, Receipt, CircleDollarSign } from "lucide-react";
+import { Users, GraduationCap, Briefcase, BarChart3, Receipt, CircleDollarSign, Megaphone, Calendar } from "lucide-react";
 import Link from "next/link";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 type StatCardProps = {
     title: string;
@@ -41,8 +44,16 @@ function StatCard({ title, value, icon, link, linkText }: StatCardProps) {
 
 export default async function DirectorDashboardPage({ params }: { params: { id: string }}) {
   const schoolId = params.id;
-  const summaryResult = await getDashboardSummary(schoolId);
+  const [summaryResult, noticesResult, eventsResult] = await Promise.all([
+      getDashboardSummary(schoolId),
+      getNotices(schoolId),
+      getEvents(schoolId),
+  ]);
+
   const summary = summaryResult.success ? summaryResult.data : { totalStudents: 0, totalStaff: 0, totalClasses: 0 };
+  const recentNotices = noticesResult.slice(0, 4); // getNotices is already sorted by date
+  const upcomingEvents = eventsResult.filter(e => e.start >= new Date()).sort((a,b) => a.start.getTime() - b.start.getTime()).slice(0, 4);
+
 
   return (
     <div className="space-y-6">
@@ -83,30 +94,70 @@ export default async function DirectorDashboardPage({ params }: { params: { id: 
              />
         </div>
         
-        {/* Placeholder for charts and recent activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
                 <CardHeader>
-                    <CardTitle>Attendance Overview</CardTitle>
-                    <CardDescription>Student attendance for the current month.</CardDescription>
+                    <CardTitle>Recent Notices</CardTitle>
+                    <CardDescription>Latest announcements and communications.</CardDescription>
                 </CardHeader>
-                <CardContent className="h-80 flex items-center justify-center bg-muted/50 rounded-b-lg">
-                   <div className="text-center text-muted-foreground">
-                        <BarChart3 className="h-10 w-10 mx-auto mb-2"/>
-                        <p>Attendance chart coming soon</p>
-                   </div>
+                <CardContent className="h-80 flex flex-col">
+                   {recentNotices.length > 0 ? (
+                       <ul className="space-y-4">
+                           {recentNotices.map(notice => (
+                               <li key={notice.id} className="flex items-start gap-4">
+                                   <div className="bg-muted p-2 rounded-full">
+                                       <Megaphone className="h-5 w-5 text-primary"/>
+                                   </div>
+                                   <div>
+                                       <p className="font-semibold">{notice.title}</p>
+                                       <p className="text-xs text-muted-foreground">
+                                           Posted on {format(new Date(notice.postedAt), 'dd MMM, yyyy')} for {notice.audience.join(', ')}
+                                       </p>
+                                   </div>
+                               </li>
+                           ))}
+                       </ul>
+                   ) : (
+                        <div className="m-auto text-center text-muted-foreground">
+                            <Megaphone className="h-10 w-10 mx-auto mb-2"/>
+                            <p>No recent notices</p>
+                        </div>
+                   )}
+                   <Link href={`/director/dashboard/${schoolId}/communication/notices`} className="text-sm text-primary hover:underline mt-auto pt-4">
+                        View All Notices
+                    </Link>
                 </CardContent>
             </Card>
              <Card>
                 <CardHeader>
-                    <CardTitle>Recent Fee Collections</CardTitle>
-                    <CardDescription>Latest payments received.</CardDescription>
+                    <CardTitle>Upcoming Events</CardTitle>
+                    <CardDescription>Upcoming holidays, exams, and school events.</CardDescription>
                 </CardHeader>
-                <CardContent className="h-80 flex items-center justify-center bg-muted/50 rounded-b-lg">
-                    <div className="text-center text-muted-foreground">
-                        <Receipt className="h-10 w-10 mx-auto mb-2"/>
-                        <p>Fee activity feed coming soon</p>
-                   </div>
+                <CardContent className="h-80 flex flex-col">
+                   {upcomingEvents.length > 0 ? (
+                       <ul className="space-y-4">
+                           {upcomingEvents.map(event => (
+                               <li key={event.id} className="flex items-start gap-4">
+                                   <div className="flex flex-col items-center bg-muted p-2 rounded-md">
+                                       <span className="text-xs font-bold text-primary">{format(new Date(event.start), 'MMM')}</span>
+                                       <span className="text-lg font-bold">{format(new Date(event.start), 'dd')}</span>
+                                   </div>
+                                   <div>
+                                       <p className="font-semibold">{event.title}</p>
+                                       <Badge variant="outline">{event.type}</Badge>
+                                   </div>
+                               </li>
+                           ))}
+                       </ul>
+                   ) : (
+                        <div className="m-auto text-center text-muted-foreground">
+                            <Calendar className="h-10 w-10 mx-auto mb-2"/>
+                            <p>No upcoming events</p>
+                        </div>
+                   )}
+                   <Link href={`/director/dashboard/${schoolId}/communication/calendar`} className="text-sm text-primary hover:underline mt-auto pt-4">
+                        View Full Calendar
+                    </Link>
                 </CardContent>
             </Card>
         </div>
