@@ -311,6 +311,8 @@ async function getDocsByIds(collectionRef: any, ids: string[]) {
     const details: Record<string, any> = {};
     if (ids.length === 0) return details;
 
+    // Firestore 'in' queries are limited to 30 items per query.
+    // We need to chunk the ids array if it's larger than 30.
     const queryChunks = [];
     for (let i = 0; i < ids.length; i += 30) {
         queryChunks.push(ids.slice(i, i + 30));
