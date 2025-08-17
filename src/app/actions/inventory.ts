@@ -23,12 +23,9 @@ export async function createItemCategory(prevState: any, formData: FormData) {
   } catch (e) { return { success: false, error: 'Failed to create.' }; }
 }
 export async function getItemCategories(schoolId: string) {
-  const q = query(collection(db, 'inventoryCategories'), where('schoolId', '==', schoolId));
+  const q = query(collection(db, 'inventoryCategories'), where('schoolId', '==', schoolId), orderBy('name'));
   const snapshot = await getDocs(q);
-  const categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  // Sort manually to avoid composite index
-  categories.sort((a, b) => a.name.localeCompare(b.name));
-  return categories;
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 export async function updateItemCategory(prevState: any, formData: FormData) {
     const id = formData.get('id') as string;
@@ -78,11 +75,9 @@ export async function createVendor(prevState: any, formData: FormData) {
   } catch (e) { return { success: false, error: 'Failed to create.' }; }
 }
 export async function getVendors(schoolId: string) {
-  const q = query(collection(db, 'inventoryVendors'), where('schoolId', '==', schoolId));
+  const q = query(collection(db, 'inventoryVendors'), where('schoolId', '==', schoolId), orderBy('name'));
   const snapshot = await getDocs(q);
-  const vendors = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  vendors.sort((a, b) => a.name.localeCompare(b.name));
-  return vendors;
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 export async function updateVendor(prevState: any, formData: FormData) {
     const id = formData.get('id') as string;
@@ -125,11 +120,9 @@ export async function createUnit(prevState: any, formData: FormData) {
     return { success: true, message: 'Unit created.', data: { id: docSnap.id, ...docSnap.data() } };
 }
 export async function getUnits(schoolId: string) {
-    const q = query(collection(db, 'inventoryUnits'), where('schoolId', '==', schoolId));
+    const q = query(collection(db, 'inventoryUnits'), where('schoolId', '==', schoolId), orderBy('name'));
     const snapshot = await getDocs(q);
-    const units = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    units.sort((a, b) => a.name.localeCompare(b.name));
-    return units;
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 export async function deleteUnit(id: string, schoolId: string) {
     try {
@@ -158,11 +151,9 @@ export async function createLocation(prevState: any, formData: FormData) {
     return { success: true, message: 'Location created.', data: { id: docSnap.id, ...docSnap.data() } };
 }
 export async function getLocations(schoolId: string) {
-    const q = query(collection(db, 'inventoryLocations'), where('schoolId', '==', schoolId));
+    const q = query(collection(db, 'inventoryLocations'), where('schoolId', '==', schoolId), orderBy('name'));
     const snapshot = await getDocs(q);
-    const locations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    locations.sort((a,b) => a.name.localeCompare(b.name));
-    return locations;
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 export async function deleteLocation(id: string, schoolId: string) {
     try {
@@ -207,14 +198,11 @@ export async function getInventoryItems(schoolId: string, categoryId?: string) {
     if (categoryId) {
         constraints.push(where('categoryId', '==', categoryId));
     }
+    constraints.push(orderBy('name'));
+    
     const q = query(collection(db, 'inventoryItems'), ...constraints);
     const snapshot = await getDocs(q);
-    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-    // Sort manually to avoid composite index requirement
-    items.sort((a, b) => a.name.localeCompare(b.name));
-
-    return items;
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 
@@ -292,5 +280,3 @@ export async function getItemHistory(schoolId: string, itemId: string) {
         };
     });
 }
-
-    

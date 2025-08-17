@@ -63,10 +63,10 @@ export async function getRecentGatePasses(schoolId: string) {
     if (!schoolId) return { success: false, error: "School ID is required." };
 
     try {
-        // Removed orderBy to avoid needing a composite index. Sorting will be done in code.
         const q = query(
             collection(db, 'gatePasses'), 
             where('schoolId', '==', schoolId),
+            orderBy('createdAt', 'desc'),
             limit(50)
         );
         const snapshot = await getDocs(q);
@@ -79,11 +79,8 @@ export async function getRecentGatePasses(schoolId: string) {
             id: doc.id,
             ...doc.data(),
             passDate: doc.data().passDate.toDate(),
-            createdAt: doc.data().createdAt?.toDate() || new Date(0) // Handle case where createdAt might be null
+            createdAt: doc.data().createdAt?.toDate() || new Date(0)
         }));
-        
-        // Sort in code to ensure newest passes are first
-        passes.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         
         return { success: true, data: passes };
     } catch (error) {
@@ -188,12 +185,9 @@ export async function createPassType(prevState: any, formData: FormData) {
 }
 
 export async function getPassTypes(schoolId: string) {
-    const q = query(collection(db, 'gatePassTypes'), where('schoolId', '==', schoolId));
+    const q = query(collection(db, 'gatePassTypes'), where('schoolId', '==', schoolId), orderBy('name'));
     const snapshot = await getDocs(q);
-    const passTypes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as { name: string } }));
-    // Sort in code to prevent needing a composite index
-    passTypes.sort((a, b) => a.name.localeCompare(b.name));
-    return passTypes;
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as { name: string } }));
 }
 
 export async function updatePassType(prevState: any, formData: FormData) {

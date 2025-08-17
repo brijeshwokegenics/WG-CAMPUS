@@ -31,11 +31,9 @@ export async function createBookCategory(prevState: any, formData: FormData) {
 }
 
 export async function getBookCategories(schoolId: string) {
-  const q = query(collection(db, 'libraryCategories'), where('schoolId', '==', schoolId));
+  const q = query(collection(db, 'libraryCategories'), where('schoolId', '==', schoolId), orderBy('name'));
   const snapshot = await getDocs(q);
-  const categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  categories.sort((a, b) => a.name.localeCompare(b.name));
-  return categories;
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 export async function updateBookCategory(prevState: any, formData: FormData) {
@@ -114,18 +112,17 @@ export async function addBook(prevState: any, formData: FormData) {
 }
 
 export async function getBooks(schoolId: string, categoryId?: string, searchTerm?: string) {
-    const constraints = [where('schoolId', '==', schoolId)];
+    let constraints = [where('schoolId', '==', schoolId)];
     if (categoryId) {
         constraints.push(where('categoryId', '==', categoryId));
     }
     
-    let booksQuery = query(collection(db, 'libraryBooks'), ...constraints);
-    const snapshot = await getDocs(booksQuery);
-    
-    let books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    let booksQuery = query(collection(db, 'libraryBooks'), ...constraints, orderBy('title'));
+    let books = (await getDocs(booksQuery)).docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     if (searchTerm) {
         const lowercasedTerm = searchTerm.toLowerCase();
+        // This is a client-side filter. For large datasets, a more advanced search solution like Algolia would be better.
         books = books.filter(book => 
             (book.title as string).toLowerCase().includes(lowercasedTerm) ||
             (book.author as string).toLowerCase().includes(lowercasedTerm) ||
@@ -215,18 +212,14 @@ export async function getMemberHistory(schoolId: string, memberId: string) {
     const q = query(
         collection(db, 'libraryIssues'),
         where('schoolId', '==', schoolId),
-        where('memberId', '==', memberId)
+        where('memberId', '==', memberId),
+        orderBy('issueDate', 'desc')
     );
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) return [];
     
     const issues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-    // Sort manually
-    issues.sort((a, b) => ((b.issueDate?.toDate() || 0) as number) - ((a.issueDate?.toDate() || 0) as number));
-
-
     const bookIds = [...new Set(issues.map(i => i.bookId))];
     const bookDetails: Record<string, any> = {};
 
@@ -273,14 +266,13 @@ export async function returnBook(issueId: string, schoolId: string) {
 export async function getFullIssueHistory(schoolId: string) {
     const q = query(
         collection(db, 'libraryIssues'),
-        where('schoolId', '==', schoolId)
+        where('schoolId', '==', schoolId),
+        orderBy('issueDate', 'desc')
     );
     const snapshot = await getDocs(q);
     if (snapshot.empty) return [];
 
     const issues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    // Sort manually
-    issues.sort((a, b) => ((b.issueDate?.toDate() || 0) as number) - ((a.issueDate?.toDate() || 0) as number));
     
     const bookIds = [...new Set(issues.map(i => i.bookId))];
     const studentIds = [...new Set(issues.filter(i => i.memberType === 'Student').map(i => i.memberId))];

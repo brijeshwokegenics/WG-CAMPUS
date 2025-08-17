@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or, documentId } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or, documentId, orderBy } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 
@@ -177,7 +177,10 @@ export async function getClassesForSchool(schoolId: string) {
 
   try {
     const classesRef = collection(db, 'classes');
-    const q = query(classesRef, where('schoolId', '==', schoolId));
+    // Firestore requires an index for ordering by a field different from the where clause field.
+    // Assuming an index on (schoolId, name) exists. If not, this will throw an error or be slow.
+    // A more robust solution might sort in code if indexing is an issue, but this is faster if indexed.
+    const q = query(classesRef, where('schoolId', '==', schoolId), orderBy('name'));
     const querySnapshot = await getDocs(q);
 
     const classes = querySnapshot.docs.map(doc => ({
@@ -185,12 +188,6 @@ export async function getClassesForSchool(schoolId: string) {
       ...doc.data(),
     })) as { id: string; name: string; sections: string[]; schoolId: string }[];
     
-    // Sort classes alphanumerically, e.g., Class 1, Class 2, ..., Class 10
-    classes.sort((a, b) => {
-        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
-    });
-
-
     return { success: true, data: classes };
   } catch (error) {
     console.error('Error fetching classes:', error);
@@ -365,90 +362,68 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
         return [];
     }
 
-    // If searching by admission ID, do a direct document lookup
-    if (admissionId) {
-        try {
+    try {
+        // If searching by admission ID, do a direct document lookup
+        if (admissionId) {
             const studentDoc = await getDoc(doc(db, 'students', admissionId));
             if (studentDoc.exists() && studentDoc.data().schoolId === schoolId) {
                 const studentData = studentDoc.data();
-                const classDocRef = doc(db, 'classes', studentData.classId);
-                const classDoc = await getDoc(classDocRef);
+                const classDoc = await getDoc(doc(db, 'classes', studentData.classId));
                 const className = classDoc.exists() ? classDoc.data().name : 'N/A';
-                
                 return [{
-                    id: studentDoc.id,
-                    studentName: studentData.studentName,
-                    className: className,
-                    section: studentData.section,
-                    fatherName: studentData.fatherName,
-                    parentMobile: studentData.parentMobile,
-                    feesPaid: studentData.feesPaid || false,
-                    passedFinalExam: studentData.passedFinalExam || false,
+                    id: studentDoc.id, studentName: studentData.studentName,
+                    className: className, section: studentData.section,
+                    fatherName: studentData.fatherName, parentMobile: studentData.parentMobile,
+                    feesPaid: studentData.feesPaid || false, passedFinalExam: studentData.passedFinalExam || false,
                 }];
             }
-        } catch (e) { /* Ignore errors if admissionId is not a valid doc ID */ }
-        return []; // Return empty if ID search yields no results
-    }
-    
-    try {
-        const studentsRef = collection(db, 'students');
-        const queryConstraints: QueryConstraint[] = [where('schoolId', '==', schoolId)];
-
-        if (classId) {
-            queryConstraints.push(where('classId', '==', classId));
-        }
-        if (section) {
-            queryConstraints.push(where('section', '==', section));
-        }
-        if (passedOnly) {
-            queryConstraints.push(where('passedFinalExam', '==', true));
+            return []; // Return empty if ID search yields no results
         }
         
-        let studentsQuery = query(studentsRef, ...queryConstraints);
+        const studentsRef = collection(db, 'students');
+        let queryConstraints: QueryConstraint[] = [where('schoolId', '==', schoolId)];
+
+        // Build the query constraints dynamically
+        if (classId) queryConstraints.push(where('classId', '==', classId));
+        if (section) queryConstraints.push(where('section', '==', section));
+        if (passedOnly) queryConstraints.push(where('passedFinalExam', '==', true));
+        // For search term, Firestore requires specific indexing for partial string matches which is complex.
+        // A common approach for "starts-with" search is to use an inequality.
+        // This is more efficient than fetching all and filtering in code.
+        if (searchTerm) {
+            const endTerm = searchTerm.slice(0, -1) + String.fromCharCode(searchTerm.charCodeAt(searchTerm.length - 1) + 1);
+            queryConstraints.push(where('studentName', '>=', searchTerm));
+            queryConstraints.push(where('studentName', '<', endTerm));
+        }
+        
+        const studentsQuery = query(studentsRef, ...queryConstraints);
         const studentsSnapshot = await getDocs(studentsQuery);
 
-        if (studentsSnapshot.empty) {
-            return [];
-        }
+        if (studentsSnapshot.empty) return [];
 
         const classCache = new Map();
         const getClassName = async (cId: string) => {
-            if (classCache.has(cId)) {
-                return classCache.get(cId);
-            }
             if (!cId) return 'N/A';
-            const classDocRef = doc(db, 'classes', cId);
-            const classDoc = await getDoc(classDocRef);
-            if (classDoc.exists() && classDoc.data().schoolId === schoolId) {
+            if (classCache.has(cId)) return classCache.get(cId);
+            const classDoc = await getDoc(doc(db, 'classes', cId));
+            if (classDoc.exists()) {
                 const className = classDoc.data().name;
                 classCache.set(cId, className);
                 return className;
             }
             return 'N/A';
         };
-        
-        let studentsData = await Promise.all(studentsSnapshot.docs.map(async (doc) => {
-            const data = doc.data();
+
+        const studentsData = await Promise.all(studentsSnapshot.docs.map(async (d) => {
+            const data = d.data();
             const className = await getClassName(data.classId);
             return {
-                id: doc.id,
-                studentName: data.studentName,
-                className: className,
-                section: data.section,
-                fatherName: data.fatherName,
-                parentMobile: data.parentMobile,
-                feesPaid: data.feesPaid || false,
-                passedFinalExam: data.passedFinalExam || false,
+                id: d.id, studentName: data.studentName, className,
+                section: data.section, fatherName: data.fatherName, parentMobile: data.parentMobile,
+                feesPaid: data.feesPaid || false, passedFinalExam: data.passedFinalExam || false,
             };
         }));
         
-        // Manual client-side filtering for name if search term is provided
-        if (searchTerm) {
-            studentsData = studentsData.filter(student =>
-                student.studentName.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
         return studentsData;
     } catch (error) {
         console.error("Error fetching students:", error);
@@ -1127,5 +1102,3 @@ export async function deleteHomework({ id, schoolId }: { id: string; schoolId: s
         return { success: false, error: 'Failed to delete homework.' };
     }
 }
-
-    
