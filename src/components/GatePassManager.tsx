@@ -13,19 +13,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, CalendarIcon, Printer, CheckCircle2, AlertCircle, RefreshCcw } from 'lucide-react';
+import { Loader2, Search, CalendarIcon, Printer, RefreshCcw, User, UserCog, UserSquare2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getStudentsForSchool } from '@/app/actions/academics';
 import { createGatePass, getRecentGatePasses, updateGatePassStatus } from '@/app/actions/gatepass';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Switch } from './ui/switch';
 import { getUsersForSchool } from '@/app/actions/users';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 
 type Member = { id: string; name: string; type: 'Student' | 'Staff'; details: string; };
 
@@ -36,9 +36,9 @@ const PassTypes = z.enum([
 ]);
 
 const GatePassFormSchema = z.object({
-  studentId: z.string().optional(),
-  memberType: z.enum(['Student', 'Staff', 'Visitor']).optional(),
-  passHolderName: z.string().optional(),
+  passHolderId: z.string().optional(),
+  memberType: z.enum(['Student', 'Staff', 'Visitor']),
+  passHolderName: z.string().min(1, "Pass holder name is required."),
   passHolderDetails: z.string().optional(),
   passType: PassTypes,
   passDate: z.date(),
@@ -56,14 +56,15 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
     const [recentPasses, setRecentPasses] = useState<any[]>([]);
     const [loadingPasses, setLoadingPasses] = useState(true);
-    const [issueForVisitor, setIssueForVisitor] = useState(false);
-
+    
     const [state, formAction] = useFormState(createGatePass, { success: false });
 
     const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset, setValue, watch } = useForm<GatePassFormValues>({
         resolver: zodResolver(GatePassFormSchema),
-        defaultValues: { passDate: new Date(), outTime: format(new Date(), 'HH:mm'), passType: "Gate Pass" }
+        defaultValues: { passDate: new Date(), outTime: format(new Date(), 'HH:mm'), passType: "Gate Pass", memberType: 'Student' }
     });
+    
+    const memberType = watch('memberType');
 
     const fetchPasses = async () => {
         setLoadingPasses(true);
@@ -78,44 +79,45 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
 
     useEffect(() => {
         if(state.success){
-            reset({ passDate: new Date(), outTime: format(new Date(), 'HH:mm'), passType: "Gate Pass", passHolderName: '', passHolderDetails: '' });
+            reset({ passDate: new Date(), outTime: format(new Date(), 'HH:mm'), passType: "Gate Pass", memberType: 'Student', passHolderName: '', passHolderDetails: '' });
             setSelectedMember(null);
-            setIssueForVisitor(false);
             fetchPasses();
         }
     }, [state.success, reset]);
 
-    const debouncedSearch = useDebouncedCallback((term) => {
+    const debouncedSearch = useDebouncedCallback(async (term) => {
         if (term.length < 2) {
             setSearchResults([]);
             return;
         }
         startSearchTransition(async () => {
-            const [studentRes, staffRes] = await Promise.all([
-                getStudentsForSchool({ schoolId, searchTerm: term }),
-                getUsersForSchool(schoolId, term)
-            ]);
-
-            const students: Member[] = (studentRes || []).map((s: any) => ({
-                id: s.id,
-                name: s.studentName,
-                type: 'Student',
-                details: `${s.className} - ${s.section}`
-            }));
-            const staff: Member[] = (staffRes.data || []).map((s: any) => ({
-                id: s.id,
-                name: s.name,
-                type: 'Staff',
-                details: s.role
-            }));
-            setSearchResults([...students, ...staff]);
+            let results: Member[] = [];
+            if (memberType === 'Student') {
+                const studentRes = await getStudentsForSchool({ schoolId, searchTerm: term });
+                results = (studentRes || []).map((s: any) => ({ id: s.id, name: s.studentName, type: 'Student', details: `${s.className} - ${s.section}` }));
+            } else if (memberType === 'Staff') {
+                const staffRes = await getUsersForSchool(schoolId, term);
+                 results = (staffRes.data || []).map((s: any) => ({ id: s.id, name: s.name, type: 'Staff', details: s.role }));
+            }
+            setSearchResults(results);
         });
     }, 500);
+    
+    useEffect(() => {
+        // Reset search when member type changes
+        setSearchTerm('');
+        setSearchResults([]);
+        setSelectedMember(null);
+        setValue('passHolderId', undefined);
+        setValue('passHolderName', '');
+        setValue('passHolderDetails', '');
+    }, [memberType, setValue]);
 
     const handleSelectMember = (member: Member) => {
         setSelectedMember(member);
-        setValue('studentId', member.id);
-        setValue('memberType', member.type);
+        setValue('passHolderId', member.id);
+        setValue('passHolderName', member.name);
+        setValue('passHolderDetails', member.details);
         setSearchTerm('');
         setSearchResults([]);
     };
@@ -139,91 +141,48 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
-                            {state.message && (
-                                <Alert variant={state.success ? 'default' : 'destructive'}>
-                                    {state.success ? <CheckCircle2 className="h-4 w-4"/> : <AlertCircle className="h-4 w-4"/>}
-                                    <AlertTitle>{state.success ? 'Success' : 'Error'}</AlertTitle>
-                                    <AlertDescription>{state.message || state.error}</AlertDescription>
-                                </Alert>
-                            )}
-
-                            <div className="flex items-center space-x-2">
-                                <Switch id="visitor-mode" checked={issueForVisitor} onCheckedChange={(checked) => {
-                                    setIssueForVisitor(checked);
-                                    setSelectedMember(null);
-                                    setValue('studentId', '');
-                                    setValue('memberType', checked ? 'Visitor' : undefined);
-                                }} />
-                                <Label htmlFor="visitor-mode">Issue Pass for Visitor / Other</Label>
-                            </div>
-
-                            {issueForVisitor ? (
+                            {state.error && (<Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>)}
+                            
+                            <Controller name="memberType" control={control} render={({field}) => (
+                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-3 gap-4">
+                                    <div><RadioGroupItem value="Student" id="Student"/><Label htmlFor="Student" className="ml-2 flex items-center gap-2"><User className="h-4 w-4"/>Student</Label></div>
+                                    <div><RadioGroupItem value="Staff" id="Staff"/><Label htmlFor="Staff" className="ml-2 flex items-center gap-2"><UserCog className="h-4 w-4"/>Staff</Label></div>
+                                    <div><RadioGroupItem value="Visitor" id="Visitor"/><Label htmlFor="Visitor" className="ml-2 flex items-center gap-2"><UserSquare2 className="h-4 w-4"/>Visitor</Label></div>
+                                </RadioGroup>
+                            )}/>
+                            
+                            {memberType === 'Visitor' ? (
                                 <>
-                                    <div className="space-y-2">
-                                        <Label>Pass Holder Name</Label>
-                                        <Input {...register('passHolderName')} placeholder="e.g., John Doe" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Details / Relation</Label>
-                                        <Input {...register('passHolderDetails')} placeholder="e.g., Parent of Jane Doe, Class 5" />
-                                    </div>
+                                    <div className="space-y-2"><Label>Visitor Name</Label><Input {...register('passHolderName')} /></div>
+                                    <div className="space-y-2"><Label>Details / Relation</Label><Input {...register('passHolderDetails')} /></div>
                                 </>
                             ) : (
-                                 <div className="space-y-2">
-                                    <Label>Search Student or Staff</Label>
+                                <div className="space-y-2">
+                                    <Label>Search {memberType}</Label>
                                     <div className="relative">
                                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input placeholder="Search by name or ID..." className="pl-8" value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}}/>
+                                        <Input placeholder={`Search ${memberType.toLowerCase()} by name or ID...`} className="pl-8" value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}}/>
                                     </div>
                                     {isSearching && <Loader2 className="animate-spin mx-auto"/>}
-                                    {searchResults.length > 0 && (
-                                        <div className="border rounded-md max-h-40 overflow-y-auto"><ul>{searchResults.map(s => <li key={`${s.type}-${s.id}`} className="p-2 cursor-pointer hover:bg-muted" onClick={() => handleSelectMember(s)}>{s.name} <Badge variant="secondary">{s.type}</Badge></li>)}</ul></div>
-                                    )}
-                                     {selectedMember && (
-                                        <div className="p-2 bg-green-50 border border-green-200 rounded-md text-sm">
-                                            Selected: <span className="font-semibold">{selectedMember.name}</span> <Badge variant="outline">{selectedMember.type}</Badge>
-                                        </div>
-                                    )}
+                                    {searchResults.length > 0 && (<div className="border rounded-md max-h-40 overflow-y-auto"><ul>{searchResults.map(s => <li key={`${s.type}-${s.id}`} className="p-2 cursor-pointer hover:bg-muted" onClick={() => handleSelectMember(s)}>{s.name} <Badge variant="secondary">{s.details}</Badge></li>)}</ul></div>)}
+                                    {selectedMember && (<div className="p-2 bg-green-50 border border-green-200 rounded-md text-sm">Selected: <span className="font-semibold">{selectedMember.name}</span></div>)}
                                 </div>
                             )}
 
                             <div className="space-y-2">
                                 <Label>Pass Type</Label>
                                 <Controller name="passType" control={control} render={({field}) => (
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            {PassTypes.options.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{PassTypes.options.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent></Select>
                                 )} />
                             </div>
 
-                            <div className="space-y-2">
-                                <Label>Reason for Pass</Label>
-                                <Textarea {...register('reason')} />
-                                {errors.reason && <p className="text-sm text-destructive">{errors.reason.message}</p>}
-                            </div>
+                            <div className="space-y-2"><Label>Reason for Pass</Label><Textarea {...register('reason')} />{errors.reason && <p className="text-sm text-destructive">{errors.reason.message}</p>}</div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>Date</Label>
-                                    <Controller name="passDate" control={control} render={({ field }) => (<Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start"><CalendarIcon className="mr-2 h-4 w-4"/>{field.value ? format(field.value, "PPP") : 'Pick a date'}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange}/></PopoverContent></Popover>)} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Out Time</Label>
-                                    <Input type="time" {...register('outTime')}/>
-                                    {errors.outTime && <p className="text-sm text-destructive">{errors.outTime.message}</p>}
-                                </div>
+                                <div className="space-y-2"><Label>Date</Label><Controller name="passDate" control={control} render={({ field }) => (<Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start"><CalendarIcon className="mr-2 h-4 w-4"/>{field.value ? format(field.value, "PPP") : 'Pick a date'}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange}/></PopoverContent></Popover>)} /></div>
+                                <div className="space-y-2"><Label>Out Time</Label><Input type="time" {...register('outTime')}/>{errors.outTime && <p className="text-sm text-destructive">{errors.outTime.message}</p>}</div>
                             </div>
-                            <div className="space-y-2">
-                                <Label>Issued By (Staff Name)</Label>
-                                <Input {...register('issuedBy')} />
-                                {errors.issuedBy && <p className="text-sm text-destructive">{errors.issuedBy.message}</p>}
-                            </div>
-                            <Button type="submit" className="w-full" disabled={isSubmitting || (!selectedMember && !watch('passHolderName'))}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                Issue Pass
-                            </Button>
+                            <div className="space-y-2"><Label>Issued By (Staff Name)</Label><Input {...register('issuedBy')} />{errors.issuedBy && <p className="text-sm text-destructive">{errors.issuedBy.message}</p>}</div>
+                            <Button type="submit" className="w-full" disabled={isSubmitting || !watch('passHolderName')}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Issue Pass</Button>
                         </form>
                     </CardContent>
                 </Card>
@@ -265,12 +224,10 @@ function RecentPassesTable({ schoolId, passes, loading, refresh }: { schoolId: s
                             {loading ? <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin"/></TableCell></TableRow>
                             : passes.length > 0 ? passes.map(p => (
                                 <TableRow key={p.id}>
-                                    <TableCell className="font-medium">{p.studentName}</TableCell>
+                                    <TableCell className="font-medium">{p.passHolderName} <Badge variant="secondary">{p.memberType}</Badge></TableCell>
                                     <TableCell>{p.passType}</TableCell>
                                     <TableCell>{p.outTime}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={p.status === 'Issued' ? 'destructive' : (p.status === 'Returned' ? 'default' : 'secondary')}>{p.status}</Badge>
-                                    </TableCell>
+                                    <TableCell><Badge variant={p.status === 'Issued' ? 'destructive' : (p.status === 'Returned' ? 'default' : 'secondary')}>{p.status}</Badge></TableCell>
                                     <TableCell>
                                         {p.status === 'Issued' && <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(p.id, 'Returned')} disabled={isPending}>Mark Returned</Button>}
                                         <Button size="icon" variant="ghost" onClick={() => handlePrint(p.id)}><Printer className="h-4 w-4"/></Button>

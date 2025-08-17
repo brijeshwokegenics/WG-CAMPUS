@@ -50,9 +50,9 @@ export default function PrintGatePassPage({ params }: { params: { id: string } }
         return notFound();
     }
     
-    const passHolderName = pass.student?.studentName || pass.passHolderName;
-    const passHolderDetails = pass.student ? `Class: ${pass.student.className} - ${pass.student.section}` : pass.passHolderDetails;
-    const photoUrl = pass.student?.photoUrl;
+    const passHolderName = pass.passHolderName;
+    const passHolderDetails = pass.passHolderDetails;
+    const photoUrl = pass.student?.photoUrl; // photo only exists for students
     const fallbackChar = passHolderName?.charAt(0) || '?';
 
     return (

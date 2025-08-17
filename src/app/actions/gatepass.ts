@@ -15,10 +15,10 @@ const PassTypes = z.enum([
 
 const GatePassSchema = z.object({
   schoolId: z.string(),
-  studentId: z.string().optional(),
-  memberType: z.enum(['Student', 'Staff', 'Visitor']).optional(),
-  passHolderName: z.string().optional(),
-  passHolderDetails: z.string().optional(),
+  passHolderId: z.string().optional(), // studentId or staff userId
+  memberType: z.enum(['Student', 'Staff', 'Visitor']),
+  passHolderName: z.string().min(1, "Pass holder name is required."), // For visitors, this is the main name. For students/staff, it's a copy.
+  passHolderDetails: z.string().optional(), // Class/Section for student, Role for staff, Details for visitor
   passType: PassTypes,
   passDate: z.date(),
   reason: z.string().min(5, "A valid reason is required."),
@@ -26,11 +26,6 @@ const GatePassSchema = z.object({
   status: z.enum(['Issued', 'Returned', 'Expired']).default('Issued'),
   outTime: z.string(),
   returnTime: z.string().optional(),
-}).refine(data => {
-    return !!data.studentId || !!data.passHolderName;
-}, {
-    message: "Either a student must be selected or a pass holder name must be entered.",
-    path: ["passHolderName"],
 });
 
 
@@ -44,7 +39,7 @@ export async function createGatePass(prevState: any, formData: FormData) {
 
   if (!parsed.success) {
     console.error(parsed.error.flatten());
-    return { success: false, error: "Invalid data provided." };
+    return { success: false, error: "Invalid data provided.", details: parsed.error.flatten() };
   }
 
   try {
@@ -82,30 +77,9 @@ export async function getRecentGatePasses(schoolId: string) {
             passDate: doc.data().passDate.toDate(),
         }));
         
-        const studentIds = [...new Set(passes.map(p => p.studentId).filter(Boolean))];
-        const studentDetails: Record<string, any> = {};
-
-        if (studentIds.length > 0) {
-            const studentIdChunks = [];
-            for (let i = 0; i < studentIds.length; i += 30) {
-                studentIdChunks.push(studentIds.slice(i, i + 30));
-            }
-
-            for (const chunk of studentIdChunks) {
-                const studentsQuery = query(collection(db, 'students'), where(documentId(), 'in', chunk));
-                const studentsSnapshot = await getDocs(studentsQuery);
-                studentsSnapshot.forEach(doc => {
-                    studentDetails[doc.id] = doc.data();
-                });
-            }
-        }
-        
-        const populatedPasses = passes.map(pass => ({
-            ...pass,
-            studentName: studentDetails[pass.studentId]?.studentName || pass.passHolderName || 'Unknown',
-        }));
-
-        return { success: true, data: populatedPasses };
+        // No need to populate here as we stored the name directly on the pass
+        // This is more efficient than doing multiple lookups later
+        return { success: true, data: passes };
     } catch (error) {
         console.error("Error fetching gate passes:", error);
         return { success: false, error: "Failed to fetch gate passes." };
@@ -156,8 +130,8 @@ export async function getGatePassById(schoolId: string, passId: string) {
         const passData = docSnap.data();
         let studentInfo = null;
 
-        if (passData.studentId) {
-            const studentRes = await getStudentById(passData.studentId, schoolId);
+        if (passData.memberType === 'Student' && passData.passHolderId) {
+            const studentRes = await getStudentById(passData.passHolderId, schoolId);
             if(studentRes.success) studentInfo = studentRes.data;
         }
 
@@ -167,7 +141,7 @@ export async function getGatePassById(schoolId: string, passId: string) {
                 ...passData,
                 id: docSnap.id,
                 passDate: passData.passDate.toDate(),
-                student: studentInfo,
+                student: studentInfo, // Contains photoUrl if student
             }
         };
 
