@@ -1,10 +1,10 @@
 
 'use client';
 
-import React, { useState, forwardRef } from 'react';
+import React, { useState, forwardRef, useEffect } from 'react';
 import { Input, InputProps } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Upload, X, File as FileIcon } from 'lucide-react';
+import { Loader2, X, File as FileIcon } from 'lucide-react';
 import { Label } from './ui/label';
 import { cn } from '@/lib/utils';
 
@@ -19,46 +19,42 @@ interface FileUploadProps extends Omit<InputProps, 'onChange' | 'value' | 'type'
 
 export const FileUpload = forwardRef<HTMLInputElement, FileUploadProps>(
   ({ onUploadComplete, onUploadError, onFileRemove, uploadPath, label, initialUrl, ...props }, ref) => {
-    const [file, setFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [uploadedUrl, setUploadedUrl] = useState<string | null>(initialUrl || null);
+    
+    // Sync state if the initialUrl prop changes from the parent
+    useEffect(() => {
+        setUploadedUrl(initialUrl || null);
+    }, [initialUrl]);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const selectedFile = e.target.files?.[0];
       if (selectedFile) {
-        setFile(selectedFile);
+        setUploading(true);
         setError(null);
-        handleUpload(selectedFile);
-      }
-    };
-    
-    const handleUpload = async (fileToUpload: File) => {
-      setUploading(true);
-      setError(null);
-      
-      try {
-        // Here you would call your actual upload function
-        // For demonstration, let's simulate an upload
-        const { uploadFile } = await import('@/lib/upload');
-        const finalPath = `${uploadPath}/${Date.now()}_${fileToUpload.name}`;
-        const url = await uploadFile(fileToUpload, finalPath);
+        
+        try {
+          // Here you would call your actual upload function
+          const { uploadFile } = await import('@/lib/upload');
+          const finalPath = `${uploadPath}/${Date.now()}_${selectedFile.name}`;
+          const url = await uploadFile(selectedFile, finalPath);
 
-        setUploadedUrl(url);
-        onUploadComplete(url);
-      } catch (e) {
-        const err = e as Error;
-        setError(err.message);
-        if (onUploadError) {
-          onUploadError(err);
+          setUploadedUrl(url);
+          onUploadComplete(url);
+        } catch (err) {
+          const e = err as Error;
+          setError(e.message);
+          if (onUploadError) {
+            onUploadError(e);
+          }
+        } finally {
+          setUploading(false);
         }
-      } finally {
-        setUploading(false);
       }
     };
 
     const handleRemove = () => {
-        setFile(null);
         setUploadedUrl(null);
         setError(null);
         if (onFileRemove) {
@@ -69,12 +65,12 @@ export const FileUpload = forwardRef<HTMLInputElement, FileUploadProps>(
     return (
       <div className="space-y-2">
         <Label htmlFor={props.id}>{label}</Label>
-        {uploadedUrl ? (
+        {uploadedUrl && !uploading ? (
             <div className="flex items-center justify-between p-2 border rounded-md bg-muted/50">
                 <div className='flex items-center gap-2'>
                     <FileIcon className='h-5 w-5 text-muted-foreground' />
                     <a href={uploadedUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline truncate max-w-[150px]">
-                        View Document
+                        View File
                     </a>
                 </div>
                 <Button type='button' variant='ghost' size='icon' onClick={handleRemove} className='h-6 w-6'>
