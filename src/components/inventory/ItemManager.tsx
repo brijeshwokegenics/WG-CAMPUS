@@ -70,10 +70,9 @@ export function ItemManager({ schoolId }: { schoolId: string }) {
                     <div className="flex gap-2">
                         <Select value={filteredCategory} onValueChange={setFilteredCategory}>
                             <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Filter by category" />
+                                <SelectValue placeholder="Filter by category..." />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All Categories</SelectItem>
                                 {categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
