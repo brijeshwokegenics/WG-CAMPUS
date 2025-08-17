@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Loader2, Edit, Trash2, History, PackagePlus, PackageMinus } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Loader2, Edit, Trash2, History, PackagePlus, X } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,15 +29,17 @@ export function ItemManager({ schoolId }: { schoolId: string }) {
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState<Item | null>(null);
 
-    const fetchData = async () => {
+    const fetchData = () => {
         setLoading(true);
-        const [itemsRes, categoriesRes] = await Promise.all([
-            getInventoryItems(schoolId, filteredCategory || undefined),
-            getItemCategories(schoolId)
-        ]);
-        setItems(itemsRes as Item[]);
-        setCategories(categoriesRes as Category[]);
-        setLoading(false);
+        startTransition(async () => {
+            const [itemsRes, categoriesRes] = await Promise.all([
+                getInventoryItems(schoolId, filteredCategory || undefined),
+                getItemCategories(schoolId)
+            ]);
+            setItems(itemsRes as Item[]);
+            setCategories(categoriesRes as Category[]);
+            setLoading(false);
+        });
     };
 
     useEffect(() => {
@@ -69,15 +71,21 @@ export function ItemManager({ schoolId }: { schoolId: string }) {
                         <CardDescription>View, add, and manage all inventory items.</CardDescription>
                     </div>
                     <div className="flex gap-2">
-                         <Select value={filteredCategory} onValueChange={setFilteredCategory}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Filter by category..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="">All Categories</SelectItem>
-                                {categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                         <div className="flex items-center gap-2">
+                             <Select value={filteredCategory} onValueChange={setFilteredCategory}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Filter by category..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            {filteredCategory && (
+                                <Button variant="ghost" size="icon" onClick={() => setFilteredCategory('')}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
+                         </div>
                         <Button onClick={() => setIsAddItemOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add Item</Button>
                     </div>
                 </div>
