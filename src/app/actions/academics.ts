@@ -177,18 +177,25 @@ export async function getClassesForSchool(schoolId: string) {
 
   try {
     const classesRef = collection(db, 'classes');
-    // Using orderBy('name') requires a composite index on (schoolId, name) in Firestore.
-    // This is more efficient than client-side sorting for large datasets.
-    const q = query(classesRef, where('schoolId', '==', schoolId), orderBy('name'));
+    const q = query(classesRef, where('schoolId', '==', schoolId));
     const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return { success: true, data: [] };
+    }
 
     const classes = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
     })) as { id: string; name: string; sections: string[]; schoolId: string }[];
     
-    // As a fallback, if Firestore doesn't sort perfectly (e.g. "Class 10" vs "Class 2"), sort here.
-    classes.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+    // Perform a safe sort in code
+    classes.sort((a, b) => {
+      if (a.name && b.name) {
+        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+      }
+      return 0; // if name is missing, don't sort
+    });
 
     return { success: true, data: classes };
   } catch (error) {
@@ -1104,3 +1111,5 @@ export async function deleteHomework({ id, schoolId }: { id: string; schoolId: s
         return { success: false, error: 'Failed to delete homework.' };
     }
 }
+
+    
