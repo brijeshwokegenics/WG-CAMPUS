@@ -101,7 +101,6 @@ export function BookCatalog({ schoolId }: { schoolId: string }) {
                                 <SelectValue placeholder="All Categories" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All Categories</SelectItem>
                                 {categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -165,4 +164,3 @@ export function BookCatalog({ schoolId }: { schoolId: string }) {
         </Card>
     );
 }
-
