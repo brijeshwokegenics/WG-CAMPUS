@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -154,7 +153,7 @@ export async function getFeeStructure(schoolId: string, classId: string) {
     try {
         const docRef = doc(db, 'feeStructures', docId);
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
+        if (docSnap.exists() && docSnap.data().schoolId === schoolId) {
             return { success: true, data: docSnap.data() };
         }
         return { success: true, data: null }; // Not found is not an error
@@ -340,13 +339,13 @@ export async function getStudentFeeDetails(schoolId: string, studentId: string) 
 }
 
 
-export async function getFeeReceipt(receiptId: string) {
+export async function getFeeReceipt(receiptId: string, schoolId: string) {
     try {
         const docRef = doc(db, 'feeCollections', receiptId);
         const docSnap = await getDoc(docRef);
 
-        if (!docSnap.exists()) {
-            return { success: false, error: "Receipt not found." };
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) {
+            return { success: false, error: "Receipt not found or permission denied." };
         }
         
         const receiptData = docSnap.data();

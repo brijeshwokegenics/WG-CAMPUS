@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -178,6 +177,7 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
 }
 
 export default function PayslipPrintPage({ params }: { params: { id: string } }) {
+    const schoolId = params.id;
     const searchParams = useSearchParams();
     const month = searchParams.get('month');
     const userId = searchParams.get('userId');
@@ -190,5 +190,5 @@ export default function PayslipPrintPage({ params }: { params: { id: string } })
         );
     }
     
-    return <PayslipView schoolId={params.id} month={month} userId={userId} />;
+    return <PayslipView schoolId={schoolId} month={month} userId={userId} />;
 }

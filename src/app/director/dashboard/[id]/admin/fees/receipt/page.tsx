@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -13,7 +12,7 @@ import { numberToWords } from 'number-to-words';
 type ReceiptData = any;
 type SchoolData = any;
 
-function ReceiptView({ receiptId }: { receiptId: string }) {
+function ReceiptView({ receiptId, schoolId }: { receiptId: string, schoolId: string }) {
     const [receipt, setReceipt] = useState<ReceiptData>(null);
     const [school, setSchool] = useState<SchoolData>(null);
     const [loading, setLoading] = useState(true);
@@ -21,7 +20,7 @@ function ReceiptView({ receiptId }: { receiptId: string }) {
     useEffect(() => {
         async function fetchData() {
             setLoading(true);
-            const receiptRes = await getFeeReceipt(receiptId);
+            const receiptRes = await getFeeReceipt(receiptId, schoolId);
             if (receiptRes.success && receiptRes.data) {
                 setReceipt(receiptRes.data);
                 const schoolRes = await getSchool(receiptRes.data.schoolId);
@@ -32,7 +31,7 @@ function ReceiptView({ receiptId }: { receiptId: string }) {
             setLoading(false);
         }
         fetchData();
-    }, [receiptId]);
+    }, [receiptId, schoolId]);
 
     useEffect(() => {
         if (!loading && receipt && school) {
@@ -129,7 +128,8 @@ function ReceiptView({ receiptId }: { receiptId: string }) {
 }
 
 
-export default function FeeReceiptPage() {
+export default function FeeReceiptPage({ params }: { params: { id: string } }) {
+    const schoolId = params.id;
     const searchParams = useSearchParams();
     const receiptId = searchParams.get('id');
 
@@ -141,5 +141,5 @@ export default function FeeReceiptPage() {
         );
     }
     
-    return <ReceiptView receiptId={receiptId} />;
+    return <ReceiptView receiptId={receiptId} schoolId={schoolId} />;
 }

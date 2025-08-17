@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -455,6 +454,7 @@ export async function getStudentById(studentId: string, schoolId: string) {
         // Convert Firestore Timestamps to Dates
         const dataWithDates = {
             ...studentData,
+            id: studentDoc.id,
             admissionDate: studentData.admissionDate.toDate(),
             dob: studentData.dob.toDate(),
             className,
@@ -905,7 +905,7 @@ export async function getMarksForStudent(schoolId: string, examTermId: string, s
     try {
         const docRef = doc(db, 'marks', docId);
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
+        if (docSnap.exists() && docSnap.data().schoolId === schoolId) {
             return { success: true, data: docSnap.data() };
         }
         return { success: true, data: null };
@@ -975,7 +975,10 @@ export async function updateStudyMaterial(prevState: any, formData: FormData) {
 
     try {
         const docRef = doc(db, 'studyMaterials', id);
-        // Security check could be added here to ensure doc belongs to schoolId
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) {
+            return { success: false, error: "Permission denied." };
+        }
         await updateDoc(docRef, updateData);
         revalidatePath(`/director/dashboard/${schoolId}/academics/elearning`);
         return { success: true, message: 'Study material updated successfully.' };
@@ -988,7 +991,10 @@ export async function updateStudyMaterial(prevState: any, formData: FormData) {
 export async function deleteStudyMaterial({ id, schoolId }: { id: string; schoolId: string }) {
     try {
         const docRef = doc(db, 'studyMaterials', id);
-        // Add a security check if needed
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) {
+            return { success: false, error: "Permission denied." };
+        }
         await deleteDoc(docRef);
         revalidatePath(`/director/dashboard/${schoolId}/academics/elearning`);
         return { success: true };
@@ -1062,6 +1068,10 @@ export async function updateHomework(prevState: any, formData: FormData) {
 
     try {
         const docRef = doc(db, 'homework', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) {
+            return { success: false, error: "Permission denied." };
+        }
         await updateDoc(docRef, updateData);
         revalidatePath(`/director/dashboard/${schoolId}/academics/elearning`);
         return { success: true, message: 'Homework updated successfully.' };
@@ -1074,6 +1084,10 @@ export async function updateHomework(prevState: any, formData: FormData) {
 export async function deleteHomework({ id, schoolId }: { id: string; schoolId: string }) {
     try {
         const docRef = doc(db, 'homework', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) {
+            return { success: false, error: "Permission denied." };
+        }
         await deleteDoc(docRef);
         revalidatePath(`/director/dashboard/${schoolId}/academics/elearning`);
         return { success: true };

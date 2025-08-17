@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -45,6 +44,11 @@ export async function setStaffSalary(prevState: any, formData: FormData) {
   const { schoolId, userId } = parsed.data;
 
   try {
+    const userDocRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userDocRef);
+    if (!userDoc.exists() || userDoc.data().schoolId !== schoolId) {
+        return { success: false, error: "User not found or permission denied." };
+    }
     const salaryDocRef = doc(db, 'staffSalaries', `${schoolId}_${userId}`);
     await setDoc(salaryDocRef, parsed.data);
     revalidatePath(`/director/dashboard/${schoolId}/hr/salary`);
@@ -72,7 +76,7 @@ export async function getStaffSalaryByUserId(schoolId: string, userId: string) {
     try {
         const salaryDocRef = doc(db, 'staffSalaries', `${schoolId}_${userId}`);
         const docSnap = await getDoc(salaryDocRef);
-        if (docSnap.exists()) {
+        if (docSnap.exists() && docSnap.data().schoolId === schoolId) {
             return { success: true, data: docSnap.data() };
         }
         return { success: false, error: 'Salary not found' };
@@ -128,7 +132,7 @@ export async function getStaffAttendanceForDate({ schoolId, date }: { schoolId: 
         const attendanceRef = doc(db, 'staffAttendance', docId);
         const docSnap = await getDoc(attendanceRef);
 
-        if (docSnap.exists()) {
+        if (docSnap.exists() && docSnap.data().schoolId === schoolId) {
             return { success: true, data: docSnap.data().attendance };
         } else {
             return { success: true, data: null }; // No record found for this date is not an error
@@ -297,7 +301,7 @@ export async function getPayrollForMonth(schoolId: string, month: string) {
     try {
         const payrollDocRef = doc(db, 'payrolls', `${schoolId}_${month}`);
         const docSnap = await getDoc(payrollDocRef);
-        if (docSnap.exists()) {
+        if (docSnap.exists() && docSnap.data().schoolId === schoolId) {
             return { success: true, data: docSnap.data() };
         }
         return { success: false, error: "Payroll record not found for this month." };
@@ -320,5 +324,3 @@ export async function getPayrollHistory(schoolId: string) {
         return { success: false, error: "Failed to fetch payrolls." };
       }
 }
-
-    

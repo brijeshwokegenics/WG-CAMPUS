@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -28,16 +27,23 @@ export async function getItemCategories(schoolId: string) {
 }
 export async function updateItemCategory(prevState: any, formData: FormData) {
     const id = formData.get('id') as string;
+    const schoolId = formData.get('schoolId') as string;
     const parsed = ItemCategorySchema.omit({schoolId: true}).safeParse(Object.fromEntries(formData));
     if (!parsed.success) return { success: false, error: 'Invalid data' };
     try {
-        await updateDoc(doc(db, 'inventoryCategories', id), parsed.data);
-        revalidatePath(`/director/dashboard/${formData.get('schoolId')}/admin/inventory`);
+        const docRef = doc(db, 'inventoryCategories', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return { success: false, error: 'Permission denied.'};
+        await updateDoc(docRef, parsed.data);
+        revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
         return { success: true, message: 'Category updated.' };
     } catch (e) { return { success: false, error: 'Failed to update.' }; }
 }
 export async function deleteItemCategory(id: string, schoolId: string) {
-    await deleteDoc(doc(db, 'inventoryCategories', id));
+    const docRef = doc(db, 'inventoryCategories', id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return;
+    await deleteDoc(docRef);
     revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
 }
 
@@ -67,16 +73,23 @@ export async function getVendors(schoolId: string) {
 }
 export async function updateVendor(prevState: any, formData: FormData) {
     const id = formData.get('id') as string;
+    const schoolId = formData.get('schoolId') as string;
     const parsed = VendorSchema.omit({schoolId: true}).safeParse(Object.fromEntries(formData));
     if (!parsed.success) return { success: false, error: 'Invalid data' };
     try {
-        await updateDoc(doc(db, 'inventoryVendors', id), parsed.data);
-        revalidatePath(`/director/dashboard/${formData.get('schoolId')}/admin/inventory`);
+        const docRef = doc(db, 'inventoryVendors', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return { success: false, error: 'Permission denied.'};
+        await updateDoc(docRef, parsed.data);
+        revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
         return { success: true, message: 'Vendor updated.' };
     } catch (e) { return { success: false, error: 'Failed to update.' }; }
 }
 export async function deleteVendor(id: string, schoolId: string) {
-    await deleteDoc(doc(db, 'inventoryVendors', id));
+    const docRef = doc(db, 'inventoryVendors', id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return;
+    await deleteDoc(docRef);
     revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
 }
 
@@ -98,7 +111,10 @@ export async function getUnits(schoolId: string) {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 export async function deleteUnit(id: string, schoolId: string) {
-    await deleteDoc(doc(db, 'inventoryUnits', id));
+    const docRef = doc(db, 'inventoryUnits', id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return;
+    await deleteDoc(docRef);
     revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
 }
 
@@ -120,7 +136,10 @@ export async function getLocations(schoolId: string) {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 export async function deleteLocation(id: string, schoolId: string) {
-    await deleteDoc(doc(db, 'inventoryLocations', id));
+    const docRef = doc(db, 'inventoryLocations', id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return;
+    await deleteDoc(docRef);
     revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
 }
 
@@ -186,14 +205,14 @@ export async function updateStock(prevState: any, formData: FormData) {
         return { success: false, error: "Invalid data.", details: parsed.error.flatten() };
     }
     
-    const { itemId, type, quantity } = parsed.data;
+    const { itemId, type, quantity, schoolId } = parsed.data;
     const itemRef = doc(db, 'inventoryItems', itemId);
     const historyRef = collection(db, 'inventoryHistory');
 
     try {
         await runTransaction(db, async (transaction) => {
             const itemDoc = await transaction.get(itemRef);
-            if (!itemDoc.exists()) throw new Error("Item not found.");
+            if (!itemDoc.exists() || itemDoc.data().schoolId !== schoolId) throw new Error("Item not found or permission denied.");
 
             const currentStock = itemDoc.data().currentStock || 0;
             let newStock = currentStock;
@@ -218,7 +237,7 @@ export async function updateStock(prevState: any, formData: FormData) {
             transaction.set(newHistoryRef, historyData);
         });
         
-        revalidatePath(`/director/dashboard/${parsed.data.schoolId}/admin/inventory`);
+        revalidatePath(`/director/dashboard/${schoolId}/admin/inventory`);
         return { success: true, message: "Stock updated successfully." };
 
     } catch (e: any) {
