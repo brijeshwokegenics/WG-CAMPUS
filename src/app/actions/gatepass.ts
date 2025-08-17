@@ -174,9 +174,11 @@ export async function createPassType(prevState: any, formData: FormData) {
 }
 
 export async function getPassTypes(schoolId: string) {
-    const q = query(collection(db, 'gatePassTypes'), where('schoolId', '==', schoolId), orderBy('name'));
+    const q = query(collection(db, 'gatePassTypes'), where('schoolId', '==', schoolId));
     const snapshot = await getDocs(q);
-    const passTypes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const passTypes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as { name: string } }));
+    // Sort in code to prevent needing a composite index
+    passTypes.sort((a, b) => a.name.localeCompare(b.name));
     return passTypes;
 }
 
