@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useFormState } from 'react-dom';
 import { format, parseISO, getDaysInMonth } from 'date-fns';
-import { Calendar as CalendarIcon, Loader2, Download } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2, Download, MessageSquare } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { cn } from '@/lib/utils';
@@ -250,10 +250,16 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
       </div>
 
       {state.message && (
-        <Alert className={cn(state.success ? 'border-green-500 text-green-700' : 'border-destructive text-destructive')}>
-          <AlertTitle>{state.success ? 'Success!' : 'Error!'}</AlertTitle>
-          <AlertDescription>{state.message || state.error}</AlertDescription>
-        </Alert>
+        <div className="flex justify-between items-center rounded-lg border bg-card text-card-foreground shadow-sm p-4">
+             <Alert className={cn(state.success ? 'border-green-500 text-green-700' : 'border-destructive text-destructive')}>
+                <AlertTitle>{state.success ? 'Success!' : 'Error!'}</AlertTitle>
+                <AlertDescription>{state.message || state.error}</AlertDescription>
+            </Alert>
+            {state.success && (
+                <Button variant="outline" disabled><MessageSquare className="mr-2 h-4 w-4" /> Notify Absentees</Button>
+            )}
+        </div>
+
       )}
 
       {/* Attendance Table */}

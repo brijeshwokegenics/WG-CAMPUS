@@ -24,7 +24,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 import { getStudentFeeDetails, collectFee } from '@/app/actions/finance';
 import { getStudentsForSchool } from '@/app/actions/academics';
-import { Loader2, Search, CalendarIcon, Wallet, FileText, Receipt, Printer } from 'lucide-react';
+import { Loader2, Search, CalendarIcon, Wallet, FileText, Receipt, Printer, Mail, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -271,9 +271,13 @@ function FeeCollectionForm({ student, feeStatus, schoolId, state, formAction }: 
                             <AlertDescription>
                                 {state.message || state.error}
                                 {state.success && state.receiptId && (
-                                    <Link href={`/director/dashboard/${schoolId}/admin/fees/receipt?id=${state.receiptId}`} target="_blank">
-                                        <Button variant="link" className="p-0 h-auto ml-2">Print Receipt</Button>
-                                    </Link>
+                                    <div className='flex gap-2 mt-2'>
+                                         <Link href={`/director/dashboard/${schoolId}/admin/fees/receipt?id=${state.receiptId}`} target="_blank">
+                                            <Button variant="link" className="p-0 h-auto"><Printer className='mr-1 h-4 w-4' /> Print Receipt</Button>
+                                        </Link>
+                                        <Button variant="link" disabled className="p-0 h-auto"><Mail className='mr-1 h-4 w-4' /> Email Receipt</Button>
+                                        <Button variant="link" disabled className="p-0 h-auto"><MessageSquare className='mr-1 h-4 w-4' /> SMS Receipt</Button>
+                                    </div>
                                 )}
                             </AlertDescription>
                         </Alert>

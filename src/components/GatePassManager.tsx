@@ -13,12 +13,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, CalendarIcon, Printer, RefreshCcw, User, UserCog, UserSquare2, PlusCircle, Trash2, Edit, Ticket } from 'lucide-react';
+import { Loader2, Search, CalendarIcon, Printer, RefreshCcw, User, UserCog, UserSquare2, PlusCircle, Trash2, Edit, Ticket, CheckCircle2, MessageSquare } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getStudentsForSchool } from '@/app/actions/academics';
@@ -49,8 +49,6 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
     }, [fetchData]);
     
     const handleSuccess = () => {
-        setIsIssueDialogOpen(false);
-        setIsManageTypesDialogOpen(false);
         fetchData();
     }
 
@@ -71,7 +69,7 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
             <CardContent>
                 <RecentPassesTable schoolId={schoolId} passes={recentPasses} loading={loadingData} refresh={fetchData} />
             </CardContent>
-             {isIssueDialogOpen && <IssuePassDialog isOpen={isIssueDialogOpen} setIsOpen={setIsIssueDialogOpen} schoolId={schoolId} onSuccess={handleSuccess} />}
+             <IssuePassDialog isOpen={isIssueDialogOpen} setIsOpen={setIsIssueDialogOpen} schoolId={schoolId} onSuccess={handleSuccess} />
             {isManageTypesDialogOpen && <ManagePassTypesDialog isOpen={isManageTypesDialogOpen} setIsOpen={setIsManageTypesDialogOpen} schoolId={schoolId} onSuccess={handleSuccess} />}
         </Card>
     );
@@ -143,6 +141,8 @@ function IssuePassDialog({ isOpen, setIsOpen, schoolId, onSuccess }: {isOpen: bo
     const [isSearching, startSearchTransition] = useTransition();
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
     const [passTypes, setPassTypes] = useState<PassType[]>([]);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [issuedPass, setIssuedPass] = useState<any>(null);
     
     const [durationValue, setDurationValue] = useState(1);
     const [durationUnit, setDurationUnit] = useState('Days');
@@ -161,6 +161,18 @@ function IssuePassDialog({ isOpen, setIsOpen, schoolId, onSuccess }: {isOpen: bo
     
     const memberType = watch('memberType');
     
+    const handleDialogClose = (open: boolean) => {
+        if (!open) {
+            reset();
+            setSearchTerm('');
+            setSearchResults([]);
+            setSelectedMember(null);
+            setShowSuccess(false);
+            setIssuedPass(null);
+        }
+        setIsOpen(open);
+    }
+
     useEffect(() => {
         async function fetchTypes() {
             const typesRes = await actions.getPassTypes(schoolId);
@@ -171,10 +183,11 @@ function IssuePassDialog({ isOpen, setIsOpen, schoolId, onSuccess }: {isOpen: bo
 
     useEffect(() => {
         if(state.success){
-            reset();
+            setIssuedPass(state.pass);
+            setShowSuccess(true);
             onSuccess();
         }
-    }, [state.success, reset, onSuccess]);
+    }, [state.success, state.pass, onSuccess]);
 
     const debouncedSearch = useDebouncedCallback(async (term) => {
         if (term.length < 2) {
@@ -229,8 +242,33 @@ function IssuePassDialog({ isOpen, setIsOpen, schoolId, onSuccess }: {isOpen: bo
         formAction(formData);
     };
 
+    if (showSuccess) {
+        return (
+            <Dialog open={isOpen} onOpenChange={handleDialogClose}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Success!</DialogTitle>
+                    </DialogHeader>
+                    <div className="text-center py-8">
+                        <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                        <p>Gate pass has been successfully issued for {issuedPass.passHolderName}.</p>
+                    </div>
+                    <DialogFooter>
+                         <Button variant="outline" onClick={() => window.open(`/director/dashboard/${schoolId}/admin/gate-pass/print?id=${issuedPass.id}`, '_blank')}>
+                            <Printer className="mr-2 h-4 w-4"/> Print Pass
+                        </Button>
+                        <Button variant="secondary" disabled>
+                            <MessageSquare className="mr-2 h-4 w-4"/> Notify Parent (SMS)
+                        </Button>
+                        <Button onClick={() => handleDialogClose(false)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )
+    }
+
     return (
-         <Dialog open={isOpen} onOpenChange={setIsOpen}>
+         <Dialog open={isOpen} onOpenChange={handleDialogClose}>
             <DialogContent className="sm:max-w-xl">
                  <DialogHeader>
                     <DialogTitle>Issue New Pass</DialogTitle>
@@ -296,7 +334,7 @@ function IssuePassDialog({ isOpen, setIsOpen, schoolId, onSuccess }: {isOpen: bo
                     </div>
                     <div className="space-y-2"><Label>Issued By (Staff Name)</Label><Input {...register('issuedBy')} />{errors.issuedBy && <p className="text-sm text-destructive">{errors.issuedBy.message}</p>}</div>
                      <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                        <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>Cancel</Button>
                         <Button type="submit" disabled={isSubmitting || !watch('passHolderName')}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Issue Pass</Button>
                     </DialogFooter>
                 </form>
@@ -359,7 +397,7 @@ function ManagePassTypesDialog({ isOpen, setIsOpen, schoolId, onSuccess }: { isO
                         <Button size="sm" variant="outline" onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add New Type</Button>
                     </div>
 
-                    {isFormOpen && <PassTypeForm isOpen={isFormOpen} setIsOpen={setIsFormOpen} schoolId={schoolId} editingType={editingType} onSuccess={handleFormSuccess} />}
+                    {isFormOpen && <PassTypeForm isOpen={isFormOpen} setIsFormOpen={setIsFormOpen} schoolId={schoolId} editingType={editingType} onSuccess={handleFormSuccess} />}
 
                      <div className="border rounded-lg max-h-60 overflow-y-auto">
                         <Table>

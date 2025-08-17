@@ -39,12 +39,20 @@ export async function createGatePass(prevState: any, formData: FormData) {
   }
 
   try {
-    await addDoc(collection(db, 'gatePasses'), {
+    const dataToSave = {
         ...parsed.data,
         createdAt: serverTimestamp(),
-    });
+    };
+    const newDocRef = await addDoc(collection(db, 'gatePasses'), dataToSave);
     revalidatePath(`/director/dashboard/${parsed.data.schoolId}/admin/gate-pass`);
-    return { success: true, message: 'Gate pass created successfully.' };
+    
+    const newDocSnap = await getDoc(newDocRef);
+    const newPass = {
+        id: newDocSnap.id,
+        ...newDocSnap.data(),
+    };
+    
+    return { success: true, message: 'Gate pass created successfully.', pass: newPass };
   } catch (error) {
     console.error("Error creating gate pass:", error);
     return { success: false, error: "Failed to create gate pass." };
