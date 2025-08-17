@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, X, File as FileIcon } from 'lucide-react';
 import { Label } from './ui/label';
 import { cn } from '@/lib/utils';
+import { uploadFile } from '@/lib/upload';
 
 interface FileUploadProps extends Omit<InputProps, 'onChange' | 'value' | 'type'> {
   onUploadComplete: (url: string) => void;
@@ -35,8 +36,6 @@ export const FileUpload = forwardRef<HTMLInputElement, FileUploadProps>(
         setError(null);
         
         try {
-          // Here you would call your actual upload function
-          const { uploadFile } = await import('@/lib/upload');
           const finalPath = `${uploadPath}/${Date.now()}_${selectedFile.name}`;
           const url = await uploadFile(selectedFile, finalPath);
 
