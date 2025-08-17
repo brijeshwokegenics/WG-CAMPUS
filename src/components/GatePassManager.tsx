@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, CalendarIcon, Printer, RefreshCcw, User, UserCog, UserSquare2, PlusCircle, Trash2 } from 'lucide-react';
+import { Loader2, Search, CalendarIcon, Printer, RefreshCcw, User, UserCog, UserSquare2, PlusCircle, Trash2, Edit } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
@@ -22,7 +22,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getStudentsForSchool } from '@/app/actions/academics';
-import { createGatePass, getRecentGatePasses, updateGatePassStatus, getPassTypes, createPassType, deletePassType } from '@/app/actions/gatepass';
+import { createGatePass, getRecentGatePasses, updateGatePassStatus, getPassTypes, createPassType, deletePassType, updatePassType } from '@/app/actions/gatepass';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { getUsersForSchool } from '@/app/actions/users';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
@@ -134,62 +134,64 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            <div className="lg:col-span-1 space-y-6">
-                <Card>
-                    <CardHeader><CardTitle>Issue New Pass</CardTitle></CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
-                            {state.error && (<Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>)}
-                            
-                            <Controller name="memberType" control={control} render={({field}) => (
-                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-3 gap-4">
-                                    <div><RadioGroupItem value="Student" id="Student"/><Label htmlFor="Student" className="ml-2 flex items-center gap-2"><User className="h-4 w-4"/>Student</Label></div>
-                                    <div><RadioGroupItem value="Staff" id="Staff"/><Label htmlFor="Staff" className="ml-2 flex items-center gap-2"><UserCog className="h-4 w-4"/>Staff</Label></div>
-                                    <div><RadioGroupItem value="Visitor" id="Visitor"/><Label htmlFor="Visitor" className="ml-2 flex items-center gap-2"><UserSquare2 className="h-4 w-4"/>Visitor</Label></div>
-                                </RadioGroup>
-                            )}/>
-                            
-                            {memberType === 'Visitor' ? (
-                                <>
-                                    <div className="space-y-2"><Label>Visitor Name</Label><Input {...register('passHolderName')} /></div>
-                                    <div className="space-y-2"><Label>Details / Relation</Label><Input {...register('passHolderDetails')} /></div>
-                                </>
-                            ) : (
-                                <div className="space-y-2">
-                                    <Label>Search {memberType}</Label>
-                                    <div className="relative">
-                                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input placeholder={`Search ${memberType.toLowerCase()} by name or ID...`} className="pl-8" value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}}/>
+        <div className="space-y-6">
+            <ManagePassTypes schoolId={schoolId} passTypes={passTypes} refresh={fetchData} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                <div className="lg:col-span-1">
+                    <Card>
+                        <CardHeader><CardTitle>Issue New Pass</CardTitle></CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+                                {state.error && (<Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>)}
+                                
+                                <Controller name="memberType" control={control} render={({field}) => (
+                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-3 gap-4">
+                                        <div><RadioGroupItem value="Student" id="Student"/><Label htmlFor="Student" className="ml-2 flex items-center gap-2"><User className="h-4 w-4"/>Student</Label></div>
+                                        <div><RadioGroupItem value="Staff" id="Staff"/><Label htmlFor="Staff" className="ml-2 flex items-center gap-2"><UserCog className="h-4 w-4"/>Staff</Label></div>
+                                        <div><RadioGroupItem value="Visitor" id="Visitor"/><Label htmlFor="Visitor" className="ml-2 flex items-center gap-2"><UserSquare2 className="h-4 w-4"/>Visitor</Label></div>
+                                    </RadioGroup>
+                                )}/>
+                                
+                                {memberType === 'Visitor' ? (
+                                    <>
+                                        <div className="space-y-2"><Label>Visitor Name</Label><Input {...register('passHolderName')} /></div>
+                                        <div className="space-y-2"><Label>Details / Relation</Label><Input {...register('passHolderDetails')} /></div>
+                                    </>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <Label>Search {memberType}</Label>
+                                        <div className="relative">
+                                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input placeholder={`Search ${memberType.toLowerCase()} by name or ID...`} className="pl-8" value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}}/>
+                                        </div>
+                                        {isSearching && <Loader2 className="animate-spin mx-auto"/>}
+                                        {searchResults.length > 0 && (<div className="border rounded-md max-h-40 overflow-y-auto"><ul>{searchResults.map(s => <li key={`${s.type}-${s.id}`} className="p-2 cursor-pointer hover:bg-muted" onClick={() => handleSelectMember(s)}>{s.name} <Badge variant="secondary">{s.details}</Badge></li>)}</ul></div>)}
+                                        {selectedMember && (<div className="p-2 bg-green-50 border border-green-200 rounded-md text-sm">Selected: <span className="font-semibold">{selectedMember.name}</span></div>)}
                                     </div>
-                                    {isSearching && <Loader2 className="animate-spin mx-auto"/>}
-                                    {searchResults.length > 0 && (<div className="border rounded-md max-h-40 overflow-y-auto"><ul>{searchResults.map(s => <li key={`${s.type}-${s.id}`} className="p-2 cursor-pointer hover:bg-muted" onClick={() => handleSelectMember(s)}>{s.name} <Badge variant="secondary">{s.details}</Badge></li>)}</ul></div>)}
-                                    {selectedMember && (<div className="p-2 bg-green-50 border border-green-200 rounded-md text-sm">Selected: <span className="font-semibold">{selectedMember.name}</span></div>)}
+                                )}
+
+                                <div className="space-y-2">
+                                    <Label>Pass Type</Label>
+                                    <Controller name="passType" control={control} render={({field}) => (
+                                        <Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select a pass type..."/></SelectTrigger><SelectContent>{passTypes.map(type => <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>)}</SelectContent></Select>
+                                    )} />
+                                    {errors.passType && <p className="text-sm text-destructive">{errors.passType.message}</p>}
                                 </div>
-                            )}
 
-                            <div className="space-y-2">
-                                <Label>Pass Type</Label>
-                                <Controller name="passType" control={control} render={({field}) => (
-                                    <Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select a pass type..."/></SelectTrigger><SelectContent>{passTypes.map(type => <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>)}</SelectContent></Select>
-                                )} />
-                                {errors.passType && <p className="text-sm text-destructive">{errors.passType.message}</p>}
-                            </div>
-
-                            <div className="space-y-2"><Label>Reason for Pass</Label><Textarea {...register('reason')} />{errors.reason && <p className="text-sm text-destructive">{errors.reason.message}</p>}</div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label>Date</Label><Controller name="passDate" control={control} render={({ field }) => (<Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start"><CalendarIcon className="mr-2 h-4 w-4"/>{field.value ? format(field.value, "PPP") : 'Pick a date'}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange}/></PopoverContent></Popover>)} /></div>
-                                <div className="space-y-2"><Label>Out Time</Label><Input type="time" {...register('outTime')}/>{errors.outTime && <p className="text-sm text-destructive">{errors.outTime.message}</p>}</div>
-                            </div>
-                            <div className="space-y-2"><Label>Issued By (Staff Name)</Label><Input {...register('issuedBy')} />{errors.issuedBy && <p className="text-sm text-destructive">{errors.issuedBy.message}</p>}</div>
-                            <Button type="submit" className="w-full" disabled={isSubmitting || !watch('passHolderName')}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Issue Pass</Button>
-                        </form>
-                    </CardContent>
-                </Card>
-                <ManagePassTypes schoolId={schoolId} passTypes={passTypes} refresh={fetchData} />
-            </div>
-            <div className="lg:col-span-2">
-                <RecentPassesTable schoolId={schoolId} passes={recentPasses} loading={loadingData} refresh={fetchData} />
+                                <div className="space-y-2"><Label>Reason for Pass</Label><Textarea {...register('reason')} />{errors.reason && <p className="text-sm text-destructive">{errors.reason.message}</p>}</div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2"><Label>Date</Label><Controller name="passDate" control={control} render={({ field }) => (<Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start"><CalendarIcon className="mr-2 h-4 w-4"/>{field.value ? format(field.value, "PPP") : 'Pick a date'}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange}/></PopoverContent></Popover>)} /></div>
+                                    <div className="space-y-2"><Label>Out Time</Label><Input type="time" {...register('outTime')}/>{errors.outTime && <p className="text-sm text-destructive">{errors.outTime.message}</p>}</div>
+                                </div>
+                                <div className="space-y-2"><Label>Issued By (Staff Name)</Label><Input {...register('issuedBy')} />{errors.issuedBy && <p className="text-sm text-destructive">{errors.issuedBy.message}</p>}</div>
+                                <Button type="submit" className="w-full" disabled={isSubmitting || !watch('passHolderName')}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Issue Pass</Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
+                <div className="lg:col-span-2">
+                    <RecentPassesTable schoolId={schoolId} passes={recentPasses} loading={loadingData} refresh={fetchData} />
+                </div>
             </div>
         </div>
     );
@@ -247,6 +249,8 @@ function RecentPassesTable({ schoolId, passes, loading, refresh }: { schoolId: s
 
 function ManagePassTypes({ schoolId, passTypes, refresh }: { schoolId: string, passTypes: PassType[], refresh: () => void }) {
     const [isPending, startTransition] = useTransition();
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [editingType, setEditingType] = useState<PassType | null>(null);
 
     const handleDelete = (id: string) => {
         if(confirm("Are you sure you want to delete this pass type?")) {
@@ -256,64 +260,116 @@ function ManagePassTypes({ schoolId, passTypes, refresh }: { schoolId: string, p
             });
         }
     }
+    
+    const handleEdit = (type: PassType) => {
+        setEditingType(type);
+        setIsDialogOpen(true);
+    }
+    
+    const handleAdd = () => {
+        setEditingType(null);
+        setIsDialogOpen(true);
+    }
+    
+    const handleFormSuccess = () => {
+        setIsDialogOpen(false);
+        refresh();
+    }
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Manage Pass Types</CardTitle>
-                <CardDescription>Add or remove available pass types.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {passTypes.map(type => (
-                        <div key={type.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                            <p className="text-sm font-medium">{type.name}</p>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(type.id)} disabled={isPending}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                        </div>
-                    ))}
+                 <div className="flex justify-between items-center">
+                    <CardTitle>Manage Pass Types</CardTitle>
+                    <Button size="sm" variant="outline" onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add New</Button>
                 </div>
-                <AddPassTypeDialog schoolId={schoolId} refresh={refresh} />
+                <CardDescription>Add, edit, or remove available pass types.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <div className="border rounded-lg">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Pass Type Name</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {passTypes.length > 0 ? passTypes.map(type => (
+                                <TableRow key={type.id}>
+                                    <TableCell className="font-medium">{type.name}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(type)} disabled={isPending}><Edit className="h-4 w-4"/></Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(type.id)} disabled={isPending}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                    </TableCell>
+                                </TableRow>
+                            )) : (
+                                <TableRow><TableCell colSpan={2} className="h-24 text-center">No pass types created.</TableCell></TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </CardContent>
+            {isDialogOpen && <AddPassTypeDialog isOpen={isDialogOpen} setIsOpen={setIsDialogOpen} schoolId={schoolId} editingType={editingType} onSuccess={handleFormSuccess} />}
         </Card>
     )
 }
 
-function AddPassTypeDialog({ schoolId, refresh }: { schoolId: string, refresh: () => void }) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [state, formAction] = useFormState(createPassType, { success: false, error: null });
-    const [name, setName] = useState('');
+const PassTypeFormSchema = z.object({
+  name: z.string().min(3, "Name is required"),
+});
+type PassTypeFormValues = z.infer<typeof PassTypeFormSchema>;
+
+function AddPassTypeDialog({ isOpen, setIsOpen, schoolId, editingType, onSuccess }: { isOpen: boolean; setIsOpen: (open: boolean) => void; schoolId: string, editingType: PassType | null, onSuccess: () => void }) {
+    const action = editingType ? updatePassType : createPassType;
+    const [state, formAction] = useFormState(action, { success: false, error: null });
+
+    const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<PassTypeFormValues>({
+        resolver: zodResolver(PassTypeFormSchema),
+        defaultValues: { name: editingType?.name || '' }
+    });
 
     useEffect(() => {
         if (state.success) {
-            setIsOpen(false);
-            setName('');
-            refresh();
+            onSuccess();
         }
-    }, [state.success, refresh]);
+    }, [state.success, onSuccess]);
+    
+    useEffect(() => {
+        reset({ name: editingType?.name || '' });
+    }, [editingType, reset]);
+
+    const onFormSubmit = (data: PassTypeFormValues) => {
+        const formData = new FormData();
+        formData.append('schoolId', schoolId);
+        formData.append('name', data.name);
+        if (editingType) {
+            formData.append('id', editingType.id);
+        }
+        formAction(formData);
+    };
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                 <Button variant="outline" className="w-full"><PlusCircle className="mr-2 h-4 w-4"/>Add New Pass Type</Button>
-            </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Add New Pass Type</DialogTitle>
+                    <DialogTitle>{editingType ? 'Edit Pass Type' : 'Add New Pass Type'}</DialogTitle>
                 </DialogHeader>
-                <form action={formAction}>
+                <form onSubmit={handleSubmit(onFormSubmit)}>
                     <div className="space-y-4 py-4">
                         {state.error && <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>}
-                        <input type="hidden" name="schoolId" value={schoolId} />
                         <div className="space-y-2">
                             <Label htmlFor="pass-type-name">Pass Type Name</Label>
-                            <Input id="pass-type-name" name="name" value={name} onChange={e => setName(e.target.value)} required />
+                            <Input id="pass-type-name" {...register('name')} />
+                             {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
                         </div>
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                        <Button type="submit">Save</Button>
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                            {editingType ? 'Save Changes' : 'Create'}
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

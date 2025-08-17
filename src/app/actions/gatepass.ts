@@ -151,6 +151,8 @@ const PassTypeSchema = z.object({
   name: z.string().min(3, "Pass type name is required."),
   schoolId: z.string(),
 });
+const UpdatePassTypeSchema = PassTypeSchema.omit({schoolId: true});
+
 
 export async function createPassType(prevState: any, formData: FormData) {
   const parsed = PassTypeSchema.safeParse({
@@ -181,6 +183,28 @@ export async function getPassTypes(schoolId: string) {
     passTypes.sort((a, b) => a.name.localeCompare(b.name));
     return passTypes;
 }
+
+export async function updatePassType(prevState: any, formData: FormData) {
+    const id = formData.get('id') as string;
+    const schoolId = formData.get('schoolId') as string;
+    const parsed = UpdatePassTypeSchema.safeParse({ name: formData.get('name')});
+
+    if (!parsed.success) return { success: false, error: 'Invalid data.' };
+
+    try {
+        const docRef = doc(db, 'gatePassTypes', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) {
+            return { success: false, error: 'Permission denied.' };
+        }
+        await updateDoc(docRef, parsed.data);
+        revalidatePath(`/director/dashboard/${schoolId}/admin/gate-pass`);
+        return { success: true, message: 'Pass type updated.' };
+    } catch (e) {
+        return { success: false, error: 'Failed to update pass type.' };
+    }
+}
+
 
 export async function deletePassType(id: string, schoolId: string) {
     try {
