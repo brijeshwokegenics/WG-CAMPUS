@@ -21,6 +21,7 @@ import { Badge } from '../ui/badge';
 
 export function IssueReturn({ schoolId }: { schoolId: string }) {
     const [memberType, setMemberType] = useState<'Student' | 'Staff'>('Student');
+    const [searchBy, setSearchBy] = useState<'Name' | 'ID'>('Name');
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [isSearching, startSearchTransition] = useTransition();
@@ -35,11 +36,14 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
             return;
         }
         startSearchTransition(async () => {
+            const searchByName = searchBy === 'Name' ? term : undefined;
+            const searchById = searchBy === 'ID' ? term : undefined;
+
             if (memberType === 'Student') {
-                const results = await getStudentsForSchool({ schoolId, name: term });
+                const results = await getStudentsForSchool({ schoolId, name: searchByName, admissionId: searchById });
                 setSearchResults(results);
             } else {
-                const results = await getUsersForSchool(schoolId, term);
+                const results = await getUsersForSchool(schoolId, searchByName, searchById);
                 setSearchResults(results.data || []);
             }
         });
@@ -58,6 +62,19 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
         setSearchTerm('');
         fetchHistory(member.id);
     }
+    
+    const handleMemberTypeChange = (v: any) => {
+        setMemberType(v);
+        setSearchResults([]);
+        setSelectedMember(null);
+        setSearchTerm('');
+    }
+    
+    const handleSearchByChange = (v: any) => {
+        setSearchBy(v);
+        setSearchResults([]);
+        setSearchTerm('');
+    }
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
@@ -67,13 +84,17 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
                         <CardTitle>Find Member</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <RadioGroup value={memberType} onValueChange={(v) => {setMemberType(v as any); setSearchResults([]);}} className="flex gap-4">
+                        <RadioGroup value={memberType} onValueChange={handleMemberTypeChange} className="flex gap-4">
                             <div className="flex items-center space-x-2"><RadioGroupItem value="Student" id="student"/><Label htmlFor="student">Student</Label></div>
                             <div className="flex items-center space-x-2"><RadioGroupItem value="Staff" id="staff"/><Label htmlFor="staff">Staff</Label></div>
                         </RadioGroup>
+                         <RadioGroup value={searchBy} onValueChange={handleSearchByChange} className="flex gap-4">
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="Name" id="name"/><Label htmlFor="name">By Name</Label></div>
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="ID" id="id"/><Label htmlFor="id">By ID</Label></div>
+                        </RadioGroup>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder={`Search for a ${memberType.toLowerCase()}...`} className="pl-8" value={searchTerm} onChange={e => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}} />
+                            <Input placeholder={`Search ${memberType.toLowerCase()} by ${searchBy}...`} className="pl-8" value={searchTerm} onChange={e => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}} />
                         </div>
                         {isSearching && <Loader2 className="animate-spin mx-auto"/>}
                         {searchResults.length > 0 && (
@@ -81,7 +102,7 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
                                 {searchResults.map(res => (
                                     <div key={res.id} onClick={() => handleSelectMember(res)} className="p-2 hover:bg-muted cursor-pointer text-sm">
                                         <p className="font-semibold">{res.studentName || res.name}</p>
-                                        <p className="text-xs text-muted-foreground">{res.className ? `${res.className} - ${res.section}` : res.role}</p>
+                                        <p className="text-xs text-muted-foreground">{res.className ? `${res.className} - ${res.section}` : (res.role ? res.role : `ID: ${res.id}`)}</p>
                                     </div>
                                 ))}
                             </div>
@@ -223,3 +244,5 @@ function IssuedBooksList({ schoolId, history, onReturnSuccess }: { schoolId: str
         </div>
     )
 }
+
+    

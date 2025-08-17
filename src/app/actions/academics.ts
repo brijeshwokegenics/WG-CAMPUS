@@ -1,8 +1,9 @@
+
 'use server';
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or, documentId } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 
@@ -366,6 +367,10 @@ export async function getStudentsForSchool({ schoolId, name, admissionId, classI
         if (passedOnly) {
             queryConstraints.push(where('passedFinalExam', '==', true));
         }
+        if (admissionId) {
+            queryConstraints.push(where(documentId(), '==', admissionId));
+        }
+
 
         let studentsQuery = query(studentsRef, ...queryConstraints);
         const studentsSnapshot = await getDocs(studentsQuery);
@@ -405,18 +410,12 @@ export async function getStudentsForSchool({ schoolId, name, admissionId, classI
             };
         }));
         
-        // Manual client-side filtering for non-indexed fields (name, admissionId)
-        if (name) {
+        // Manual client-side filtering for name if not searching by ID
+        if (name && !admissionId) {
             studentsData = studentsData.filter(student =>
                 student.studentName.toLowerCase().includes(name.toLowerCase())
             );
         }
-        if (admissionId) {
-            studentsData = studentsData.filter(student =>
-                student.id.toLowerCase().includes(admissionId.toLowerCase())
-            );
-        }
-
 
         return studentsData;
     } catch (error) {
@@ -1096,3 +1095,5 @@ export async function deleteHomework({ id, schoolId }: { id: string; schoolId: s
         return { success: false, error: 'Failed to delete homework.' };
     }
 }
+
+    
