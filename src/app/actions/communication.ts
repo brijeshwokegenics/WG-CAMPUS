@@ -37,13 +37,18 @@ export async function createNotice(prevState: any, formData: FormData) {
 }
 
 export async function getNotices(schoolId: string) {
-    const q = query(collection(db, 'notices'), where('schoolId', '==', schoolId), orderBy('postedAt', 'desc'));
+    const q = query(collection(db, 'notices'), where('schoolId', '==', schoolId));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
+    const notices = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         postedAt: doc.data().postedAt.toDate(),
     }));
+
+    // Sort in code to avoid needing a composite index
+    notices.sort((a, b) => b.postedAt.getTime() - a.postedAt.getTime());
+
+    return notices;
 }
 
 export async function updateNotice(prevState: any, formData: FormData) {
