@@ -8,14 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, Search, BookUp, BookDown, Library } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { getStudentsForSchool } from '@/app/actions/academics';
 import { getUsersForSchool } from '@/app/actions/users';
 import { getBooks, getMemberHistory, issueBook, returnBook } from '@/app/actions/library';
 import { format, isAfter } from 'date-fns';
 import { useFormState } from 'react-dom';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Alert, AlertDescription } from '../ui/alert';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
 
@@ -32,8 +30,6 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
     const [isSearching, startSearchTransition] = useTransition();
     
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-    const [memberHistory, setMemberHistory] = useState<any[]>([]);
-    const [loadingHistory, setLoadingHistory] = useState(false);
 
     const debouncedSearch = useDebouncedCallback(async (term: string) => {
         if (term.length < 3) {
@@ -64,145 +60,98 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
         });
     }, 500);
 
-    const fetchHistory = useCallback(async (memberId: string) => {
-        setLoadingHistory(true);
-        const history = await getMemberHistory(schoolId, memberId);
-        setMemberHistory(history);
-        setLoadingHistory(false);
-    }, [schoolId]);
-
     const handleSelectMember = (member: Member) => {
         setSelectedMember(member);
         setSearchResults([]);
         setSearchTerm('');
-        fetchHistory(member.id);
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-            <div className="md:col-span-1 space-y-4">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Find Member</CardTitle>
-                         <CardDescription>Search for a student or staff member by name or ID.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="relative">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Search name or ID..." className="pl-8" value={searchTerm} onChange={e => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}} />
+        <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Find Library Member</CardTitle>
+                    <CardDescription>Search for a student or staff member by name or ID to manage their book circulation.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="relative max-w-lg">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="Start typing a name or ID..." 
+                            className="pl-8" 
+                            value={searchTerm} 
+                            onChange={e => {
+                                setSearchTerm(e.target.value); 
+                                debouncedSearch(e.target.value);
+                            }} 
+                        />
+                    </div>
+                    {isSearching && <Loader2 className="animate-spin mx-auto"/>}
+                    {searchResults.length > 0 && (
+                        <div className="border rounded-md max-h-60 overflow-y-auto max-w-lg">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Action</TableHead></TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                     {searchResults.map(res => (
+                                        <TableRow key={`${res.type}-${res.id}`}>
+                                            <TableCell className="font-medium">{res.name} <Badge variant="secondary">{res.type}</Badge></TableCell>
+                                            <TableCell className="text-muted-foreground">{res.details}</TableCell>
+                                            <TableCell><Button size="sm" onClick={() => handleSelectMember(res)}>Select</Button></TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </div>
-                        {isSearching && <Loader2 className="animate-spin mx-auto"/>}
-                        {searchResults.length > 0 && (
-                            <div className="border rounded-md max-h-60 overflow-y-auto">
-                                {searchResults.map(res => (
-                                    <div key={`${res.type}-${res.id}`} onClick={() => handleSelectMember(res)} className="p-2 hover:bg-muted cursor-pointer text-sm">
-                                        <p className="font-semibold flex justify-between items-center">
-                                            {res.name}
-                                            <Badge variant="secondary">{res.type}</Badge>
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">{res.details}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                    )}
+                </CardContent>
+            </Card>
 
-                {selectedMember && (
-                    <IssueBookForm schoolId={schoolId} member={selectedMember} onIssueSuccess={() => fetchHistory(selectedMember.id)}/>
-                )}
-            </div>
+            {selectedMember ? (
+                <MemberCirculationDashboard key={selectedMember.id} schoolId={schoolId} member={selectedMember} />
+            ) : (
+                <div className="text-center p-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                    <Library className="mx-auto h-12 w-12 text-gray-300" />
+                    <p className="mt-4">Search for and select a member to begin.</p>
+                </div>
+            )}
+        </div>
+    );
+}
 
-            <div className="md:col-span-2">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Member's Current Status</CardTitle>
-                        {selectedMember ? (
-                            <CardDescription>Books currently issued to {selectedMember.name}.</CardDescription>
-                        ) : (
-                            <CardDescription>Search for and select a member to view their status.</CardDescription>
-                        )}
-                    </CardHeader>
-                    <CardContent>
-                         {loadingHistory ? <div className="text-center p-8"><Loader2 className="animate-spin mx-auto"/></div> 
-                         : selectedMember ? <IssuedBooksList schoolId={schoolId} history={memberHistory} onReturnSuccess={() => fetchHistory(selectedMember.id)} />
-                         : <div className="text-center p-8 text-muted-foreground"><Library className="mx-auto h-12 w-12 text-gray-300" />Please select a member.</div>}
-                    </CardContent>
-                </Card>
+
+function MemberCirculationDashboard({ schoolId, member }: { schoolId: string, member: Member }) {
+    const [history, setHistory] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchHistory = useCallback(async () => {
+        setLoading(true);
+        const memberHistory = await getMemberHistory(schoolId, member.id);
+        setHistory(memberHistory);
+        setLoading(false);
+    }, [schoolId, member.id]);
+
+    useEffect(() => {
+        fetchHistory();
+    }, [fetchHistory]);
+
+    const issuedBooks = history.filter(h => h.status === 'issued');
+
+    return (
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Circulation for: {member.name} <Badge variant="outline">{member.type}</Badge></h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                <IssuedBooksTable issuedBooks={issuedBooks} schoolId={schoolId} loading={loading} onReturnSuccess={fetchHistory} />
+                <IssueNewBookForm schoolId={schoolId} member={member} onIssueSuccess={fetchHistory} />
             </div>
         </div>
     );
 }
 
-function IssueBookForm({ schoolId, member, onIssueSuccess }: { schoolId: string, member: Member, onIssueSuccess: () => void}) {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [books, setBooks] = useState<any[]>([]);
-    const [isSearching, startSearchTransition] = useTransition();
-
-    const [state, formAction] = useFormState(issueBook, { success: false, error: null });
-
-    const debouncedSearch = useDebouncedCallback((term) => {
-        if (term.length < 3) {
-            setBooks([]);
-            return;
-        }
-        startSearchTransition(async () => {
-            const results = await getBooks(schoolId, undefined, term);
-            setBooks(results.filter(b => b.availableStock > 0));
-        });
-    }, 500);
-
-    const handleIssue = (bookId: string) => {
-        const formData = new FormData();
-        formData.append('schoolId', schoolId);
-        formData.append('bookId', bookId);
-        formData.append('memberId', member.id);
-        formData.append('memberType', member.type);
-        formAction(formData);
-    }
-    
-    useEffect(() => {
-        if (state.success) {
-            onIssueSuccess();
-            setSearchTerm('');
-            setBooks([]);
-        }
-    }, [state.success, onIssueSuccess]);
-
-    return (
-        <Card>
-            <CardHeader><CardTitle>Issue a New Book</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-                 {state.error && <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>}
-                <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search for a book..." className="pl-8" value={searchTerm} onChange={e => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}}/>
-                </div>
-                 {isSearching && <Loader2 className="animate-spin mx-auto"/>}
-                 {books.length > 0 && (
-                    <div className="border rounded-md max-h-60 overflow-y-auto">
-                        {books.map(book => (
-                            <div key={book.id} className="p-2 flex justify-between items-center text-sm">
-                                <div>
-                                    <p className="font-semibold">{book.title}</p>
-                                    <p className="text-xs text-muted-foreground">{book.author}</p>
-                                </div>
-                                <form action={() => handleIssue(book.id)}>
-                                    <Button type="submit" size="sm" variant="outline"><BookUp className="mr-2 h-4 w-4"/> Issue</Button>
-                                </form>
-                            </div>
-                        ))}
-                    </div>
-                )}
-                 {searchTerm.length >=3 && !isSearching && books.length === 0 && <p className="text-center text-xs text-muted-foreground">No available books match your search.</p>}
-            </CardContent>
-        </Card>
-    );
-}
-
-function IssuedBooksList({ schoolId, history, onReturnSuccess }: { schoolId: string, history: any[], onReturnSuccess: () => void }) {
+function IssuedBooksTable({ issuedBooks, schoolId, loading, onReturnSuccess }: { issuedBooks: any[], schoolId: string, loading: boolean, onReturnSuccess: () => void }) {
     const [isReturning, startReturnTransition] = useTransition();
-    const [returningId, setReturningId] = useState<string|null>(null);
+    const [returningId, setReturningId] = useState<string | null>(null);
 
     const handleReturn = (issueId: string) => {
         setReturningId(issueId);
@@ -215,30 +164,124 @@ function IssuedBooksList({ schoolId, history, onReturnSuccess }: { schoolId: str
             }
             setReturningId(null);
         });
-    }
-
-    const issuedBooks = history.filter(h => h.status === 'issued');
+    };
 
     return (
-        <div className="space-y-3">
-            {issuedBooks.length > 0 ? issuedBooks.map((item: any) => {
-                const isOverdue = item.dueDate && isAfter(new Date(), new Date(item.dueDate));
-                return (
-                    <div key={item.id} className="border p-3 rounded-md flex justify-between items-start">
-                        <div>
-                            <p className="font-semibold">{item.bookTitle}</p>
-                            <p className="text-sm">Issued: {item.issueDate ? format(new Date(item.issueDate), 'dd-MMM-yyyy') : 'N/A'}</p>
-                            <p className={cn("text-sm", isOverdue && "font-bold text-destructive")}>
-                                Due: {item.dueDate ? format(new Date(item.dueDate), 'dd-MMM-yyyy') : 'N/A'}
-                            </p>
-                        </div>
-                        <Button size="sm" variant="outline" onClick={() => handleReturn(item.id)} disabled={isReturning && returningId === item.id}>
-                            {isReturning && returningId === item.id ? <Loader2 className="animate-spin h-4 w-4 mr-2"/> : <BookDown className="h-4 w-4 mr-2"/>}
-                            Return
-                        </Button>
-                    </div>
-                )
-            }) : <p className="text-center text-sm text-muted-foreground p-4">No books currently issued.</p>}
-        </div>
-    )
+        <Card>
+            <CardHeader>
+                <CardTitle>Currently Issued Books ({issuedBooks.length})</CardTitle>
+                <CardDescription>Books that need to be returned by this member.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="border rounded-lg max-h-96 overflow-y-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow><TableHead>Book Title</TableHead><TableHead>Due Date</TableHead><TableHead>Action</TableHead></TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? <TableRow><TableCell colSpan={3} className="h-24 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></TableCell></TableRow>
+                            : issuedBooks.length > 0 ? issuedBooks.map(item => {
+                                const isOverdue = item.dueDate && isAfter(new Date(), new Date(item.dueDate));
+                                return (
+                                    <TableRow key={item.id}>
+                                        <TableCell className="font-medium">{item.bookTitle}</TableCell>
+                                        <TableCell className={cn(isOverdue && "font-bold text-destructive")}>{item.dueDate ? format(new Date(item.dueDate), 'dd-MMM-yyyy') : 'N/A'}</TableCell>
+                                        <TableCell>
+                                            <Button size="sm" variant="outline" onClick={() => handleReturn(item.id)} disabled={isReturning && returningId === item.id}>
+                                                {isReturning && returningId === item.id ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <BookDown className="h-4 w-4 mr-2" />}
+                                                Return
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })
+                            : <TableRow><TableCell colSpan={3} className="h-24 text-center">No books currently issued.</TableCell></TableRow>}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+        </Card>
+    );
 }
+
+function IssueNewBookForm({ schoolId, member, onIssueSuccess }: { schoolId: string, member: Member, onIssueSuccess: () => void }) {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [books, setBooks] = useState<any[]>([]);
+    const [isSearching, startSearchTransition] = useTransition();
+
+    const [issueState, formAction] = useFormState(issueBook, { success: false, error: null });
+
+    const debouncedSearch = useDebouncedCallback((term) => {
+        if (term.length < 3) {
+            setBooks([]);
+            return;
+        }
+        startSearchTransition(async () => {
+            const results = await getBooks(schoolId, undefined, term);
+            setBooks(results.filter(b => b.availableStock > 0));
+        });
+    }, 500);
+
+    useEffect(() => {
+        if (issueState.success) {
+            onIssueSuccess();
+            setSearchTerm('');
+            setBooks([]);
+        }
+    }, [issueState.success, onIssueSuccess]);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Issue a New Book</CardTitle>
+                <CardDescription>Search for an available book to issue to {member.name}.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {issueState.error && <Alert variant="destructive"><AlertDescription>{issueState.error}</AlertDescription></Alert>}
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by title, author, or ISBN..."
+                        className="pl-8"
+                        value={searchTerm}
+                        onChange={e => {
+                            setSearchTerm(e.target.value);
+                            debouncedSearch(e.target.value);
+                        }}
+                    />
+                </div>
+                {isSearching ? <div className="text-center p-4"><Loader2 className="animate-spin mx-auto"/></div>
+                : books.length > 0 ? (
+                    <div className="border rounded-md max-h-80 overflow-y-auto">
+                        <Table>
+                             <TableHeader>
+                                <TableRow><TableHead>Book Title</TableHead><TableHead>Author</TableHead><TableHead>Action</TableHead></TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {books.map(book => (
+                                     <TableRow key={book.id}>
+                                         <TableCell className="font-medium">{book.title}</TableCell>
+                                         <TableCell className="text-muted-foreground">{book.author}</TableCell>
+                                         <TableCell>
+                                             <form action={() => {
+                                                  const formData = new FormData();
+                                                    formData.append('schoolId', schoolId);
+                                                    formData.append('bookId', book.id);
+                                                    formData.append('memberId', member.id);
+                                                    formData.append('memberType', member.type);
+                                                    formAction(formData);
+                                             }}>
+                                                 <Button type="submit" size="sm" variant="outline"><BookUp className="mr-2 h-4 w-4"/> Issue</Button>
+                                             </form>
+                                         </TableCell>
+                                     </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                ) : searchTerm.length >=3 && <p className="text-center text-xs text-muted-foreground py-4">No available books match your search.</p>}
+            </CardContent>
+        </Card>
+    );
+}
+
