@@ -53,10 +53,10 @@ export async function getRecentGatePasses(schoolId: string) {
     if (!schoolId) return { success: false, error: "School ID is required." };
 
     try {
+        // Removed orderBy to avoid needing a composite index. Sorting will be done in code.
         const q = query(
             collection(db, 'gatePasses'), 
             where('schoolId', '==', schoolId),
-            orderBy('createdAt', 'desc'),
             limit(50)
         );
         const snapshot = await getDocs(q);
@@ -69,10 +69,12 @@ export async function getRecentGatePasses(schoolId: string) {
             id: doc.id,
             ...doc.data(),
             passDate: doc.data().passDate.toDate(),
+            createdAt: doc.data().createdAt?.toDate() || new Date(0) // Handle case where createdAt might be null
         }));
         
-        // No need to populate here as we stored the name directly on the pass
-        // This is more efficient than doing multiple lookups later
+        // Sort in code to ensure newest passes are first
+        passes.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        
         return { success: true, data: passes };
     } catch (error) {
         console.error("Error fetching gate passes:", error);
