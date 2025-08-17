@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { School, LayoutDashboard, Building, LogOut, PanelLeftClose, PanelRightClose } from "lucide-react";
+import { School, LayoutDashboard, Building, LogOut, PanelLeftClose, PanelRightClose, Webhook } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
@@ -28,6 +28,11 @@ export const sidebarNavItems = [
     title: "Manage Schools",
     href: "/super-admin/dashboard/schools",
     icon: <Building className="h-5 w-5" />,
+  },
+  {
+    title: "Integrations",
+    href: "/super-admin/dashboard/integrations",
+    icon: <Webhook className="h-5 w-5" />,
   },
 ];
 
