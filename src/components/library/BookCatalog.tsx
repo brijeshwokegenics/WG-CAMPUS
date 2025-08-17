@@ -5,7 +5,7 @@ import React, { useState, useEffect, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, MoreHorizontal, Loader2, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Loader2, Edit, Trash2, X } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -96,14 +96,22 @@ export function BookCatalog({ schoolId }: { schoolId: string }) {
                             onChange={e => setSearchTerm(e.target.value)}
                             className="w-full md:w-64"
                         />
-                        <Select value={filteredCategory} onValueChange={setFilteredCategory}>
-                            <SelectTrigger className="w-full md:w-[180px]">
-                                <SelectValue placeholder="All Categories" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <div className="flex items-center">
+                            <Select value={filteredCategory} onValueChange={setFilteredCategory}>
+                                <SelectTrigger className="w-full md:w-[180px]">
+                                    <SelectValue placeholder="All Categories" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="">All Categories</SelectItem>
+                                    {categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            {filteredCategory && (
+                                <Button variant="ghost" size="icon" className="ml-1" onClick={() => setFilteredCategory('')}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
                         <Button onClick={handleAddClick}><PlusCircle className="mr-2 h-4 w-4" /> Add Book</Button>
                     </div>
                 </div>
