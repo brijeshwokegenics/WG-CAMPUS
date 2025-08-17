@@ -3,19 +3,22 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, getDoc, orderBy, limit, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, getDoc, orderBy, limit, serverTimestamp, documentId } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { getStudentById } from './academics';
 
 const PassTypes = z.enum([
     "Hall Pass", "Library Pass", "Laboratory Pass",
     "Late Arrival Pass", "Early Dismissal Pass", "Gate Pass",
-    "Medical/Clinic Pass"
+    "Medical/Clinic Pass", "Vehicle Pass"
 ]);
 
 const GatePassSchema = z.object({
   schoolId: z.string(),
-  studentId: z.string(), // Keeping this for now for student-specific passes
+  studentId: z.string().optional(),
+  memberType: z.enum(['Student', 'Staff', 'Visitor']).optional(),
+  passHolderName: z.string().optional(),
+  passHolderDetails: z.string().optional(),
   passType: PassTypes,
   passDate: z.date(),
   reason: z.string().min(5, "A valid reason is required."),
@@ -23,7 +26,13 @@ const GatePassSchema = z.object({
   status: z.enum(['Issued', 'Returned', 'Expired']).default('Issued'),
   outTime: z.string(),
   returnTime: z.string().optional(),
+}).refine(data => {
+    return !!data.studentId || !!data.passHolderName;
+}, {
+    message: "Either a student must be selected or a pass holder name must be entered.",
+    path: ["passHolderName"],
 });
+
 
 export async function createGatePass(prevState: any, formData: FormData) {
   const rawData = {
@@ -73,26 +82,27 @@ export async function getRecentGatePasses(schoolId: string) {
             passDate: doc.data().passDate.toDate(),
         }));
         
-        const studentIds = [...new Set(passes.map(p => p.studentId))];
+        const studentIds = [...new Set(passes.map(p => p.studentId).filter(Boolean))];
         const studentDetails: Record<string, any> = {};
 
-        // Fetch student details in batches of 30
-        const studentIdChunks = [];
-        for (let i = 0; i < studentIds.length; i += 30) {
-            studentIdChunks.push(studentIds.slice(i, i + 30));
-        }
+        if (studentIds.length > 0) {
+            const studentIdChunks = [];
+            for (let i = 0; i < studentIds.length; i += 30) {
+                studentIdChunks.push(studentIds.slice(i, i + 30));
+            }
 
-        for (const chunk of studentIdChunks) {
-            const studentsQuery = query(collection(db, 'students'), where('__name__', 'in', chunk));
-            const studentsSnapshot = await getDocs(studentsQuery);
-            studentsSnapshot.forEach(doc => {
-                studentDetails[doc.id] = doc.data();
-            });
+            for (const chunk of studentIdChunks) {
+                const studentsQuery = query(collection(db, 'students'), where(documentId(), 'in', chunk));
+                const studentsSnapshot = await getDocs(studentsQuery);
+                studentsSnapshot.forEach(doc => {
+                    studentDetails[doc.id] = doc.data();
+                });
+            }
         }
         
         const populatedPasses = passes.map(pass => ({
             ...pass,
-            studentName: studentDetails[pass.studentId]?.studentName || 'Unknown Student',
+            studentName: studentDetails[pass.studentId]?.studentName || pass.passHolderName || 'Unknown',
         }));
 
         return { success: true, data: populatedPasses };
@@ -144,7 +154,12 @@ export async function getGatePassById(schoolId: string, passId: string) {
         }
         
         const passData = docSnap.data();
-        const studentRes = await getStudentById(passData.studentId, schoolId);
+        let studentInfo = null;
+
+        if (passData.studentId) {
+            const studentRes = await getStudentById(passData.studentId, schoolId);
+            if(studentRes.success) studentInfo = studentRes.data;
+        }
 
         return {
             success: true,
@@ -152,7 +167,7 @@ export async function getGatePassById(schoolId: string, passId: string) {
                 ...passData,
                 id: docSnap.id,
                 passDate: passData.passDate.toDate(),
-                student: studentRes.success ? studentRes.data : null,
+                student: studentInfo,
             }
         };
 

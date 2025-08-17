@@ -24,18 +24,22 @@ import { cn } from '@/lib/utils';
 import { getStudentsForSchool } from '@/app/actions/academics';
 import { createGatePass, getRecentGatePasses, updateGatePassStatus } from '@/app/actions/gatepass';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Switch } from './ui/switch';
+import { getUsersForSchool } from '@/app/actions/users';
 
-type Student = { id: string; studentName: string; className: string; section: string; };
+type Member = { id: string; name: string; type: 'Student' | 'Staff'; details: string; };
 
 const PassTypes = z.enum([
     "Hall Pass", "Library Pass", "Laboratory Pass",
     "Late Arrival Pass", "Early Dismissal Pass", "Gate Pass",
-    "Medical/Clinic Pass"
+    "Medical/Clinic Pass", "Vehicle Pass"
 ]);
 
-
 const GatePassFormSchema = z.object({
-  studentId: z.string().min(1, "Please select a student."),
+  studentId: z.string().optional(),
+  memberType: z.enum(['Student', 'Staff', 'Visitor']).optional(),
+  passHolderName: z.string().optional(),
+  passHolderDetails: z.string().optional(),
   passType: PassTypes,
   passDate: z.date(),
   reason: z.string().min(5, "A valid reason is required."),
@@ -47,15 +51,16 @@ type GatePassFormValues = z.infer<typeof GatePassFormSchema>;
 
 export function GatePassManager({ schoolId }: { schoolId: string }) {
     const [searchTerm, setSearchTerm] = useState('');
-    const [students, setStudents] = useState<Student[]>([]);
+    const [searchResults, setSearchResults] = useState<Member[]>([]);
     const [isSearching, startSearchTransition] = useTransition();
-    const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+    const [selectedMember, setSelectedMember] = useState<Member | null>(null);
     const [recentPasses, setRecentPasses] = useState<any[]>([]);
     const [loadingPasses, setLoadingPasses] = useState(true);
+    const [issueForVisitor, setIssueForVisitor] = useState(false);
 
     const [state, formAction] = useFormState(createGatePass, { success: false });
 
-    const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset, setValue } = useForm<GatePassFormValues>({
+    const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset, setValue, watch } = useForm<GatePassFormValues>({
         resolver: zodResolver(GatePassFormSchema),
         defaultValues: { passDate: new Date(), outTime: format(new Date(), 'HH:mm'), passType: "Gate Pass" }
     });
@@ -73,29 +78,46 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
 
     useEffect(() => {
         if(state.success){
-            reset({ passDate: new Date(), outTime: format(new Date(), 'HH:mm'), passType: "Gate Pass" });
-            setSelectedStudent(null);
+            reset({ passDate: new Date(), outTime: format(new Date(), 'HH:mm'), passType: "Gate Pass", passHolderName: '', passHolderDetails: '' });
+            setSelectedMember(null);
+            setIssueForVisitor(false);
             fetchPasses();
         }
     }, [state.success, reset]);
 
-
     const debouncedSearch = useDebouncedCallback((term) => {
-        if (term.length < 3) {
-            setStudents([]);
+        if (term.length < 2) {
+            setSearchResults([]);
             return;
         }
         startSearchTransition(async () => {
-            const results = await getStudentsForSchool({ schoolId, searchTerm: term });
-            setStudents(results);
+            const [studentRes, staffRes] = await Promise.all([
+                getStudentsForSchool({ schoolId, searchTerm: term }),
+                getUsersForSchool(schoolId, term)
+            ]);
+
+            const students: Member[] = (studentRes || []).map((s: any) => ({
+                id: s.id,
+                name: s.studentName,
+                type: 'Student',
+                details: `${s.className} - ${s.section}`
+            }));
+            const staff: Member[] = (staffRes.data || []).map((s: any) => ({
+                id: s.id,
+                name: s.name,
+                type: 'Staff',
+                details: s.role
+            }));
+            setSearchResults([...students, ...staff]);
         });
     }, 500);
 
-    const handleSelectStudent = (student: Student) => {
-        setSelectedStudent(student);
-        setValue('studentId', student.id);
+    const handleSelectMember = (member: Member) => {
+        setSelectedMember(member);
+        setValue('studentId', member.id);
+        setValue('memberType', member.type);
         setSearchTerm('');
-        setStudents([]);
+        setSearchResults([]);
     };
     
     const onFormSubmit = (data: GatePassFormValues) => {
@@ -124,34 +146,47 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
                                     <AlertDescription>{state.message || state.error}</AlertDescription>
                                 </Alert>
                             )}
-                            <div className="space-y-2">
-                                <Label>Search Student</Label>
-                                 <div className="relative">
-                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search by name or ID..."
-                                        className="pl-8"
-                                        value={searchTerm}
-                                        onChange={(e) => {
-                                            setSearchTerm(e.target.value);
-                                            debouncedSearch(e.target.value);
-                                        }}
-                                    />
-                                </div>
-                                {isSearching && <Loader2 className="animate-spin mx-auto"/>}
-                                {students.length > 0 && (
-                                    <div className="border rounded-md max-h-40 overflow-y-auto">
-                                        <ul>{students.map(s => <li key={s.id} className="p-2 cursor-pointer hover:bg-muted" onClick={() => handleSelectStudent(s)}>{s.studentName} ({s.className})</li>)}</ul>
-                                    </div>
-                                )}
+
+                            <div className="flex items-center space-x-2">
+                                <Switch id="visitor-mode" checked={issueForVisitor} onCheckedChange={(checked) => {
+                                    setIssueForVisitor(checked);
+                                    setSelectedMember(null);
+                                    setValue('studentId', '');
+                                    setValue('memberType', checked ? 'Visitor' : undefined);
+                                }} />
+                                <Label htmlFor="visitor-mode">Issue Pass for Visitor / Other</Label>
                             </div>
-                             {selectedStudent && (
-                                <div className="p-2 bg-green-50 border border-green-200 rounded-md text-sm">
-                                    Selected: <span className="font-semibold">{selectedStudent.studentName}</span>
+
+                            {issueForVisitor ? (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label>Pass Holder Name</Label>
+                                        <Input {...register('passHolderName')} placeholder="e.g., John Doe" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Details / Relation</Label>
+                                        <Input {...register('passHolderDetails')} placeholder="e.g., Parent of Jane Doe, Class 5" />
+                                    </div>
+                                </>
+                            ) : (
+                                 <div className="space-y-2">
+                                    <Label>Search Student or Staff</Label>
+                                    <div className="relative">
+                                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input placeholder="Search by name or ID..." className="pl-8" value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}}/>
+                                    </div>
+                                    {isSearching && <Loader2 className="animate-spin mx-auto"/>}
+                                    {searchResults.length > 0 && (
+                                        <div className="border rounded-md max-h-40 overflow-y-auto"><ul>{searchResults.map(s => <li key={`${s.type}-${s.id}`} className="p-2 cursor-pointer hover:bg-muted" onClick={() => handleSelectMember(s)}>{s.name} <Badge variant="secondary">{s.type}</Badge></li>)}</ul></div>
+                                    )}
+                                     {selectedMember && (
+                                        <div className="p-2 bg-green-50 border border-green-200 rounded-md text-sm">
+                                            Selected: <span className="font-semibold">{selectedMember.name}</span> <Badge variant="outline">{selectedMember.type}</Badge>
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                            {errors.studentId && <p className="text-sm text-destructive">{errors.studentId.message}</p>}
-                            
+
                             <div className="space-y-2">
                                 <Label>Pass Type</Label>
                                 <Controller name="passType" control={control} render={({field}) => (
@@ -165,7 +200,7 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Reason for Leaving</Label>
+                                <Label>Reason for Pass</Label>
                                 <Textarea {...register('reason')} />
                                 {errors.reason && <p className="text-sm text-destructive">{errors.reason.message}</p>}
                             </div>
@@ -185,7 +220,7 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
                                 <Input {...register('issuedBy')} />
                                 {errors.issuedBy && <p className="text-sm text-destructive">{errors.issuedBy.message}</p>}
                             </div>
-                            <Button type="submit" className="w-full" disabled={isSubmitting || !selectedStudent}>
+                            <Button type="submit" className="w-full" disabled={isSubmitting || (!selectedMember && !watch('passHolderName'))}>
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                 Issue Pass
                             </Button>
@@ -225,7 +260,7 @@ function RecentPassesTable({ schoolId, passes, loading, refresh }: { schoolId: s
             <CardContent>
                 <div className="border rounded-lg max-h-[70vh] overflow-y-auto">
                     <Table>
-                        <TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Pass Type</TableHead><TableHead>Out Time</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+                        <TableHeader><TableRow><TableHead>Pass Holder</TableHead><TableHead>Pass Type</TableHead><TableHead>Out Time</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
                         <TableBody>
                             {loading ? <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin"/></TableCell></TableRow>
                             : passes.length > 0 ? passes.map(p => (

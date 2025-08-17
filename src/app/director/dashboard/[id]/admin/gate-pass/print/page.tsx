@@ -49,7 +49,11 @@ export default function PrintGatePassPage({ params }: { params: { id: string } }
     if (!passId || !pass || !school) {
         return notFound();
     }
-
+    
+    const passHolderName = pass.student?.studentName || pass.passHolderName;
+    const passHolderDetails = pass.student ? `Class: ${pass.student.className} - ${pass.student.section}` : pass.passHolderDetails;
+    const photoUrl = pass.student?.photoUrl;
+    const fallbackChar = passHolderName?.charAt(0) || '?';
 
     return (
         <div className="bg-white min-h-screen p-4 sm:p-8 flex items-center justify-center font-sans text-black">
@@ -67,22 +71,22 @@ export default function PrintGatePassPage({ params }: { params: { id: string } }
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-sm">
                     <div className="col-span-2 space-y-2">
-                        <p><strong>Student:</strong> {pass.student.studentName}</p>
-                        <p><strong>Class:</strong> {pass.student.className} - {pass.student.section}</p>
+                        <p><strong>Pass Holder:</strong> {passHolderName}</p>
+                        <p><strong>Details:</strong> {passHolderDetails}</p>
                         <p><strong>Reason:</strong> {pass.reason}</p>
                         <p><strong>Date:</strong> {format(pass.passDate, 'dd-MMM-yyyy')}</p>
                         <p><strong>Out Time:</strong> {pass.outTime}</p>
                     </div>
                     <div className="col-span-1 flex items-center justify-center">
                         <Avatar className="h-20 w-20 border">
-                            <AvatarImage src={pass.student?.photoUrl || ''} alt={pass.student?.studentName} />
-                            <AvatarFallback>{pass.student?.studentName?.charAt(0)}</AvatarFallback>
+                            <AvatarImage src={photoUrl || ''} alt={passHolderName} />
+                            <AvatarFallback>{fallbackChar}</AvatarFallback>
                         </Avatar>
                     </div>
                 </div>
                  <div className="mt-8 pt-8 flex justify-between text-xs">
                     <div className="text-center">
-                        <p className="border-t border-gray-400 pt-1 px-4">Student's Signature</p>
+                        <p className="border-t border-gray-400 pt-1 px-4">Holder's Signature</p>
                     </div>
                      <div className="text-center">
                         <p className="border-t border-gray-400 pt-1 px-4">Issued By</p>
