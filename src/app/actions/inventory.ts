@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -153,9 +154,14 @@ export async function getInventoryItems(schoolId: string, categoryId?: string) {
     if (categoryId) {
         constraints.push(where('categoryId', '==', categoryId));
     }
-    const q = query(collection(db, 'inventoryItems'), ...constraints, orderBy('name'));
+    const q = query(collection(db, 'inventoryItems'), ...constraints);
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Sort manually to avoid composite index requirement
+    items.sort((a, b) => a.name.localeCompare(b.name));
+
+    return items;
 }
 
 
