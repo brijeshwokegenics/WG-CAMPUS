@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, serverTimestamp, orderBy, runTransaction, increment } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, serverTimestamp, orderBy, runTransaction, increment, documentId } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
 // ========== HOSTELS ==========
@@ -200,4 +200,90 @@ export async function assignStudentToRoom(prevState: any, formData: FormData) {
   } catch (e: any) {
     return { success: false, error: e.message || "Failed to assign student." };
   }
+}
+
+export async function getAssignedStudentsForRooms(schoolId: string, roomIds: string[]) {
+    if (!schoolId || roomIds.length === 0) {
+        return { success: true, data: {} };
+    }
+
+    try {
+        const assignmentsRef = collection(db, 'hostelAssignments');
+        const q = query(assignmentsRef, where('schoolId', '==', schoolId), where('roomId', 'in', roomIds));
+        const assignmentsSnapshot = await getDocs(q);
+
+        if (assignmentsSnapshot.empty) {
+            return { success: true, data: {} };
+        }
+
+        const assignments = assignmentsSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        const studentIds = [...new Set(assignments.map(a => a.studentId))];
+
+        if (studentIds.length === 0) {
+            return { success: true, data: {} };
+        }
+
+        const studentDetails: Record<string, any> = {};
+        
+        const studentIdChunks = [];
+        for (let i = 0; i < studentIds.length; i += 30) {
+            studentIdChunks.push(studentIds.slice(i, i + 30));
+        }
+
+        for (const chunk of studentIdChunks) {
+             const studentsQuery = query(collection(db, 'students'), where(documentId(), 'in', chunk));
+             const studentsSnapshot = await getDocs(studentsQuery);
+             studentsSnapshot.forEach(doc => {
+                if(doc.data().schoolId === schoolId) {
+                    studentDetails[doc.id] = doc.data();
+                }
+             });
+        }
+       
+        const assignmentsByRoom: Record<string, any[]> = {};
+        assignments.forEach(assignment => {
+            if (!assignmentsByRoom[assignment.roomId]) {
+                assignmentsByRoom[assignment.roomId] = [];
+            }
+            if(studentDetails[assignment.studentId]) {
+                 assignmentsByRoom[assignment.roomId].push({
+                    assignmentId: assignment.id,
+                    studentId: assignment.studentId,
+                    studentName: studentDetails[assignment.studentId].studentName,
+                });
+            }
+        });
+
+        return { success: true, data: assignmentsByRoom };
+    } catch (error) {
+        console.error("Error fetching assigned students for rooms:", error);
+        return { success: false, error: 'Failed to fetch assigned students.' };
+    }
+}
+
+export async function unassignStudentFromRoom(schoolId: string, assignmentId: string) {
+    if(!schoolId || !assignmentId) return { success: false, error: 'Missing required IDs.'};
+    
+    const assignmentRef = doc(db, 'hostelAssignments', assignmentId);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const assignmentDoc = await transaction.get(assignmentRef);
+            if (!assignmentDoc.exists() || assignmentDoc.data().schoolId !== schoolId) {
+                throw new Error("Assignment not found or permission denied.");
+            }
+
+            const { roomId } = assignmentDoc.data();
+            const roomRef = doc(db, 'hostelRooms', roomId);
+            
+            // Decrement occupancy and delete assignment
+            transaction.update(roomRef, { currentOccupancy: increment(-1) });
+            transaction.delete(assignmentRef);
+        });
+
+        revalidatePath(`/director/dashboard/${schoolId}/admin/hostel`);
+        return { success: true };
+    } catch(e: any) {
+        return { success: false, error: e.message || "Failed to unassign student." };
+    }
 }
