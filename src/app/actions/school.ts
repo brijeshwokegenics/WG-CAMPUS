@@ -19,6 +19,7 @@ const BaseSchoolSchema = z.object({
   enabled: z.boolean().default(true),
   schoolLogoUrl: z.string().url().optional().or(z.literal('')),
   affiliationCode: z.string().optional(),
+  registrationNumber: z.string().optional(),
   schoolWebsite: z.string().url("Must be a valid URL.").optional().or(z.literal('')),
 });
 
@@ -35,6 +36,7 @@ const SchoolSchema = z.object({
   confirmPassword: z.string().min(6, "Confirm Password must be at least 6 characters."),
   schoolLogoUrl: z.string().url().optional().or(z.literal('')),
   affiliationCode: z.string().optional(),
+  registrationNumber: z.string().optional(),
   schoolWebsite: z.string().url("Must be a valid URL.").optional().or(z.literal('')),
 }).refine((data) => data.password === data.confirmPassword, {
   path: ["confirmPassword"],

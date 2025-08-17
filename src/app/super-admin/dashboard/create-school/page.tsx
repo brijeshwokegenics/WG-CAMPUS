@@ -143,6 +143,23 @@ export default function CreateSchoolPage() {
                   )}
                 </div>
               </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="affiliationCode">Affiliation Code (Optional)</Label>
+                    <Input id="affiliationCode" name="affiliationCode" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="registrationNumber">Registration Number (Optional)</Label>
+                    <Input id="registrationNumber" name="registrationNumber" />
+                </div>
+              </div>
+              
+               <div className="space-y-2">
+                    <Label htmlFor="schoolWebsite">School Website (Optional)</Label>
+                    <Input id="schoolWebsite" name="schoolWebsite" type="url" />
+                </div>
+
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">

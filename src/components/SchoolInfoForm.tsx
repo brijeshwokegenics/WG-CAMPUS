@@ -29,6 +29,7 @@ const FormSchema = z.object({
   enabled: z.boolean(),
   schoolLogoUrl: z.string().url().optional().or(z.literal('')),
   affiliationCode: z.string().optional(),
+  registrationNumber: z.string().optional(),
   schoolWebsite: z.string().url("Must be a valid URL.").optional().or(z.literal('')),
 });
 
@@ -53,6 +54,7 @@ export function SchoolInfoForm({ school }: { school: any }) {
       enabled: school.enabled,
       schoolLogoUrl: school.schoolLogoUrl || '',
       affiliationCode: school.affiliationCode || '',
+      registrationNumber: school.registrationNumber || '',
       schoolWebsite: school.schoolWebsite || '',
     },
   });
@@ -146,6 +148,10 @@ export function SchoolInfoForm({ school }: { school: any }) {
             <Input id="affiliationCode" {...register('affiliationCode')} />
         </div>
         <div className="space-y-2">
+            <Label htmlFor="registrationNumber">Registration Number (Optional)</Label>
+            <Input id="registrationNumber" {...register('registrationNumber')} />
+        </div>
+        <div className="space-y-2 md:col-span-2">
             <Label htmlFor="schoolWebsite">School Website (Optional)</Label>
             <Input id="schoolWebsite" type="url" {...register('schoolWebsite')} />
             {errors.schoolWebsite && <p className="text-sm text-destructive">{errors.schoolWebsite.message}</p>}
