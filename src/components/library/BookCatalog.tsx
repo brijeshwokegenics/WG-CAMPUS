@@ -78,7 +78,7 @@ export function BookCatalog({ schoolId }: { schoolId: string }) {
     const filteredBooks = books.filter(book => 
         book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        book.isbn?.includes(searchTerm)
+        (book.isbn && book.isbn.includes(searchTerm))
     );
 
     return (
@@ -102,7 +102,6 @@ export function BookCatalog({ schoolId }: { schoolId: string }) {
                                     <SelectValue placeholder="All Categories" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">All Categories</SelectItem>
                                     {categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
