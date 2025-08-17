@@ -341,7 +341,18 @@ export async function admitStudent(prevState: any, formData: FormData) {
       revalidatePath(`/director/dashboard/${schoolId}/academics/admissions`);
       revalidatePath(`/director/dashboard/${schoolId}/academics/students`);
 
-      return { success: true, message: `Student admitted successfully with ID: ${newStudentRef.id}` };
+      // Fetch the newly created student data to return
+      const newStudentDoc = await getDoc(newStudentRef);
+      const newStudentData = {
+          id: newStudentDoc.id,
+          ...newStudentDoc.data(),
+      };
+
+      return { 
+          success: true, 
+          message: `Student admitted successfully with ID: ${newStudentRef.id}`,
+          student: newStudentData,
+      };
   } catch (error) {
       console.error('Error admitting student:', error);
       return { success: false, error: 'An unexpected error occurred during admission.' };

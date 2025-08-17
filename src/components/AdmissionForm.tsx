@@ -7,7 +7,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, Mail, MessageSquare, CheckCircle2 } from 'lucide-react';
 
 import { admitStudent, getClassesForSchool } from '@/app/actions/academics';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { FileUpload } from './FileUpload';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 
 const FormSchema = z.object({
   schoolId: z.string(),
@@ -59,7 +60,9 @@ type ClassData = { id: string; name: string; sections: string[]; };
 export function AdmissionForm({ schoolId }: { schoolId: string }) {
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
-  const initialState = { success: false, error: null, message: null };
+  const [newlyAdmittedStudent, setNewlyAdmittedStudent] = useState<any | null>(null);
+
+  const initialState = { success: false, error: null, message: null, student: null };
 
   const { register, handleSubmit, control, formState: { errors, isSubmitting }, watch, reset, setValue } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
@@ -91,11 +94,13 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
   
   useEffect(() => {
     if (state.success) {
-      reset();
+      setNewlyAdmittedStudent(state.student);
+      reset(); // Clear the form
     }
-  }, [state.success, reset]);
+  }, [state, reset]);
 
   const onFormSubmit = (data: FormValues) => {
+    setNewlyAdmittedStudent(null); // Clear previous success state before new submission
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
         if (value instanceof Date) {
@@ -109,13 +114,43 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
     formAction(formData);
   };
   
+  if (newlyAdmittedStudent) {
+    return (
+        <Card className="bg-green-50 border-green-200">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-8 w-8 text-green-600" />
+                    <div>
+                        <CardTitle className="text-green-800">Admission Successful!</CardTitle>
+                        <CardDescription className="text-green-700">
+                            Student {newlyAdmittedStudent.studentName} has been admitted with ID: {newlyAdmittedStudent.id}.
+                        </CardDescription>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm font-medium mb-2">What would you like to do next?</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Button onClick={() => setNewlyAdmittedStudent(null)}>Admit Another Student</Button>
+                    <Button variant="outline" disabled>
+                        <Mail className="mr-2 h-4 w-4"/> Send Welcome Email
+                    </Button>
+                     <Button variant="outline" disabled>
+                        <MessageSquare className="mr-2 h-4 w-4"/> Send Welcome SMS
+                    </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-4">Note: Communication features require integration setup by a developer.</p>
+            </CardContent>
+        </Card>
+    )
+  }
 
   return (
     <>
-     {state.message && (
-        <Alert className={cn(state.success ? "border-green-500 text-green-700" : "border-destructive text-destructive", "mb-4")}>
-          <AlertTitle>{state.success ? 'Success!' : 'Error!'}</AlertTitle>
-          <AlertDescription>{state.message || state.error}</AlertDescription>
+     {state.error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTitle>Admission Failed</AlertTitle>
+          <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       )}
 
