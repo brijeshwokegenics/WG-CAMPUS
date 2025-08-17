@@ -275,15 +275,21 @@ export async function unassignStudentFromRoom(schoolId: string, assignmentId: st
 
             const { roomId } = assignmentDoc.data();
             const roomRef = doc(db, 'hostelRooms', roomId);
+            const roomDoc = await transaction.get(roomRef);
+
+            if(roomDoc.exists() && roomDoc.data().currentOccupancy > 0) {
+                 // Decrement occupancy only if it's greater than 0
+                transaction.update(roomRef, { currentOccupancy: increment(-1) });
+            }
             
-            // Decrement occupancy and delete assignment
-            transaction.update(roomRef, { currentOccupancy: increment(-1) });
+            // Delete the assignment record
             transaction.delete(assignmentRef);
         });
 
         revalidatePath(`/director/dashboard/${schoolId}/admin/hostel`);
         return { success: true };
     } catch(e: any) {
-        return { success: false, error: e.message || "Failed to unassign student." };
+        console.error("Failed to unassign student:", e);
+        return { success: false, error: e.message || "An unexpected error occurred." };
     }
 }
