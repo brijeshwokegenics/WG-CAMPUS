@@ -18,6 +18,8 @@ const BaseSchoolSchema = z.object({
   schoolId: z.string(),
   enabled: z.boolean().default(true),
   schoolLogoUrl: z.string().url().optional().or(z.literal('')),
+  affiliationCode: z.string().optional(),
+  schoolWebsite: z.string().url("Must be a valid URL.").optional().or(z.literal('')),
 });
 
 const SchoolSchema = z.object({
@@ -32,6 +34,8 @@ const SchoolSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters."),
   confirmPassword: z.string().min(6, "Confirm Password must be at least 6 characters."),
   schoolLogoUrl: z.string().url().optional().or(z.literal('')),
+  affiliationCode: z.string().optional(),
+  schoolWebsite: z.string().url("Must be a valid URL.").optional().or(z.literal('')),
 }).refine((data) => data.password === data.confirmPassword, {
   path: ["confirmPassword"],
   message: "Passwords do not match.",
@@ -149,6 +153,10 @@ export async function updateSchool(id: string, prevState: State, formData: FormD
     
     if (formDataObj.schoolLogoUrl === 'undefined' || formDataObj.schoolLogoUrl === '') {
         formDataObj.schoolLogoUrl = '';
+    }
+    
+    if (formDataObj.schoolWebsite === 'undefined' || formDataObj.schoolWebsite === '') {
+        formDataObj.schoolWebsite = '';
     }
 
 

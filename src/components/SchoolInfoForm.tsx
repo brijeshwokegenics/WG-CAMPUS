@@ -28,6 +28,8 @@ const FormSchema = z.object({
   schoolId: z.string(),
   enabled: z.boolean(),
   schoolLogoUrl: z.string().url().optional().or(z.literal('')),
+  affiliationCode: z.string().optional(),
+  schoolWebsite: z.string().url("Must be a valid URL.").optional().or(z.literal('')),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -50,6 +52,8 @@ export function SchoolInfoForm({ school }: { school: any }) {
       schoolId: school.schoolId,
       enabled: school.enabled,
       schoolLogoUrl: school.schoolLogoUrl || '',
+      affiliationCode: school.affiliationCode || '',
+      schoolWebsite: school.schoolWebsite || '',
     },
   });
 
@@ -135,6 +139,19 @@ export function SchoolInfoForm({ school }: { school: any }) {
             {errors.contactEmail && <p className="text-sm text-destructive">{errors.contactEmail.message}</p>}
         </div>
       </div>
+
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+            <Label htmlFor="affiliationCode">Affiliation Code (Optional)</Label>
+            <Input id="affiliationCode" {...register('affiliationCode')} />
+        </div>
+        <div className="space-y-2">
+            <Label htmlFor="schoolWebsite">School Website (Optional)</Label>
+            <Input id="schoolWebsite" type="url" {...register('schoolWebsite')} />
+            {errors.schoolWebsite && <p className="text-sm text-destructive">{errors.schoolWebsite.message}</p>}
+        </div>
+      </div>
+
       <input type="hidden" {...register('enabled')} />
 
       <div className="flex justify-end pt-4">
