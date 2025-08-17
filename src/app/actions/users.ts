@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -58,7 +57,7 @@ export async function createUser(prevState: any, formData: FormData) {
   }
 }
 
-export async function getUsersForSchool(schoolId: string, name?: string, userId?: string) {
+export async function getUsersForSchool(schoolId: string, searchTerm?: string) {
   if (!schoolId) {
     return { success: false, error: 'School ID is required.' };
   }
@@ -66,10 +65,6 @@ export async function getUsersForSchool(schoolId: string, name?: string, userId?
   try {
     const usersRef = collection(db, 'users');
     const constraints: QueryConstraint[] = [where('schoolId', '==', schoolId)];
-
-    if (userId) {
-        constraints.push(where('userId', '==', userId));
-    }
 
     const q = query(usersRef, ...constraints);
     const querySnapshot = await getDocs(q);
@@ -79,8 +74,12 @@ export async function getUsersForSchool(schoolId: string, name?: string, userId?
       ...doc.data(),
     })) as (z.infer<typeof UserSchema> & { id: string })[];
 
-    if (name && !userId) {
-      users = users.filter(user => user.name.toLowerCase().includes(name.toLowerCase()));
+    if (searchTerm) {
+      const lowercasedTerm = searchTerm.toLowerCase();
+      users = users.filter(user => 
+        user.name.toLowerCase().includes(lowercasedTerm) ||
+        user.userId.toLowerCase().includes(lowercasedTerm)
+      );
     }
     
     return { success: true, data: users };
@@ -181,5 +180,3 @@ export async function updateUserPassword(docId: string, schoolId: string, newPas
         return { success: false, error: "Failed to update password." };
     }
 }
-
-    

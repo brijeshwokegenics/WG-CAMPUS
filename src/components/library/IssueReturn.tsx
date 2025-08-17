@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
@@ -21,7 +20,6 @@ import { Badge } from '../ui/badge';
 
 export function IssueReturn({ schoolId }: { schoolId: string }) {
     const [memberType, setMemberType] = useState<'Student' | 'Staff'>('Student');
-    const [searchBy, setSearchBy] = useState<'Name' | 'ID'>('Name');
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [isSearching, startSearchTransition] = useTransition();
@@ -36,14 +34,11 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
             return;
         }
         startSearchTransition(async () => {
-            const searchByName = searchBy === 'Name' ? term : undefined;
-            const searchById = searchBy === 'ID' ? term : undefined;
-
             if (memberType === 'Student') {
-                const results = await getStudentsForSchool({ schoolId, name: searchByName, admissionId: searchById });
+                const results = await getStudentsForSchool({ schoolId, searchTerm: term });
                 setSearchResults(results);
             } else {
-                const results = await getUsersForSchool(schoolId, searchByName, searchById);
+                const results = await getUsersForSchool(schoolId, term);
                 setSearchResults(results.data || []);
             }
         });
@@ -69,12 +64,6 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
         setSelectedMember(null);
         setSearchTerm('');
     }
-    
-    const handleSearchByChange = (v: any) => {
-        setSearchBy(v);
-        setSearchResults([]);
-        setSearchTerm('');
-    }
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
@@ -88,13 +77,9 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
                             <div className="flex items-center space-x-2"><RadioGroupItem value="Student" id="student"/><Label htmlFor="student">Student</Label></div>
                             <div className="flex items-center space-x-2"><RadioGroupItem value="Staff" id="staff"/><Label htmlFor="staff">Staff</Label></div>
                         </RadioGroup>
-                         <RadioGroup value={searchBy} onValueChange={handleSearchByChange} className="flex gap-4">
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="Name" id="name"/><Label htmlFor="name">By Name</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="ID" id="id"/><Label htmlFor="id">By ID</Label></div>
-                        </RadioGroup>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder={`Search ${memberType.toLowerCase()} by ${searchBy}...`} className="pl-8" value={searchTerm} onChange={e => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}} />
+                            <Input placeholder={`Search by name or ID...`} className="pl-8" value={searchTerm} onChange={e => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}} />
                         </div>
                         {isSearching && <Loader2 className="animate-spin mx-auto"/>}
                         {searchResults.length > 0 && (
@@ -244,5 +229,3 @@ function IssuedBooksList({ schoolId, history, onReturnSuccess }: { schoolId: str
         </div>
     )
 }
-
-    

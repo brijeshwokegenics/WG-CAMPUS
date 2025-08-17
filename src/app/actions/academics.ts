@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -348,7 +347,7 @@ export async function admitStudent(prevState: any, formData: FormData) {
   }
 }
 
-export async function getStudentsForSchool({ schoolId, name, admissionId, classId, section, passedOnly }: { schoolId: string, name?: string, admissionId?: string, classId?: string, section?: string, passedOnly?: boolean }) {
+export async function getStudentsForSchool({ schoolId, searchTerm, classId, section, passedOnly }: { schoolId: string, searchTerm?: string, classId?: string, section?: string, passedOnly?: boolean }) {
     if (!schoolId) {
         console.error("School ID is required.");
         return [];
@@ -367,13 +366,19 @@ export async function getStudentsForSchool({ schoolId, name, admissionId, classI
         if (passedOnly) {
             queryConstraints.push(where('passedFinalExam', '==', true));
         }
-        if (admissionId) {
-            queryConstraints.push(where(documentId(), '==', admissionId));
-        }
-
-
+        
         let studentsQuery = query(studentsRef, ...queryConstraints);
         const studentsSnapshot = await getDocs(studentsQuery);
+
+        if (studentsSnapshot.empty && searchTerm) {
+            // If the main query is empty but there's a search term, it might be an ID search.
+            try {
+                const studentDoc = await getDoc(doc(db, 'students', searchTerm));
+                if (studentDoc.exists() && studentDoc.data().schoolId === schoolId) {
+                    studentsSnapshot.docs.push(studentDoc);
+                }
+            } catch (e) { /* Ignore errors if searchTerm is not a valid doc ID */ }
+        }
 
         if (studentsSnapshot.empty) {
             return [];
@@ -410,10 +415,11 @@ export async function getStudentsForSchool({ schoolId, name, admissionId, classI
             };
         }));
         
-        // Manual client-side filtering for name if not searching by ID
-        if (name && !admissionId) {
+        // Manual client-side filtering for name/id if search term is provided
+        if (searchTerm) {
             studentsData = studentsData.filter(student =>
-                student.studentName.toLowerCase().includes(name.toLowerCase())
+                student.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                student.id.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -1095,5 +1101,3 @@ export async function deleteHomework({ id, schoolId }: { id: string; schoolId: s
         return { success: false, error: 'Failed to delete homework.' };
     }
 }
-
-    
