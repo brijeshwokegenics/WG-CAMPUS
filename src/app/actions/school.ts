@@ -17,6 +17,7 @@ const BaseSchoolSchema = z.object({
   phone: z.string().min(10, { message: "Phone number must be at least 10 digits long." }),
   schoolId: z.string(),
   enabled: z.boolean().default(true),
+  schoolLogoUrl: z.string().url().optional().or(z.literal('')),
 });
 
 const SchoolSchema = z.object({
@@ -30,6 +31,7 @@ const SchoolSchema = z.object({
   schoolId: z.string().min(3, "School ID is required."),
   password: z.string().min(6, "Password must be at least 6 characters."),
   confirmPassword: z.string().min(6, "Confirm Password must be at least 6 characters."),
+  schoolLogoUrl: z.string().url().optional().or(z.literal('')),
 }).refine((data) => data.password === data.confirmPassword, {
   path: ["confirmPassword"],
   message: "Passwords do not match.",
@@ -144,10 +146,16 @@ export async function updateSchool(id: string, prevState: State, formData: FormD
     if (typeof formDataObj.enabled === 'string') {
         formDataObj.enabled = formDataObj.enabled === 'true';
     }
+    
+    if (formDataObj.schoolLogoUrl === 'undefined') {
+        delete formDataObj.schoolLogoUrl;
+    }
+
 
     const validatedFields = UpdateSchoolSchema.safeParse(formDataObj);
     
     if (!validatedFields.success) {
+        console.log(validatedFields.error.flatten())
         return {
             errors: validatedFields.error.flatten().fieldErrors,
             message: 'Validation failed. Please check the fields.',
