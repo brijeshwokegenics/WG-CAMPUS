@@ -3,8 +3,9 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, getDoc, runTransaction, serverTimestamp, increment, orderBy } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
+import { addDays } from 'date-fns';
 
 
 // ========== BOOK CATEGORIES ==========
@@ -112,16 +113,29 @@ export async function addBook(prevState: any, formData: FormData) {
     }
 }
 
-export async function getBooks(schoolId: string, categoryId?: string) {
+export async function getBooks(schoolId: string, categoryId?: string, searchTerm?: string) {
     const constraints = [where('schoolId', '==', schoolId)];
     if (categoryId) {
         constraints.push(where('categoryId', '==', categoryId));
     }
-    const q = query(collection(db, 'libraryBooks'), ...constraints);
-    const snapshot = await getDocs(q);
-    const books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    let booksQuery = query(collection(db, 'libraryBooks'), ...constraints);
+    const snapshot = await getDocs(booksQuery);
+    
+    let books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    if (searchTerm) {
+        const lowercasedTerm = searchTerm.toLowerCase();
+        books = books.filter(book => 
+            (book.title as string).toLowerCase().includes(lowercasedTerm) ||
+            (book.author as string).toLowerCase().includes(lowercasedTerm) ||
+            (book.isbn as string)?.includes(lowercasedTerm)
+        );
+    }
+
     return books;
 }
+
 
 export async function updateBook(prevState: any, formData: FormData) {
     const parsed = UpdateBookSchema.safeParse(Object.fromEntries(formData));
@@ -159,4 +173,156 @@ export async function deleteBook(id: string, schoolId: string) {
 
 
 // ========== ISSUE & RETURN ==========
-// To be implemented in Phase 2
+const IssueBookSchema = z.object({
+  schoolId: z.string(),
+  bookId: z.string(),
+  memberId: z.string(), // studentId or staff userId
+  memberType: z.enum(['Student', 'Staff']),
+});
+
+export async function issueBook(prevState: any, formData: FormData) {
+    const parsed = IssueBookSchema.safeParse(Object.fromEntries(formData));
+    if (!parsed.success) return { success: false, error: "Invalid data provided." };
+
+    const { schoolId, bookId, memberId } = parsed.data;
+    const bookRef = doc(db, 'libraryBooks', bookId);
+    
+    try {
+        await runTransaction(db, async (transaction) => {
+            const bookDoc = await transaction.get(bookRef);
+            if (!bookDoc.exists() || bookDoc.data().schoolId !== schoolId) throw new Error("Book not found.");
+            if (bookDoc.data().availableStock < 1) throw new Error("Book is not available.");
+
+            transaction.update(bookRef, { availableStock: increment(-1) });
+            
+            const newIssueRef = doc(collection(db, 'libraryIssues'));
+            transaction.set(newIssueRef, {
+                ...parsed.data,
+                issueDate: serverTimestamp(),
+                dueDate: addDays(new Date(), 15), // Due in 15 days
+                status: 'issued',
+            });
+        });
+        revalidatePath(`/director/dashboard/${schoolId}/admin/library`);
+        return { success: true, message: "Book issued successfully." };
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to issue book." };
+    }
+}
+
+
+export async function getMemberHistory(schoolId: string, memberId: string) {
+    const q = query(
+        collection(db, 'libraryIssues'),
+        where('schoolId', '==', schoolId),
+        where('memberId', '==', memberId),
+        orderBy('issueDate', 'desc')
+    );
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) return [];
+    
+    const issues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    const bookIds = [...new Set(issues.map(i => i.bookId))];
+    const bookDetails: Record<string, any> = {};
+
+    if (bookIds.length > 0) {
+        const booksQuery = query(collection(db, 'libraryBooks'), where('__name__', 'in', bookIds));
+        const booksSnapshot = await getDocs(booksQuery);
+        booksSnapshot.forEach(doc => {
+            bookDetails[doc.id] = doc.data();
+        });
+    }
+
+    return issues.map(issue => ({
+        ...issue,
+        bookTitle: bookDetails[issue.bookId]?.title || 'Unknown Book',
+        issueDate: issue.issueDate?.toDate(),
+        dueDate: issue.dueDate?.toDate(),
+        returnDate: issue.returnDate?.toDate(),
+    }));
+}
+
+
+export async function returnBook(issueId: string, schoolId: string) {
+    const issueRef = doc(db, 'libraryIssues', issueId);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const issueDoc = await transaction.get(issueRef);
+            if (!issueDoc.exists() || issueDoc.data().schoolId !== schoolId) throw new Error("Issue record not found.");
+            if (issueDoc.data().status === 'returned') throw new Error("Book already returned.");
+
+            const { bookId } = issueDoc.data();
+            const bookRef = doc(db, 'libraryBooks', bookId);
+
+            transaction.update(issueRef, { status: 'returned', returnDate: serverTimestamp() });
+            transaction.update(bookRef, { availableStock: increment(1) });
+        });
+        revalidatePath(`/director/dashboard/${schoolId}/admin/library`);
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to return book." };
+    }
+}
+
+export async function getFullIssueHistory(schoolId: string) {
+    const q = query(
+        collection(db, 'libraryIssues'),
+        where('schoolId', '==', schoolId),
+        orderBy('issueDate', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return [];
+
+    const issues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    const bookIds = [...new Set(issues.map(i => i.bookId))];
+    const studentIds = [...new Set(issues.filter(i => i.memberType === 'Student').map(i => i.memberId))];
+    const staffIds = [...new Set(issues.filter(i => i.memberType === 'Staff').map(i => i.memberId))];
+
+    const [bookDetails, studentDetails, staffDetails] = await Promise.all([
+        getDocsByIds(collection(db, 'libraryBooks'), bookIds),
+        getDocsByIds(collection(db, 'students'), studentIds),
+        getDocsByIds(collection(db, 'users'), staffIds),
+    ]);
+
+    return issues.map(issue => {
+        let memberName = 'Unknown Member';
+        if (issue.memberType === 'Student') {
+            memberName = studentDetails[issue.memberId]?.studentName || 'Unknown Student';
+        } else if (issue.memberType === 'Staff') {
+            memberName = staffDetails[issue.memberId]?.name || 'Unknown Staff';
+        }
+
+        return {
+            ...issue,
+            bookTitle: bookDetails[issue.bookId]?.title || 'Unknown Book',
+            memberName,
+            issueDate: issue.issueDate?.toDate(),
+            dueDate: issue.dueDate?.toDate(),
+            returnDate: issue.returnDate?.toDate(),
+        }
+    });
+}
+
+async function getDocsByIds(collectionRef: any, ids: string[]) {
+    const details: Record<string, any> = {};
+    if (ids.length === 0) return details;
+
+    const queryChunks = [];
+    for (let i = 0; i < ids.length; i += 30) {
+        queryChunks.push(ids.slice(i, i + 30));
+    }
+
+    for (const chunk of queryChunks) {
+        const q = query(collectionRef, where('__name__', 'in', chunk));
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => {
+            details[doc.id] = doc.data();
+        });
+    }
+
+    return details;
+}

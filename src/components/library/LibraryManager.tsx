@@ -7,6 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Book, Tags, BookCheck, History } from 'lucide-react';
 import { BookCatalog } from './BookCatalog';
 import { BookCategories } from './BookCategories';
+import { IssueReturn } from './IssueReturn';
+import { IssueHistory } from './IssueHistory';
 
 
 export function LibraryManager({ schoolId }: { schoolId: string }) {
@@ -37,14 +39,14 @@ export function LibraryManager({ schoolId }: { schoolId: string }) {
             <TabsContent value="issue-return">
                  <Card>
                     <CardContent className="pt-6">
-                        <p className="text-muted-foreground text-center p-8">Issue & Return functionality will be implemented in Phase 2.</p>
+                        <IssueReturn schoolId={schoolId} />
                     </CardContent>
                 </Card>
             </TabsContent>
              <TabsContent value="history">
                  <Card>
                     <CardContent className="pt-6">
-                         <p className="text-muted-foreground text-center p-8">Issue History functionality will be implemented in Phase 2.</p>
+                         <IssueHistory schoolId={schoolId} />
                     </CardContent>
                 </Card>
             </TabsContent>
