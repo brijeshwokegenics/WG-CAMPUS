@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -6,9 +7,19 @@ import { collection, addDoc, getDocs, query, where, doc, updateDoc, getDoc, orde
 import { revalidatePath } from 'next/cache';
 import { getStudentById } from './academics';
 
+const PassTypes = z.enum([
+    // Academic & Class
+    "Hall Pass", "Library Pass", "Laboratory Pass",
+    // Movement & Attendance
+    "Late Arrival Pass", "Early Dismissal Pass", "Gate Pass",
+    // Health & Safety
+    "Medical/Clinic Pass"
+]);
+
 const GatePassSchema = z.object({
   schoolId: z.string(),
   studentId: z.string(),
+  passType: PassTypes,
   passDate: z.date(),
   reason: z.string().min(5, "A valid reason is required."),
   issuedBy: z.string().min(1, "Issuer name is required."),

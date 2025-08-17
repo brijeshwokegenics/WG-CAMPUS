@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
@@ -22,11 +23,20 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getStudentsForSchool } from '@/app/actions/academics';
 import { createGatePass, getRecentGatePasses, updateGatePassStatus } from '@/app/actions/gatepass';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 type Student = { id: string; studentName: string; className: string; section: string; };
 
+const PassTypes = z.enum([
+    "Hall Pass", "Library Pass", "Laboratory Pass",
+    "Late Arrival Pass", "Early Dismissal Pass", "Gate Pass",
+    "Medical/Clinic Pass"
+]);
+
+
 const GatePassFormSchema = z.object({
   studentId: z.string().min(1, "Please select a student."),
+  passType: PassTypes,
   passDate: z.date(),
   reason: z.string().min(5, "A valid reason is required."),
   issuedBy: z.string().min(1, "Issuer name is required."),
@@ -47,7 +57,7 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
 
     const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset, setValue } = useForm<GatePassFormValues>({
         resolver: zodResolver(GatePassFormSchema),
-        defaultValues: { passDate: new Date(), outTime: format(new Date(), 'HH:mm') }
+        defaultValues: { passDate: new Date(), outTime: format(new Date(), 'HH:mm'), passType: "Gate Pass" }
     });
 
     const fetchPasses = async () => {
@@ -63,7 +73,7 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
 
     useEffect(() => {
         if(state.success){
-            reset({ passDate: new Date(), outTime: format(new Date(), 'HH:mm') });
+            reset({ passDate: new Date(), outTime: format(new Date(), 'HH:mm'), passType: "Gate Pass" });
             setSelectedStudent(null);
             fetchPasses();
         }
@@ -103,7 +113,7 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
             <div className="lg:col-span-1 space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Issue New Gate Pass</CardTitle>
+                        <CardTitle>Issue New Pass</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
@@ -141,6 +151,18 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
                                 </div>
                             )}
                             {errors.studentId && <p className="text-sm text-destructive">{errors.studentId.message}</p>}
+                            
+                            <div className="space-y-2">
+                                <Label>Pass Type</Label>
+                                <Controller name="passType" control={control} render={({field}) => (
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {PassTypes.options.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                )} />
+                            </div>
 
                             <div className="space-y-2">
                                 <Label>Reason for Leaving</Label>
@@ -203,13 +225,13 @@ function RecentPassesTable({ schoolId, passes, loading, refresh }: { schoolId: s
             <CardContent>
                 <div className="border rounded-lg max-h-[70vh] overflow-y-auto">
                     <Table>
-                        <TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Reason</TableHead><TableHead>Out Time</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+                        <TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Pass Type</TableHead><TableHead>Out Time</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
                         <TableBody>
                             {loading ? <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin"/></TableCell></TableRow>
                             : passes.length > 0 ? passes.map(p => (
                                 <TableRow key={p.id}>
                                     <TableCell className="font-medium">{p.studentName}</TableCell>
-                                    <TableCell>{p.reason}</TableCell>
+                                    <TableCell>{p.passType}</TableCell>
                                     <TableCell>{p.outTime}</TableCell>
                                     <TableCell>
                                         <Badge variant={p.status === 'Issued' ? 'destructive' : (p.status === 'Returned' ? 'default' : 'secondary')}>{p.status}</Badge>

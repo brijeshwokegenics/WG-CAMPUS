@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -62,7 +63,7 @@ export default function PrintGatePassPage({ params }: { params: { id: string } }
                  <div className="text-center mb-4 border-b-2 border-dashed pb-2">
                     <h1 className="text-xl font-bold uppercase">{school.schoolName}</h1>
                     <p className="text-xs text-gray-500">{school.address}</p>
-                    <h2 className="text-md font-semibold mt-1">GATE PASS</h2>
+                    <h2 className="text-md font-semibold mt-1 uppercase">{pass.passType}</h2>
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-sm">
                     <div className="col-span-2 space-y-2">
