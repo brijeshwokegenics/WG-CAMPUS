@@ -76,6 +76,8 @@ export default function PrintGatePassPage({ params }: { params: { id: string } }
                         <p><strong>Reason:</strong> {pass.reason}</p>
                         <p><strong>Date:</strong> {format(pass.passDate, 'dd-MMM-yyyy')}</p>
                         <p><strong>Out Time:</strong> {pass.outTime}</p>
+                        <p><strong>Duration:</strong> {pass.passDuration || 'N/A'}</p>
+                        <p><strong>Session:</strong> {pass.session || 'N/A'}</p>
                     </div>
                     <div className="col-span-1 flex items-center justify-center">
                         <Avatar className="h-20 w-20 border">

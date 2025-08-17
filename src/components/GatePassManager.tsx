@@ -130,6 +130,8 @@ const GatePassFormSchema = z.object({
   reason: z.string().min(5, "A valid reason is required."),
   issuedBy: z.string().min(1, "Issuer name is required."),
   outTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Please enter a valid HH:MM time."),
+  session: z.string().optional(),
+  passDuration: z.string().optional(),
 });
 
 type GatePassFormValues = z.infer<typeof GatePassFormSchema>;
@@ -146,7 +148,12 @@ function IssuePassDialog({ isOpen, setIsOpen, schoolId, onSuccess }: {isOpen: bo
 
     const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset, setValue, watch } = useForm<GatePassFormValues>({
         resolver: zodResolver(GatePassFormSchema),
-        defaultValues: { passDate: new Date(), outTime: format(new Date(), 'HH:mm'), memberType: 'Student' }
+        defaultValues: { 
+            passDate: new Date(), 
+            outTime: format(new Date(), 'HH:mm'), 
+            memberType: 'Student',
+            session: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
+        }
     });
     
     const memberType = watch('memberType');
@@ -247,14 +254,17 @@ function IssuePassDialog({ isOpen, setIsOpen, schoolId, onSuccess }: {isOpen: bo
                         </div>
                     )}
 
-                    <div className="space-y-2">
-                        <Label>Pass Type</Label>
-                        <Controller name="passType" control={control} render={({field}) => (
-                            <Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select a pass type..."/></SelectTrigger><SelectContent>{passTypes.map(type => <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>)}</SelectContent></Select>
-                        )} />
-                        {errors.passType && <p className="text-sm text-destructive">{errors.passType.message}</p>}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Pass Type</Label>
+                            <Controller name="passType" control={control} render={({field}) => (
+                                <Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select a pass type..."/></SelectTrigger><SelectContent>{passTypes.map(type => <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>)}</SelectContent></Select>
+                            )} />
+                            {errors.passType && <p className="text-sm text-destructive">{errors.passType.message}</p>}
+                        </div>
+                        <div className="space-y-2"><Label>Session</Label><Input {...register('session')} placeholder="e.g., 2024-2025"/></div>
                     </div>
-
+                     <div className="space-y-2"><Label>Pass Duration</Label><Input {...register('passDuration')} placeholder="e.g., 2 hours, Half Day"/></div>
                     <div className="space-y-2"><Label>Reason for Pass</Label><Textarea {...register('reason')} />{errors.reason && <p className="text-sm text-destructive">{errors.reason.message}</p>}</div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2"><Label>Date</Label><Controller name="passDate" control={control} render={({ field }) => (<Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start"><CalendarIcon className="mr-2 h-4 w-4"/>{field.value ? format(field.value, "PPP") : 'Pick a date'}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange}/></PopoverContent></Popover>)} /></div>
@@ -402,7 +412,7 @@ function PassTypeForm({ isOpen, setIsOpen, schoolId, editingType, onSuccess }: {
                 {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
              <div className="flex justify-end gap-2">
-                <Button type="button" size="sm" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setIsFormOpen(false)}>Cancel</Button>
                 <Button type="submit" size="sm" disabled={isSubmitting}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                     {editingType ? 'Save Changes' : 'Create'}

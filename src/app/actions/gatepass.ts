@@ -20,6 +20,8 @@ const GatePassSchema = z.object({
   status: z.enum(['Issued', 'Returned', 'Expired']).default('Issued'),
   outTime: z.string(),
   returnTime: z.string().optional(),
+  session: z.string().optional(),
+  passDuration: z.string().optional(),
 });
 
 
