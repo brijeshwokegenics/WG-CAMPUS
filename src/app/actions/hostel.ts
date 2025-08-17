@@ -26,9 +26,11 @@ export async function createHostel(prevState: any, formData: FormData) {
 }
 
 export async function getHostels(schoolId: string) {
-  const q = query(collection(db, 'hostels'), where('schoolId', '==', schoolId), orderBy('name'));
+  const q = query(collection(db, 'hostels'), where('schoolId', '==', schoolId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const hostels = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  hostels.sort((a,b) => (a.name as string).localeCompare(b.name as string));
+  return hostels;
 }
 
 export async function updateHostel(prevState: any, formData: FormData) {
