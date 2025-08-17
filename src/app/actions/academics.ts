@@ -178,7 +178,7 @@ export async function getDashboardSummary(schoolId: string) {
         const studentsQuery = query(collection(db, 'students'), where('schoolId', '==', schoolId));
         const staffQuery = query(collection(db, 'users'), where('schoolId', '==', schoolId));
         const classesQuery = query(collection(db, 'classes'), where('schoolId', '==', schoolId));
-
+        
         const [studentsSnapshot, staffSnapshot, classesSnapshot] = await Promise.all([
             getCountFromServer(studentsQuery),
             getCountFromServer(staffQuery),
@@ -1141,5 +1141,3 @@ export async function deleteHomework({ id, schoolId }: { id: string; schoolId: s
         return { success: false, error: 'Failed to delete homework.' };
     }
 }
-
-    
