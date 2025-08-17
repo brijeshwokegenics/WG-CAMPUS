@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
@@ -31,7 +32,7 @@ export function ItemManager({ schoolId }: { schoolId: string }) {
     const fetchData = async () => {
         setLoading(true);
         const [itemsRes, categoriesRes] = await Promise.all([
-            getInventoryItems(schoolId, filteredCategory),
+            getInventoryItems(schoolId, filteredCategory || undefined),
             getItemCategories(schoolId)
         ]);
         setItems(itemsRes as Item[]);
@@ -68,11 +69,12 @@ export function ItemManager({ schoolId }: { schoolId: string }) {
                         <CardDescription>View, add, and manage all inventory items.</CardDescription>
                     </div>
                     <div className="flex gap-2">
-                        <Select value={filteredCategory} onValueChange={setFilteredCategory}>
+                         <Select value={filteredCategory} onValueChange={setFilteredCategory}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Filter by category..." />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="">All Categories</SelectItem>
                                 {categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
