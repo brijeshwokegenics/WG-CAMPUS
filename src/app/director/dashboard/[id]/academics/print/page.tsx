@@ -13,7 +13,7 @@ import { Printer, AlertCircle } from 'lucide-react';
 
 type ClassData = { id: string; name: string; sections: string[]; };
 type StudentData = { id: string; studentName: string; fatherName: string; feesPaid: boolean; };
-type PrintType = 'id-card' | 'admission-card' | 'tc' | 'gate-pass' | 'vehicle-pass' | 'exam-admit-card';
+type PrintType = 'id-card' | 'admission-card' | 'tc' | 'exam-admit-card' | 'bonafide-certificate' | 'character-certificate';
 
 
 export default function PrintCenterPage({ params }: { params: { id: string } }) {
@@ -97,11 +97,11 @@ export default function PrintCenterPage({ params }: { params: { id: string } }) 
 
     const documentTypes: {value: PrintType, label: string}[] = [
         { value: 'id-card', label: 'ID Card'},
-        { value: 'exam-admit-card', label: 'Exam Admit Card'},
         { value: 'admission-card', label: 'Admission Card'},
+        { value: 'exam-admit-card', label: 'Exam Admit Card'},
         { value: 'tc', label: 'Transfer Certificate (TC)'},
-        { value: 'gate-pass', label: 'Gate Pass'},
-        { value: 'vehicle-pass', label: 'Vehicle Pass'},
+        { value: 'bonafide-certificate', label: 'Bonafide Certificate'},
+        { value: 'character-certificate', label: 'Character Certificate'},
     ];
 
 
@@ -212,3 +212,5 @@ export default function PrintCenterPage({ params }: { params: { id: string } }) 
         </div>
     )
 }
+
+    

@@ -40,7 +40,7 @@ export default async function StudentsPage({
             <div className="mb-6">
               <StudentFilters classes={classes || []} />
             </div>
-            <Suspense fallback={<p>Loading students...</p>}>
+            <Suspense fallback={<div className="text-center p-8">Loading students...</div>}>
                 <StudentList 
                     schoolId={schoolId} 
                     name={name}
@@ -53,3 +53,5 @@ export default async function StudentsPage({
     </>
   );
 }
+
+    
