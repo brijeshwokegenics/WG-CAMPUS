@@ -210,14 +210,22 @@ export async function getAssignedStudents(schoolId: string, routeId?: string) {
     // Fetch class names
     const classDataMap = new Map<string, string>();
     if (classIds.length > 0) {
-        const classesQuery = query(collection(db, 'classes'), where(documentId(), 'in', classIds));
-        const classesSnapshot = await getDocs(classesQuery);
-        classesSnapshot.forEach(doc => {
-             // Important: only set data if class belongs to the school
-             if (doc.data().schoolId === schoolId) {
-                classDataMap.set(doc.id, doc.data().name);
-            }
-        });
+        // Chunk the classIds array if it's larger than 30
+        const classIdChunks = [];
+        for (let i = 0; i < classIds.length; i += 30) {
+            classIdChunks.push(classIds.slice(i, i + 30));
+        }
+        for (const chunk of classIdChunks) {
+            if (chunk.length === 0) continue;
+            const classesQuery = query(collection(db, 'classes'), where(documentId(), 'in', chunk));
+            const classesSnapshot = await getDocs(classesQuery);
+            classesSnapshot.forEach(doc => {
+                 // Important: only set data if class belongs to the school
+                 if (doc.data().schoolId === schoolId) {
+                    classDataMap.set(doc.id, doc.data().name);
+                }
+            });
+        }
     }
 
     // Join student data with assignment data
@@ -248,4 +256,31 @@ export async function unassignStudent(id: string, schoolId: string) {
         revalidatePath(`/director/dashboard/${schoolId}/admin/transport`);
         return { success: true };
     } catch(e) { return { success: false, error: 'Failed to unassign student.'}; }
+}
+
+export async function updateStudentAssignment(schoolId: string, assignmentId: string, newRouteId: string, newStopName: string) {
+    if (!schoolId || !assignmentId || !newRouteId || !newStopName) {
+        return { success: false, error: 'Missing required information for updating assignment.' };
+    }
+
+    try {
+        const assignmentDocRef = doc(db, 'studentTransport', assignmentId);
+        
+        // Security check
+        const docSnap = await getDoc(assignmentDocRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) {
+            return { success: false, error: "Assignment not found or permission denied." };
+        }
+
+        await updateDoc(assignmentDocRef, {
+            routeId: newRouteId,
+            stopName: newStopName,
+        });
+
+        revalidatePath(`/director/dashboard/${schoolId}/admin/transport`);
+        return { success: true, message: 'Student assignment updated successfully.' };
+    } catch (e) {
+        console.error("Error updating student assignment:", e);
+        return { success: false, error: 'Failed to update assignment.' };
+    }
 }

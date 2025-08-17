@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, UserPlus, Trash2, Search } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Loader2, UserPlus, Trash2, Search, Edit } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '../ui/input';
 import { getStudentsForSchool } from '@/app/actions/academics';
 import { getRoutes, getAssignedStudents, assignStudentsToRoute, unassignStudent } from '@/app/actions/transport';
+import { EditAssignmentDialog } from './EditAssignmentDialog';
+
 
 type ClassData = { id: string; name: string; sections: string[]; };
 type Route = { id: string; name: string; stops: { name: string; fee: number }[]; };
@@ -24,6 +26,9 @@ export function StudentAllocation({ schoolId, classes }: { schoolId: string, cla
     const [assignedStudents, setAssignedStudents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isPending, startTransition] = useTransition();
+
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [editingAssignment, setEditingAssignment] = useState<any>(null);
 
     const selectedRoute = useMemo(() => routes.find(r => r.id === selectedRouteId), [routes, selectedRouteId]);
 
@@ -49,6 +54,11 @@ export function StudentAllocation({ schoolId, classes }: { schoolId: string, cla
             })
         }
     }
+    
+    const handleEdit = (assignment: any) => {
+        setEditingAssignment(assignment);
+        setIsEditOpen(true);
+    };
 
     return (
         <Card>
@@ -85,6 +95,9 @@ export function StudentAllocation({ schoolId, classes }: { schoolId: string, cla
                                         <TableCell>{student.className} - {student.section}</TableCell>
                                         <TableCell>{student.stopName}</TableCell>
                                         <TableCell className="text-right">
+                                             <Button variant="ghost" size="icon" onClick={() => handleEdit(student)} disabled={isPending}>
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
                                             <Button variant="ghost" size="icon" onClick={() => handleUnassign(student.id)} disabled={isPending}>
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
@@ -98,6 +111,17 @@ export function StudentAllocation({ schoolId, classes }: { schoolId: string, cla
                     </Table>
                 </div>
             </CardContent>
+
+            {editingAssignment && (
+                <EditAssignmentDialog
+                    isOpen={isEditOpen}
+                    setIsOpen={setIsEditOpen}
+                    schoolId={schoolId}
+                    assignment={editingAssignment}
+                    routes={routes}
+                    onSuccess={fetchData}
+                />
+            )}
         </Card>
     );
 }
