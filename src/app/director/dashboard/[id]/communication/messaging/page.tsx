@@ -12,9 +12,9 @@ export default function MessagingPage() {
       <Card className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed">
         <CardHeader>
             <div className="mx-auto bg-muted rounded-full p-4 w-fit">
-                 <Mail className="h-12 w-12 text-muted-foreground" />
+                 <MessageSquare className="h-12 w-12 text-muted-foreground" />
             </div>
-            <CardTitle className="mt-4">Messaging System Coming Soon</CardTitle>
+            <CardTitle className="mt-4">Advanced Messaging System Coming Soon</CardTitle>
             <CardDescription className="max-w-md mx-auto">
                 This feature is currently under active development. Soon, you will be able to send direct messages, create group chats, and communicate seamlessly with everyone in the school community right from this page.
             </CardDescription>
