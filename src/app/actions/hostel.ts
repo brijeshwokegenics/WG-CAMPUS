@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, serverTimestamp, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, serverTimestamp, orderBy, runTransaction, increment } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
 // ========== HOSTELS ==========
@@ -54,14 +54,22 @@ export async function deleteHostel(id: string, schoolId: string) {
         const docSnap = await getDoc(docRef);
         if(!docSnap.exists() || docSnap.data().schoolId !== schoolId) return { success: false, error: 'Permission denied.'};
         
-        // Also delete all rooms in this hostel
+        const batch = writeBatch(db);
+        
+        // Find and delete all rooms in the hostel
         const roomsQuery = query(collection(db, 'hostelRooms'), where('hostelId', '==', id));
         const roomsSnapshot = await getDocs(roomsQuery);
-        const batch = writeBatch(db);
         roomsSnapshot.forEach(roomDoc => {
             batch.delete(roomDoc.ref);
         });
         
+        // Find and delete all student assignments for this hostel
+        const assignmentsQuery = query(collection(db, 'hostelAssignments'), where('hostelId', '==', id));
+        const assignmentsSnapshot = await getDocs(assignmentsQuery);
+        assignmentsSnapshot.forEach(assignmentDoc => {
+            batch.delete(assignmentDoc.ref);
+        });
+
         batch.delete(docRef);
         await batch.commit();
 
@@ -124,8 +132,72 @@ export async function deleteRoom(id: string, schoolId: string) {
         const docRef = doc(db, 'hostelRooms', id);
         const docSnap = await getDoc(docRef);
         if(!docSnap.exists() || docSnap.data().schoolId !== schoolId) return { success: false, error: 'Permission denied.'};
-        await deleteDoc(docRef);
+        
+        const batch = writeBatch(db);
+        
+        // Find and delete all student assignments for this room
+        const assignmentsQuery = query(collection(db, 'hostelAssignments'), where('roomId', '==', id));
+        const assignmentsSnapshot = await getDocs(assignmentsQuery);
+        assignmentsSnapshot.forEach(assignmentDoc => {
+            batch.delete(assignmentDoc.ref);
+        });
+
+        batch.delete(docRef);
+        await batch.commit();
+
         revalidatePath(`/director/dashboard/${schoolId}/admin/hostel`);
         return { success: true };
     } catch(e) { return { success: false, error: 'Failed to delete room.'}; }
+}
+
+
+// ========== STUDENT ALLOCATION ==========
+const AssignStudentSchema = z.object({
+  schoolId: z.string(),
+  hostelId: z.string(),
+  roomId: z.string(),
+  studentId: z.string(),
+});
+
+export async function assignStudentToRoom(prevState: any, formData: FormData) {
+  const parsed = AssignStudentSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { success: false, error: "Invalid data provided." };
+
+  const { schoolId, hostelId, roomId, studentId } = parsed.data;
+  const roomRef = doc(db, 'hostelRooms', roomId);
+  const assignmentRef = doc(collection(db, 'hostelAssignments'));
+
+  try {
+    // Check if student is already assigned somewhere else
+    const existingAssignmentQuery = query(collection(db, 'hostelAssignments'), where('studentId', '==', studentId), where('schoolId', '==', schoolId));
+    const existingAssignmentSnapshot = await getDocs(existingAssignmentQuery);
+    if (!existingAssignmentSnapshot.empty) {
+        return { success: false, error: "This student is already assigned to a hostel room." };
+    }
+
+    await runTransaction(db, async (transaction) => {
+        const roomDoc = await transaction.get(roomRef);
+        if (!roomDoc.exists() || roomDoc.data().schoolId !== schoolId) {
+            throw new Error("Room not found or permission denied.");
+        }
+        
+        const roomData = roomDoc.data();
+        if (roomData.currentOccupancy >= roomData.capacity) {
+            throw new Error("This room is already full.");
+        }
+
+        // Increment occupancy and create assignment
+        transaction.update(roomRef, { currentOccupancy: increment(1) });
+        transaction.set(assignmentRef, {
+            ...parsed.data,
+            assignedAt: serverTimestamp(),
+        });
+    });
+
+    revalidatePath(`/director/dashboard/${schoolId}/admin/hostel`);
+    return { success: true, message: "Student assigned successfully." };
+
+  } catch (e: any) {
+    return { success: false, error: e.message || "Failed to assign student." };
+  }
 }
