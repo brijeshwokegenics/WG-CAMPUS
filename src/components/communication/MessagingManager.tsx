@@ -15,11 +15,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Loader2, Send, Users, User, Trash2 } from 'lucide-react';
+import { Loader2, Send, Users, User, Trash2, Info, MessageSquarePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Badge } from '../ui/badge';
 import { ScrollArea } from '../ui/scroll-area';
+import { Switch } from '../ui/switch';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 type ClassData = { id: string; name: string; sections: string[]; };
 type UserData = { id: string; name: string; role: string; };
@@ -196,6 +198,21 @@ function ComposeMessageForm({ schoolId, classes, users, onSuccess }: { schoolId:
                         <Label>Message Content</Label>
                         <Textarea {...register('content')} rows={5} />
                         {errors.content && <p className="text-sm text-destructive">{errors.content.message}</p>}
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                        <Switch id="whatsapp-toggle" disabled />
+                        <Label htmlFor="whatsapp-toggle">Also send via WhatsApp</Label>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Info className="h-4 w-4 text-muted-foreground" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Enable this in Admin &gt; Integrations</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
 
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
