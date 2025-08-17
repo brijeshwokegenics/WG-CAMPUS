@@ -263,14 +263,11 @@ function IssueNewBookForm({ schoolId, member, onIssueSuccess }: { schoolId: stri
                                          <TableCell className="font-medium">{book.title}</TableCell>
                                          <TableCell className="text-muted-foreground">{book.author}</TableCell>
                                          <TableCell>
-                                             <form action={() => {
-                                                  const formData = new FormData();
-                                                    formData.append('schoolId', schoolId);
-                                                    formData.append('bookId', book.id);
-                                                    formData.append('memberId', member.id);
-                                                    formData.append('memberType', member.type);
-                                                    formAction(formData);
-                                             }}>
+                                             <form action={formAction}>
+                                                <input type="hidden" name="schoolId" value={schoolId} />
+                                                <input type="hidden" name="bookId" value={book.id} />
+                                                <input type="hidden" name="memberId" value={member.id} />
+                                                <input type="hidden" name="memberType" value={member.type} />
                                                  <Button type="submit" size="sm" variant="outline"><BookUp className="mr-2 h-4 w-4"/> Issue</Button>
                                              </form>
                                          </TableCell>
@@ -284,4 +281,3 @@ function IssueNewBookForm({ schoolId, member, onIssueSuccess }: { schoolId: stri
         </Card>
     );
 }
-
