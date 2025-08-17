@@ -72,15 +72,16 @@ export function StudentAllocation({ schoolId, classes }: { schoolId: string, cla
                 </div>
                  <div className="border rounded-lg">
                     <Table>
-                        <TableHeader><TableRow><TableHead>Student Name</TableHead><TableHead>Admission ID</TableHead><TableHead>Stop</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
+                        <TableHeader><TableRow><TableHead>Student Name</TableHead><TableHead>Admission ID</TableHead><TableHead>Class</TableHead><TableHead>Stop</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
                         <TableBody>
                             {loading ? (
-                                <TableRow><TableCell colSpan={4} className="h-24 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></TableCell></TableRow>
+                                <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></TableCell></TableRow>
                             ) : assignedStudents.length > 0 ? (
                                 assignedStudents.map(student => (
                                     <TableRow key={student.id}>
-                                        <TableCell className="font-medium">Student Name Here</TableCell> {/* TODO: Get student name */}
+                                        <TableCell className="font-medium">{student.studentName}</TableCell>
                                         <TableCell>{student.studentId}</TableCell>
+                                        <TableCell>{student.className} - {student.section}</TableCell>
                                         <TableCell>{student.stopName}</TableCell>
                                         <TableCell className="text-right">
                                             <Button variant="ghost" size="icon" onClick={() => handleUnassign(student.id)} disabled={isPending}>
@@ -90,7 +91,7 @@ export function StudentAllocation({ schoolId, classes }: { schoolId: string, cla
                                     </TableRow>
                                 ))
                             ) : (
-                                <TableRow><TableCell colSpan={4} className="h-24 text-center">No students assigned to this route.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={5} className="h-24 text-center">No students assigned to this route.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>

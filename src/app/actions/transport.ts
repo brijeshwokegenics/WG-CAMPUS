@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, documentId } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
 // ========== VEHICLES ==========
@@ -162,14 +162,56 @@ export async function assignStudentsToRoute(schoolId: string, routeId: string, s
 }
 
 export async function getAssignedStudents(schoolId: string, routeId?: string) {
-    const q = routeId
-        ? query(collection(db, 'studentTransport'), where('schoolId', '==', schoolId), where('routeId', '==', routeId))
-        : query(collection(db, 'studentTransport'), where('schoolId', '==', schoolId));
+    const constraints = routeId
+        ? [where('schoolId', '==', schoolId), where('routeId', '==', routeId)]
+        : [where('schoolId', '==', schoolId)];
+
+    const q = query(collection(db, 'studentTransport'), ...constraints);
     
-    const snapshot = await getDocs(q);
-    const assignments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    return assignments;
+    const assignmentsSnapshot = await getDocs(q);
+    if (assignmentsSnapshot.empty) {
+        return [];
+    }
+
+    const assignments = assignmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Get unique student IDs from the assignments
+    const studentIds = [...new Set(assignments.map(a => a.studentId))];
+    
+    // Firestore 'in' queries are limited to 30 items per query.
+    // We need to chunk the studentIds array if it's larger than 30.
+    const studentDataMap = new Map();
+    const studentIdChunks = [];
+    for (let i = 0; i < studentIds.length; i += 30) {
+        studentIdChunks.push(studentIds.slice(i, i + 30));
+    }
+
+    for (const chunk of studentIdChunks) {
+        if (chunk.length === 0) continue;
+        const studentsQuery = query(collection(db, 'students'), where(documentId(), 'in', chunk));
+        const studentsSnapshot = await getDocs(studentsQuery);
+        studentsSnapshot.forEach(doc => {
+            const data = doc.data();
+            studentDataMap.set(doc.id, {
+                studentName: data.studentName,
+                className: data.className || 'N/A', // className may not be on student doc
+                section: data.section,
+            });
+        });
+    }
+
+    // Join student data with assignment data
+    const populatedAssignments = assignments.map(assignment => {
+        const studentInfo = studentDataMap.get(assignment.studentId) || {};
+        return {
+            ...assignment,
+            ...studentInfo,
+        };
+    });
+
+    return populatedAssignments;
 }
+
 
 export async function unassignStudent(id: string, schoolId: string) {
      try {
