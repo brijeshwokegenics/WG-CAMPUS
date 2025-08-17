@@ -147,8 +147,8 @@ export async function updateSchool(id: string, prevState: State, formData: FormD
         formDataObj.enabled = formDataObj.enabled === 'true';
     }
     
-    if (formDataObj.schoolLogoUrl === 'undefined') {
-        delete formDataObj.schoolLogoUrl;
+    if (formDataObj.schoolLogoUrl === 'undefined' || formDataObj.schoolLogoUrl === '') {
+        formDataObj.schoolLogoUrl = '';
     }
 
 
