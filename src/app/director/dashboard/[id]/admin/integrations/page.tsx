@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -68,7 +69,7 @@ export default function IntegrationsPage() {
                   <Label htmlFor="smtp-host">SMTP Host</Label>
                   <Input id="smtp-host" placeholder="e.g., smtp.sendgrid.net" />
               </div>
-               <div className="grid grid-cols-2 gap-4">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <div className="space-y-2">
                     <Label htmlFor="smtp-port">SMTP Port</Label>
                     <Input id="smtp-port" placeholder="e.g., 587" />
@@ -97,7 +98,7 @@ export default function IntegrationsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5"/> SMS Gateway</CardTitle>
             <CardDescription>
-              Configure an SMS provider to send critical alerts for attendance, etc.
+              Configure an SMS provider to send critical alerts for attendance, fees, etc.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

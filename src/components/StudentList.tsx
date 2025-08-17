@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useTransition, useMemo } from 'react';
@@ -77,7 +78,7 @@ export function StudentList({ schoolId, name, admissionId, classId }: StudentLis
 
   return (
     <div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto border rounded-lg">
             <Table>
             <TableHeader>
                 <TableRow>

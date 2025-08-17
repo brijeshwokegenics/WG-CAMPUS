@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -271,7 +272,7 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
                 <Button type="button" variant="outline" size="sm" onClick={() => handleMarkAll('Present')}>Mark All Present</Button>
                 <Button type="button" variant="outline" size="sm" onClick={() => handleMarkAll('Absent')}>Mark All Absent</Button>
             </div>
-            <div className='border rounded-lg'>
+            <div className='border rounded-lg overflow-x-auto'>
                 <Table>
                 <TableHeader>
                     <TableRow>
@@ -289,7 +290,7 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
                         <RadioGroup
                             value={attendance[student.id] || 'Present'}
                             onValueChange={(value) => handleStatusChange(student.id, value as AttendanceStatus)}
-                            className="flex justify-end gap-4"
+                            className="flex justify-end gap-2 sm:gap-4 flex-wrap"
                         >
                             {(['Present', 'Absent', 'Late', 'Half Day'] as AttendanceStatus[]).map(status => (
                                 <div key={status} className="flex items-center space-x-2">

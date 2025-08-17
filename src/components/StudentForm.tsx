@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -133,7 +134,7 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
         <input type="hidden" {...register("schoolId")} />
         
         {/* Academic Details */}
-        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-4">
+        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-2 lg:grid-cols-4">
           <legend className="-ml-1 px-1 text-sm font-medium">Academic Details</legend>
           <div className="space-y-2">
             <Label>Admission Date</Label>
@@ -211,7 +212,7 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
         </fieldset>
 
         {/* Student Details */}
-        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-4">
+        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-2 lg:grid-cols-4">
           <legend className="-ml-1 px-1 text-sm font-medium">Student Details</legend>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="studentName">Student Name</Label>
