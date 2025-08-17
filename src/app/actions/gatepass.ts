@@ -8,17 +8,14 @@ import { revalidatePath } from 'next/cache';
 import { getStudentById } from './academics';
 
 const PassTypes = z.enum([
-    // Academic & Class
     "Hall Pass", "Library Pass", "Laboratory Pass",
-    // Movement & Attendance
     "Late Arrival Pass", "Early Dismissal Pass", "Gate Pass",
-    // Health & Safety
     "Medical/Clinic Pass"
 ]);
 
 const GatePassSchema = z.object({
   schoolId: z.string(),
-  studentId: z.string(),
+  studentId: z.string(), // Keeping this for now for student-specific passes
   passType: PassTypes,
   passDate: z.date(),
   reason: z.string().min(5, "A valid reason is required."),
@@ -96,7 +93,6 @@ export async function getRecentGatePasses(schoolId: string) {
         const populatedPasses = passes.map(pass => ({
             ...pass,
             studentName: studentDetails[pass.studentId]?.studentName || 'Unknown Student',
-            className: studentDetails[pass.studentId]?.className || 'N/A'
         }));
 
         return { success: true, data: populatedPasses };
