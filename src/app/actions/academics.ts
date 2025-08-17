@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or, documentId, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or, documentId, orderBy,getCountFromServer } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 
@@ -169,6 +169,36 @@ const UpdateHomeworkSchema = HomeworkObjectSchema.omit({ schoolId: true }).exten
     path: ["submissionDate"],
 });
 
+
+export async function getDashboardSummary(schoolId: string) {
+    if (!schoolId) {
+        return { success: false, error: 'School ID is required.' };
+    }
+    try {
+        const studentsQuery = query(collection(db, 'students'), where('schoolId', '==', schoolId));
+        const staffQuery = query(collection(db, 'users'), where('schoolId', '==', schoolId));
+        const classesQuery = query(collection(db, 'classes'), where('schoolId', '==', schoolId));
+
+        const [studentsSnapshot, staffSnapshot, classesSnapshot] = await Promise.all([
+            getCountFromServer(studentsQuery),
+            getCountFromServer(staffQuery),
+            getCountFromServer(classesQuery)
+        ]);
+        
+        return {
+            success: true,
+            data: {
+                totalStudents: studentsSnapshot.data().count,
+                totalStaff: staffSnapshot.data().count,
+                totalClasses: classesSnapshot.data().count,
+            }
+        };
+
+    } catch(error) {
+        console.error("Error fetching dashboard summary:", error);
+        return { success: false, error: "Failed to fetch dashboard summary." };
+    }
+}
 
 export async function getClassesForSchool(schoolId: string) {
   if (!schoolId) {
