@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -173,43 +174,68 @@ export async function getAssignedStudents(schoolId: string, routeId?: string) {
         return [];
     }
 
-    const assignments = assignmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const assignments = assignmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as z.infer<typeof StudentTransportSchema> }));
 
     // Get unique student IDs from the assignments
     const studentIds = [...new Set(assignments.map(a => a.studentId))];
+    if (studentIds.length === 0) {
+        return [];
+    }
     
     // Firestore 'in' queries are limited to 30 items per query.
     // We need to chunk the studentIds array if it's larger than 30.
-    const studentDataMap = new Map();
+    const studentDataMap = new Map<string, any>();
     const studentIdChunks = [];
     for (let i = 0; i < studentIds.length; i += 30) {
         studentIdChunks.push(studentIds.slice(i, i + 30));
     }
 
+    // Fetch all student documents in chunks
     for (const chunk of studentIdChunks) {
         if (chunk.length === 0) continue;
         const studentsQuery = query(collection(db, 'students'), where(documentId(), 'in', chunk));
         const studentsSnapshot = await getDocs(studentsQuery);
         studentsSnapshot.forEach(doc => {
             const data = doc.data();
-            studentDataMap.set(doc.id, {
-                studentName: data.studentName,
-                className: data.className || 'N/A', // className may not be on student doc
-                section: data.section,
-            });
+            // Important: only set data if student belongs to the school
+            if (data.schoolId === schoolId) {
+                studentDataMap.set(doc.id, data);
+            }
+        });
+    }
+
+    // Get unique class IDs from the fetched students
+    const classIds = [...new Set(Array.from(studentDataMap.values()).map(student => student.classId).filter(Boolean))];
+
+    // Fetch class names
+    const classDataMap = new Map<string, string>();
+    if (classIds.length > 0) {
+        const classesQuery = query(collection(db, 'classes'), where(documentId(), 'in', classIds));
+        const classesSnapshot = await getDocs(classesQuery);
+        classesSnapshot.forEach(doc => {
+             // Important: only set data if class belongs to the school
+             if (doc.data().schoolId === schoolId) {
+                classDataMap.set(doc.id, doc.data().name);
+            }
         });
     }
 
     // Join student data with assignment data
     const populatedAssignments = assignments.map(assignment => {
-        const studentInfo = studentDataMap.get(assignment.studentId) || {};
+        const studentInfo = studentDataMap.get(assignment.studentId);
+        if (!studentInfo) return null; // Skip if student not found or doesn't belong to school
+
+        const className = classDataMap.get(studentInfo.classId) || 'N/A';
+        
         return {
             ...assignment,
-            ...studentInfo,
+            studentName: studentInfo.studentName,
+            className: className,
+            section: studentInfo.section,
         };
-    });
+    }).filter(Boolean); // remove null entries
 
-    return populatedAssignments;
+    return populatedAssignments as any[];
 }
 
 
