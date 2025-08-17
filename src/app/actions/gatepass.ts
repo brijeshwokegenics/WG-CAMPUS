@@ -3,15 +3,9 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, getDoc, orderBy, limit, serverTimestamp, documentId } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, getDoc, orderBy, limit, serverTimestamp, documentId, deleteDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { getStudentById } from './academics';
-
-const PassTypes = z.enum([
-    "Hall Pass", "Library Pass", "Laboratory Pass",
-    "Late Arrival Pass", "Early Dismissal Pass", "Gate Pass",
-    "Medical/Clinic Pass", "Vehicle Pass"
-]);
 
 const GatePassSchema = z.object({
   schoolId: z.string(),
@@ -19,7 +13,7 @@ const GatePassSchema = z.object({
   memberType: z.enum(['Student', 'Staff', 'Visitor']),
   passHolderName: z.string().min(1, "Pass holder name is required."), // For visitors, this is the main name. For students/staff, it's a copy.
   passHolderDetails: z.string().optional(), // Class/Section for student, Role for staff, Details for visitor
-  passType: PassTypes,
+  passType: z.string().min(1, "Pass type is required."),
   passDate: z.date(),
   reason: z.string().min(5, "A valid reason is required."),
   issuedBy: z.string().min(1, "Issuer name is required."),
@@ -148,5 +142,53 @@ export async function getGatePassById(schoolId: string, passId: string) {
     } catch (error) {
         console.error("Error fetching gate pass:", error);
         return { success: false, error: "Failed to fetch gate pass." };
+    }
+}
+
+
+// Pass Type Management
+const PassTypeSchema = z.object({
+  name: z.string().min(3, "Pass type name is required."),
+  schoolId: z.string(),
+});
+
+export async function createPassType(prevState: any, formData: FormData) {
+  const parsed = PassTypeSchema.safeParse({
+    name: formData.get('name'),
+    schoolId: formData.get('schoolId'),
+  });
+
+  if (!parsed.success) return { success: false, error: 'Invalid data' };
+  
+  try {
+    const q = query(collection(db, 'gatePassTypes'), where('schoolId', '==', parsed.data.schoolId), where('name', '==', parsed.data.name));
+    const existing = await getDocs(q);
+    if (!existing.empty) return { success: false, error: `A pass type named "${parsed.data.name}" already exists.` };
+
+    await addDoc(collection(db, 'gatePassTypes'), parsed.data);
+    revalidatePath(`/director/dashboard/${parsed.data.schoolId}/admin/gate-pass`);
+    return { success: true, message: 'Pass type created.' };
+  } catch (e) { 
+    return { success: false, error: 'Failed to create pass type.' }; 
+  }
+}
+
+export async function getPassTypes(schoolId: string) {
+    const q = query(collection(db, 'gatePassTypes'), where('schoolId', '==', schoolId), orderBy('name'));
+    const snapshot = await getDocs(q);
+    const passTypes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return passTypes;
+}
+
+export async function deletePassType(id: string, schoolId: string) {
+    try {
+        const docRef = doc(db, 'gatePassTypes', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return { success: false, error: 'Permission denied.' };
+        await deleteDoc(docRef);
+        revalidatePath(`/director/dashboard/${schoolId}/admin/gate-pass`);
+        return { success: true };
+    } catch(e) {
+        return { success: false, error: 'Failed to delete.' };
     }
 }

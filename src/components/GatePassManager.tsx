@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, CalendarIcon, Printer, RefreshCcw, User, UserCog, UserSquare2 } from 'lucide-react';
+import { Loader2, Search, CalendarIcon, Printer, RefreshCcw, User, UserCog, UserSquare2, PlusCircle, Trash2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
@@ -22,25 +22,21 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getStudentsForSchool } from '@/app/actions/academics';
-import { createGatePass, getRecentGatePasses, updateGatePassStatus } from '@/app/actions/gatepass';
+import { createGatePass, getRecentGatePasses, updateGatePassStatus, getPassTypes, createPassType, deletePassType } from '@/app/actions/gatepass';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { getUsersForSchool } from '@/app/actions/users';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Dialog, DialogHeader, DialogTitle, DialogFooter, DialogContent, DialogTrigger } from './ui/dialog';
 
 type Member = { id: string; name: string; type: 'Student' | 'Staff'; details: string; };
-
-const PassTypes = z.enum([
-    "Hall Pass", "Library Pass", "Laboratory Pass",
-    "Late Arrival Pass", "Early Dismissal Pass", "Gate Pass",
-    "Medical/Clinic Pass", "Vehicle Pass"
-]);
+type PassType = { id: string; name: string; };
 
 const GatePassFormSchema = z.object({
   passHolderId: z.string().optional(),
   memberType: z.enum(['Student', 'Staff', 'Visitor']),
   passHolderName: z.string().min(1, "Pass holder name is required."),
   passHolderDetails: z.string().optional(),
-  passType: PassTypes,
+  passType: z.string().min(1, "Please select a pass type."),
   passDate: z.date(),
   reason: z.string().min(5, "A valid reason is required."),
   issuedBy: z.string().min(1, "Issuer name is required."),
@@ -55,33 +51,38 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
     const [isSearching, startSearchTransition] = useTransition();
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
     const [recentPasses, setRecentPasses] = useState<any[]>([]);
-    const [loadingPasses, setLoadingPasses] = useState(true);
+    const [passTypes, setPassTypes] = useState<PassType[]>([]);
+    const [loadingData, setLoadingData] = useState(true);
     
     const [state, formAction] = useFormState(createGatePass, { success: false });
 
     const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset, setValue, watch } = useForm<GatePassFormValues>({
         resolver: zodResolver(GatePassFormSchema),
-        defaultValues: { passDate: new Date(), outTime: format(new Date(), 'HH:mm'), passType: "Gate Pass", memberType: 'Student' }
+        defaultValues: { passDate: new Date(), outTime: format(new Date(), 'HH:mm'), memberType: 'Student' }
     });
     
     const memberType = watch('memberType');
 
-    const fetchPasses = async () => {
-        setLoadingPasses(true);
-        const result = await getRecentGatePasses(schoolId);
-        if (result.success) setRecentPasses(result.data);
-        setLoadingPasses(false);
+    const fetchData = async () => {
+        setLoadingData(true);
+        const [passesRes, typesRes] = await Promise.all([
+            getRecentGatePasses(schoolId),
+            getPassTypes(schoolId)
+        ]);
+        if (passesRes.success) setRecentPasses(passesRes.data);
+        setPassTypes(typesRes as PassType[]);
+        setLoadingData(false);
     };
 
     useEffect(() => {
-        fetchPasses();
+        fetchData();
     }, [schoolId]);
 
     useEffect(() => {
         if(state.success){
-            reset({ passDate: new Date(), outTime: format(new Date(), 'HH:mm'), passType: "Gate Pass", memberType: 'Student', passHolderName: '', passHolderDetails: '' });
+            reset({ passDate: new Date(), outTime: format(new Date(), 'HH:mm'), passType: undefined, memberType: 'Student', passHolderName: '', passHolderDetails: '' });
             setSelectedMember(null);
-            fetchPasses();
+            fetchData();
         }
     }, [state.success, reset]);
 
@@ -136,9 +137,7 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             <div className="lg:col-span-1 space-y-6">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Issue New Pass</CardTitle>
-                    </CardHeader>
+                    <CardHeader><CardTitle>Issue New Pass</CardTitle></CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
                             {state.error && (<Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>)}
@@ -172,8 +171,9 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
                             <div className="space-y-2">
                                 <Label>Pass Type</Label>
                                 <Controller name="passType" control={control} render={({field}) => (
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{PassTypes.options.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent></Select>
+                                    <Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select a pass type..."/></SelectTrigger><SelectContent>{passTypes.map(type => <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>)}</SelectContent></Select>
                                 )} />
+                                {errors.passType && <p className="text-sm text-destructive">{errors.passType.message}</p>}
                             </div>
 
                             <div className="space-y-2"><Label>Reason for Pass</Label><Textarea {...register('reason')} />{errors.reason && <p className="text-sm text-destructive">{errors.reason.message}</p>}</div>
@@ -186,9 +186,10 @@ export function GatePassManager({ schoolId }: { schoolId: string }) {
                         </form>
                     </CardContent>
                 </Card>
+                <ManagePassTypes schoolId={schoolId} passTypes={passTypes} refresh={fetchData} />
             </div>
             <div className="lg:col-span-2">
-                <RecentPassesTable schoolId={schoolId} passes={recentPasses} loading={loadingPasses} refresh={fetchPasses} />
+                <RecentPassesTable schoolId={schoolId} passes={recentPasses} loading={loadingData} refresh={fetchData} />
             </div>
         </div>
     );
@@ -241,5 +242,81 @@ function RecentPassesTable({ schoolId, passes, loading, refresh }: { schoolId: s
                 </div>
             </CardContent>
         </Card>
+    )
+}
+
+function ManagePassTypes({ schoolId, passTypes, refresh }: { schoolId: string, passTypes: PassType[], refresh: () => void }) {
+    const [isPending, startTransition] = useTransition();
+
+    const handleDelete = (id: string) => {
+        if(confirm("Are you sure you want to delete this pass type?")) {
+            startTransition(async () => {
+                await deletePassType(id, schoolId);
+                refresh();
+            });
+        }
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Manage Pass Types</CardTitle>
+                <CardDescription>Add or remove available pass types.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {passTypes.map(type => (
+                        <div key={type.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                            <p className="text-sm font-medium">{type.name}</p>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(type.id)} disabled={isPending}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+                <AddPassTypeDialog schoolId={schoolId} refresh={refresh} />
+            </CardContent>
+        </Card>
+    )
+}
+
+function AddPassTypeDialog({ schoolId, refresh }: { schoolId: string, refresh: () => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [state, formAction] = useFormState(createPassType, { success: false, error: null });
+    const [name, setName] = useState('');
+
+    useEffect(() => {
+        if (state.success) {
+            setIsOpen(false);
+            setName('');
+            refresh();
+        }
+    }, [state.success, refresh]);
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                 <Button variant="outline" className="w-full"><PlusCircle className="mr-2 h-4 w-4"/>Add New Pass Type</Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add New Pass Type</DialogTitle>
+                </DialogHeader>
+                <form action={formAction}>
+                    <div className="space-y-4 py-4">
+                        {state.error && <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>}
+                        <input type="hidden" name="schoolId" value={schoolId} />
+                        <div className="space-y-2">
+                            <Label htmlFor="pass-type-name">Pass Type Name</Label>
+                            <Input id="pass-type-name" name="name" value={name} onChange={e => setName(e.target.value)} required />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                        <Button type="submit">Save</Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     )
 }
