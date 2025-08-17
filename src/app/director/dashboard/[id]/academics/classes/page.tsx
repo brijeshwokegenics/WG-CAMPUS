@@ -1,9 +1,10 @@
+
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Loader2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -34,6 +35,7 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
   const schoolId = params.id;
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDeleting, startDeleteTransition] = useTransition();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<ClassData | null>(null);
 
@@ -41,7 +43,11 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
     setLoading(true);
     const result = await getClassesForSchool(schoolId);
     if (result.success && result.data) {
-      setClasses(result.data);
+      // Sort classes alphanumerically on the client, as Firestore might not support it perfectly by default
+      const sortedClasses = result.data.sort((a, b) => 
+        a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+      );
+      setClasses(sortedClasses);
     } else {
       console.error(result.error);
       // Optionally, show a toast notification for the error
@@ -70,8 +76,10 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
 
   const handleDelete = async (classId: string) => {
     if (confirm('Are you sure you want to delete this class? This action cannot be undone.')) {
-      await deleteClass({ classId, schoolId });
-      fetchClasses(); // Re-fetch data
+      startDeleteTransition(async () => {
+        await deleteClass({ classId, schoolId });
+        fetchClasses(); // Re-fetch data
+      });
     }
   };
 
@@ -105,7 +113,9 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center">Loading classes...</TableCell>
+                  <TableCell colSpan={3} className="h-24 text-center">
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                  </TableCell>
                 </TableRow>
               ) : classes.length > 0 ? (
                 classes.map((cls) => (
@@ -115,7 +125,7 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
                     <TableCell className="text-right">
                        <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
+                            <Button variant="ghost" className="h-8 w-8 p-0" disabled={isDeleting}>
                               <span className="sr-only">Open menu</span>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>

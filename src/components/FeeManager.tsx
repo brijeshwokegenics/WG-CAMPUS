@@ -23,7 +23,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 
 import { getStudentFeeDetails, collectFee } from '@/app/actions/finance';
-import { getStudentsForSchool } from '@/app/actions/academics';
+import { getStudentsForSchool, getClassesForSchool } from '@/app/actions/academics';
 import { Loader2, Search, CalendarIcon, Wallet, FileText, Receipt, Printer, Mail, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -49,10 +49,11 @@ const FeeCollectionFormSchema = z.object({
 type FeeCollectionFormValues = z.infer<typeof FeeCollectionFormSchema>;
 
 
-export function FeeManager({ schoolId, classes }: { schoolId: string, classes: ClassData[] }) {
+export function FeeManager({ schoolId }: { schoolId: string }) {
     const [name, setName] = useState('');
     const [admissionId, setAdmissionId] = useState('');
     const [classId, setClassId] = useState('');
+    const [classes, setClasses] = useState<ClassData[]>([]);
     
     const [searchedStudents, setSearchedStudents] = useState<any[]>([]);
     const [loadingSearch, startSearchTransition] = useTransition();
@@ -60,6 +61,14 @@ export function FeeManager({ schoolId, classes }: { schoolId: string, classes: C
     const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
     const [details, setDetails] = useState<any>(null);
     const [loadingDetails, setLoadingDetails] = useState(false);
+
+    useEffect(() => {
+        async function fetchInitialData() {
+            const classRes = await getClassesForSchool(schoolId);
+            if (classRes.success) setClasses(classRes.data || []);
+        }
+        fetchInitialData();
+    }, [schoolId]);
 
     const handleSearch = () => {
         startSearchTransition(async () => {

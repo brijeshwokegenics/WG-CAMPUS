@@ -1,4 +1,5 @@
 
+
 import { StudentList } from "@/components/StudentList";
 import { StudentFilters } from "@/components/StudentFilters";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +26,7 @@ export default async function StudentsPage({
   const classId = searchParams?.classId || '';
   const section = searchParams?.section || '';
 
+  // Fetching classes here is still okay as it's a small dataset needed for filters
   const classResult = await getClassesForSchool(schoolId);
   const classes = classResult.success ? classResult.data : [];
 
@@ -43,19 +45,16 @@ export default async function StudentsPage({
             <div className="mb-6">
               <StudentFilters classes={classes || []} />
             </div>
-            <Suspense fallback={<div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
-                <StudentList 
-                    schoolId={schoolId} 
-                    name={name}
-                    admissionId={admissionId}
-                    classId={classId}
-                    section={section}
-                />
-            </Suspense>
+            {/* The StudentList component will now fetch its own data */}
+            <StudentList 
+                schoolId={schoolId} 
+                name={name}
+                admissionId={admissionId}
+                classId={classId}
+                section={section}
+            />
         </CardContent>
       </Card>
     </>
   );
 }
-
-    

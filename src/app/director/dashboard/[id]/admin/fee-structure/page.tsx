@@ -1,15 +1,10 @@
 
-import { getClassesForSchool } from "@/app/actions/academics";
-import { getFeeHeads } from "@/app/actions/finance";
 import { FeeStructureManager } from "@/components/FeeStructureManager";
+import { Loader2 } from "lucide-react";
+import { Suspense } from "react";
 
 export default async function FeeStructurePage({ params }: { params: { id: string } }) {
   const schoolId = params.id;
-  const classResult = await getClassesForSchool(schoolId);
-  const feeHeadsResult = await getFeeHeads(schoolId);
-
-  const classes = classResult.success ? classResult.data : [];
-  const feeHeads = feeHeadsResult.success ? feeHeadsResult.data : [];
 
   return (
     <div className="space-y-6">
@@ -19,11 +14,11 @@ export default async function FeeStructurePage({ params }: { params: { id: strin
           Define fee components and assign them to different classes.
         </p>
       </div>
-      <FeeStructureManager
-        schoolId={schoolId}
-        allClasses={classes || []}
-        initialFeeHeads={feeHeads || []}
-      />
+      <Suspense fallback={<div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+        <FeeStructureManager
+          schoolId={schoolId}
+        />
+      </Suspense>
     </div>
   );
 }

@@ -1,23 +1,35 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FeeHeadManager } from './FeeHeadManager';
 import { ClassFeeStructure } from './ClassFeeStructure';
 import { Banknote, GraduationCap } from 'lucide-react';
+import { getClassesForSchool, getFeeHeads } from '@/app/actions/academics';
 
 type ClassData = { id: string; name: string; sections: string[]; };
 type FeeHead = { id: string; name: string; description?: string; type: "One-time" | "Annual" | "Monthly" | "Quarterly"; };
 
 interface FeeStructureManagerProps {
     schoolId: string;
-    allClasses: ClassData[];
-    initialFeeHeads: FeeHead[];
 }
 
-export function FeeStructureManager({ schoolId, allClasses, initialFeeHeads }: FeeStructureManagerProps) {
-    const [feeHeads, setFeeHeads] = useState<FeeHead[]>(initialFeeHeads);
+export function FeeStructureManager({ schoolId }: FeeStructureManagerProps) {
+    const [feeHeads, setFeeHeads] = useState<FeeHead[]>([]);
+    const [allClasses, setAllClasses] = useState<ClassData[]>([]);
+
+    useEffect(() => {
+        async function fetchInitialData() {
+            const [classResult, feeHeadsResult] = await Promise.all([
+                getClassesForSchool(schoolId),
+                getFeeHeads(schoolId)
+            ]);
+            if(classResult.success) setAllClasses(classResult.data || []);
+            if(feeHeadsResult.success) setFeeHeads(feeHeadsResult.data || []);
+        }
+        fetchInitialData();
+    }, [schoolId]);
 
     const handleFeeHeadsUpdate = (newFeeHeads: FeeHead[]) => {
         setFeeHeads(newFeeHeads);
