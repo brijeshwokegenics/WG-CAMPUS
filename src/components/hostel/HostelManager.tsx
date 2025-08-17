@@ -31,7 +31,7 @@ export function HostelManager({ schoolId }: { schoolId: string }) {
     const [isAllocateDialogOpen, setIsAllocateDialogOpen] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
-    const fetchHostels = async () => {
+    const fetchHostels = useCallback(async () => {
         setLoadingHostels(true);
         const result = await actions.getHostels(schoolId);
         setHostels(result as Hostel[]);
@@ -40,7 +40,7 @@ export function HostelManager({ schoolId }: { schoolId: string }) {
             setSelectedHostel(null);
             setRooms([]);
         }
-    };
+    }, [schoolId, selectedHostel]);
     
     const fetchRoomsAndAssignments = useCallback(async () => {
         if (selectedHostel) {
@@ -66,7 +66,7 @@ export function HostelManager({ schoolId }: { schoolId: string }) {
 
     useEffect(() => {
         fetchHostels();
-    }, [schoolId]);
+    }, [fetchHostels]);
 
     useEffect(() => {
         fetchRoomsAndAssignments();
@@ -105,11 +105,14 @@ export function HostelManager({ schoolId }: { schoolId: string }) {
         setIsAllocateDialogOpen(true);
     };
 
-    const handleUnassignStudent = (assignmentId: string) => {
+    const handleUnassignStudent = useCallback((assignmentId: string) => {
         if(confirm('Are you sure you want to unassign this student?')) {
-            startTransition(() => actions.unassignStudentFromRoom(schoolId, assignmentId).then(fetchRoomsAndAssignments));
+            startTransition(async () => {
+                await actions.unassignStudentFromRoom(schoolId, assignmentId);
+                fetchRoomsAndAssignments(); // Refetch data on success
+            });
         }
-    }
+    }, [schoolId, fetchRoomsAndAssignments]);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">

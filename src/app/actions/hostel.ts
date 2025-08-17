@@ -225,6 +225,7 @@ export async function getAssignedStudentsForRooms(schoolId: string, roomIds: str
 
         const studentDetails: Record<string, any> = {};
         
+        // Firestore 'in' queries are limited to 30 items. Chunk the IDs.
         const studentIdChunks = [];
         for (let i = 0; i < studentIds.length; i += 30) {
             studentIdChunks.push(studentIds.slice(i, i + 30));
