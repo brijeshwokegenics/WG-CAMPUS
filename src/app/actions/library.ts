@@ -215,8 +215,7 @@ export async function getMemberHistory(schoolId: string, memberId: string) {
     const q = query(
         collection(db, 'libraryIssues'),
         where('schoolId', '==', schoolId),
-        where('memberId', '==', memberId),
-        orderBy('issueDate', 'desc')
+        where('memberId', '==', memberId)
     );
     const snapshot = await getDocs(q);
 
@@ -224,11 +223,15 @@ export async function getMemberHistory(schoolId: string, memberId: string) {
     
     const issues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+    // Sort manually
+    issues.sort((a, b) => (b.issueDate?.toDate() || 0) - (a.issueDate?.toDate() || 0));
+
+
     const bookIds = [...new Set(issues.map(i => i.bookId))];
     const bookDetails: Record<string, any> = {};
 
     if (bookIds.length > 0) {
-        const booksQuery = query(collection(db, 'libraryBooks'), where('__name__', 'in', bookIds));
+        const booksQuery = query(collection(db, 'libraryBooks'), where('__name__', 'in', bookIds), where('schoolId', '==', schoolId));
         const booksSnapshot = await getDocs(booksQuery);
         booksSnapshot.forEach(doc => {
             bookDetails[doc.id] = doc.data();
@@ -270,22 +273,23 @@ export async function returnBook(issueId: string, schoolId: string) {
 export async function getFullIssueHistory(schoolId: string) {
     const q = query(
         collection(db, 'libraryIssues'),
-        where('schoolId', '==', schoolId),
-        orderBy('issueDate', 'desc')
+        where('schoolId', '==', schoolId)
     );
     const snapshot = await getDocs(q);
     if (snapshot.empty) return [];
 
     const issues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Sort manually
+    issues.sort((a, b) => (b.issueDate?.toDate() || 0) - (a.issueDate?.toDate() || 0));
     
     const bookIds = [...new Set(issues.map(i => i.bookId))];
     const studentIds = [...new Set(issues.filter(i => i.memberType === 'Student').map(i => i.memberId))];
     const staffIds = [...new Set(issues.filter(i => i.memberType === 'Staff').map(i => i.memberId))];
 
     const [bookDetails, studentDetails, staffDetails] = await Promise.all([
-        getDocsByIds(collection(db, 'libraryBooks'), bookIds),
-        getDocsByIds(collection(db, 'students'), studentIds),
-        getDocsByIds(collection(db, 'users'), staffIds),
+        getDocsByIds(collection(db, 'libraryBooks'), bookIds, schoolId),
+        getDocsByIds(collection(db, 'students'), studentIds, schoolId),
+        getDocsByIds(collection(db, 'users'), staffIds, schoolId),
     ]);
 
     return issues.map(issue => {
@@ -307,19 +311,20 @@ export async function getFullIssueHistory(schoolId: string) {
     });
 }
 
-async function getDocsByIds(collectionRef: any, ids: string[]) {
+async function getDocsByIds(collectionRef: any, ids: string[], schoolId: string) {
     const details: Record<string, any> = {};
     if (ids.length === 0) return details;
 
     // Firestore 'in' queries are limited to 30 items per query.
     // We need to chunk the ids array if it's larger than 30.
-    const queryChunks = [];
+    const queryChunks: string[][] = [];
     for (let i = 0; i < ids.length; i += 30) {
         queryChunks.push(ids.slice(i, i + 30));
     }
 
     for (const chunk of queryChunks) {
-        const q = query(collectionRef, where('__name__', 'in', chunk));
+        if (chunk.length === 0) continue;
+        const q = query(collectionRef, where('__name__', 'in', chunk), where('schoolId', '==', schoolId));
         const snapshot = await getDocs(q);
         snapshot.forEach(doc => {
             details[doc.id] = doc.data();
