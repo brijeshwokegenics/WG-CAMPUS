@@ -144,6 +144,9 @@ function IssuePassDialog({ isOpen, setIsOpen, schoolId, onSuccess }: {isOpen: bo
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
     const [passTypes, setPassTypes] = useState<PassType[]>([]);
     
+    const [durationValue, setDurationValue] = useState(1);
+    const [durationUnit, setDurationUnit] = useState('Days');
+
     const [state, formAction] = useFormState(actions.createGatePass, { success: false });
 
     const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset, setValue, watch } = useForm<GatePassFormValues>({
@@ -211,10 +214,17 @@ function IssuePassDialog({ isOpen, setIsOpen, schoolId, onSuccess }: {isOpen: bo
     
     const onFormSubmit = (data: GatePassFormValues) => {
         const formData = new FormData();
+        const combinedDuration = `${durationValue} ${durationUnit}`;
+        
         formData.append('schoolId', schoolId);
         Object.entries(data).forEach(([key, value]) => {
-             if (value instanceof Date) formData.append(key, value.toISOString());
-             else if (value) formData.append(key, value as string);
+             if (key === 'passDuration') {
+                 formData.append('passDuration', combinedDuration);
+             } else if (value instanceof Date) {
+                 formData.append(key, value.toISOString());
+             } else if (value) {
+                 formData.append(key, value as string);
+             }
         });
         formAction(formData);
     };
@@ -264,7 +274,21 @@ function IssuePassDialog({ isOpen, setIsOpen, schoolId, onSuccess }: {isOpen: bo
                         </div>
                         <div className="space-y-2"><Label>Session</Label><Input {...register('session')} placeholder="e.g., 2024-2025"/></div>
                     </div>
-                     <div className="space-y-2"><Label>Pass Duration</Label><Input {...register('passDuration')} placeholder="e.g., 2 hours, Half Day"/></div>
+                     <div className="space-y-2">
+                        <Label>Pass Duration</Label>
+                        <div className='flex items-center gap-2'>
+                           <Input type="number" value={durationValue} onChange={e => setDurationValue(Number(e.target.value))} className="w-24" min="1"/>
+                           <Select value={durationUnit} onValueChange={setDurationUnit}>
+                               <SelectTrigger><SelectValue/></SelectTrigger>
+                               <SelectContent>
+                                   <SelectItem value="Days">Days</SelectItem>
+                                   <SelectItem value="Months">Months</SelectItem>
+                                   <SelectItem value="Year">Year</SelectItem>
+                               </SelectContent>
+                           </Select>
+                           <Input type="hidden" {...register('passDuration')} />
+                        </div>
+                    </div>
                     <div className="space-y-2"><Label>Reason for Pass</Label><Textarea {...register('reason')} />{errors.reason && <p className="text-sm text-destructive">{errors.reason.message}</p>}</div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2"><Label>Date</Label><Controller name="passDate" control={control} render={({ field }) => (<Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start"><CalendarIcon className="mr-2 h-4 w-4"/>{field.value ? format(field.value, "PPP") : 'Pick a date'}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange}/></PopoverContent></Popover>)} /></div>
