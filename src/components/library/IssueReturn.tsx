@@ -35,15 +35,12 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
             return;
         }
         startSearchTransition(async () => {
-            const results = memberType === 'Student'
-                ? await getStudentsForSchool({ schoolId, name: term })
-                : await getUsersForSchool(schoolId);
-            
-            if (memberType === 'Staff') {
-                const lowerTerm = term.toLowerCase();
-                setSearchResults(results.data?.filter((u: any) => u.name.toLowerCase().includes(lowerTerm)) || []);
-            } else {
+            if (memberType === 'Student') {
+                const results = await getStudentsForSchool({ schoolId, name: term });
                 setSearchResults(results);
+            } else {
+                const results = await getUsersForSchool(schoolId, term);
+                setSearchResults(results.data || []);
             }
         });
     }, 500);

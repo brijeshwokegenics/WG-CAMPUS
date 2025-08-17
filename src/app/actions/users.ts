@@ -58,7 +58,7 @@ export async function createUser(prevState: any, formData: FormData) {
   }
 }
 
-export async function getUsersForSchool(schoolId: string) {
+export async function getUsersForSchool(schoolId: string, name?: string) {
   if (!schoolId) {
     return { success: false, error: 'School ID is required.' };
   }
@@ -68,10 +68,14 @@ export async function getUsersForSchool(schoolId: string) {
     const q = query(usersRef, where('schoolId', '==', schoolId));
     const querySnapshot = await getDocs(q);
 
-    const users = querySnapshot.docs.map(doc => ({
+    let users = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
     })) as (z.infer<typeof UserSchema> & { id: string })[];
+
+    if (name) {
+      users = users.filter(user => user.name.toLowerCase().includes(name.toLowerCase()));
+    }
     
     return { success: true, data: users };
   } catch (error) {
