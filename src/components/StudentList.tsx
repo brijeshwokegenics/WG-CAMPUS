@@ -24,32 +24,39 @@ import { deleteStudent, getStudentsForSchool } from '@/app/actions/academics';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
 
 type StudentListProps = {
     schoolId: string;
     name?: string;
     admissionId?: string;
     classId?: string;
+    section?: string;
 }
 
-export function StudentList({ schoolId, name, admissionId, classId }: StudentListProps) {
+export function StudentList({ schoolId, name, admissionId, classId, section }: StudentListProps) {
     const [students, setStudents] = useState<any[]>([]);
-    const [isPending, startTransition] = useTransition();
+    const [isDeleting, startDeleteTransition] = useTransition();
+    const [isLoading, startFetchTransition] = useTransition();
+
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const fetchStudents = async () => {
-        const studentData = await getStudentsForSchool({ schoolId, name, admissionId, classId });
-        setStudents(studentData);
+        startFetchTransition(async () => {
+             const studentData = await getStudentsForSchool({ schoolId, searchTerm: name, admissionId, classId, section });
+            setStudents(studentData);
+        });
     };
 
     useEffect(() => {
         fetchStudents();
-    }, [schoolId, name, admissionId, classId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [schoolId, name, admissionId, classId, section]);
 
     const handleDelete = (studentId: string) => {
         if (confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
-            startTransition(async () => {
+            startDeleteTransition(async () => {
                 await deleteStudent({ studentId, schoolId });
                 fetchStudents(); // Refresh data
             });
@@ -91,7 +98,9 @@ export function StudentList({ schoolId, name, admissionId, classId }: StudentLis
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedStudents.length > 0 ? (
+                {isLoading ? (
+                    <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin"/></TableCell></TableRow>
+                ) : paginatedStudents.length > 0 ? (
                 paginatedStudents.map((student) => (
                     <TableRow key={student.id}>
                     <TableCell className="font-mono text-xs">{student.id}</TableCell>
@@ -102,7 +111,7 @@ export function StudentList({ schoolId, name, admissionId, classId }: StudentLis
                     <TableCell className="text-right">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0" disabled={isPending}>
+                            <Button variant="ghost" className="h-8 w-8 p-0" disabled={isDeleting}>
                                 <span className="sr-only">Open menu</span>
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
@@ -122,7 +131,7 @@ export function StudentList({ schoolId, name, admissionId, classId }: StudentLis
                                     </DropdownMenuItem>
                                 </Link>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(student.id)} disabled={isPending}>
+                                <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(student.id)} disabled={isDeleting}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Delete Student
                                 </DropdownMenuItem>
@@ -143,7 +152,7 @@ export function StudentList({ schoolId, name, admissionId, classId }: StudentLis
         </div>
         <div className="flex items-center justify-between space-x-2 py-4">
             <div className="text-sm text-muted-foreground">
-                Showing {Math.min((currentPage - 1) * rowsPerPage + 1, students.length)} to {Math.min(currentPage * rowsPerPage, students.length)} of {students.length} students
+                Showing {students.length > 0 ? Math.min((currentPage - 1) * rowsPerPage + 1, students.length) : 0} to {Math.min(currentPage * rowsPerPage, students.length)} of {students.length} students
             </div>
              <div className="flex items-center space-x-2">
                 <span className="text-sm text-muted-foreground">Rows per page:</span>

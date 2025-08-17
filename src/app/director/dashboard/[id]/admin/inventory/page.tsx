@@ -1,4 +1,6 @@
 import { InventoryManager } from "@/components/InventoryManager";
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function InventoryPage({ params }: { params: { id: string } }) {
   const schoolId = params.id;
@@ -11,7 +13,9 @@ export default function InventoryPage({ params }: { params: { id: string } }) {
           Track and manage school assets, supplies, and equipment.
         </p>
       </div>
-      <InventoryManager schoolId={schoolId} />
+      <Suspense fallback={<div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+        <InventoryManager schoolId={schoolId} />
+      </Suspense>
     </div>
   );
 }

@@ -1,5 +1,7 @@
 
 import { HostelManager } from "@/components/hostel/HostelManager";
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function HostelPage({ params }: { params: { id: string } }) {
   const schoolId = params.id;
@@ -12,7 +14,9 @@ export default function HostelPage({ params }: { params: { id: string } }) {
           Manage hostel buildings, rooms, and student allocations.
         </p>
       </div>
-      <HostelManager schoolId={schoolId} />
+       <Suspense fallback={<div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+        <HostelManager schoolId={schoolId} />
+      </Suspense>
     </div>
   );
 }
