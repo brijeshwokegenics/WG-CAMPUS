@@ -96,9 +96,12 @@ export async function createRoom(prevState: any, formData: FormData) {
 }
 
 export async function getRooms(schoolId: string, hostelId: string) {
-    const q = query(collection(db, 'hostelRooms'), where('schoolId', '==', schoolId), where('hostelId', '==', hostelId), orderBy('roomNumber'));
+    const q = query(collection(db, 'hostelRooms'), where('schoolId', '==', schoolId), where('hostelId', '==', hostelId));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const rooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Sort manually by room number to avoid composite index
+    rooms.sort((a, b) => (a.roomNumber as string).localeCompare(b.roomNumber as string, undefined, { numeric: true }));
+    return rooms;
 }
 
 export async function updateRoom(prevState: any, formData: FormData) {
