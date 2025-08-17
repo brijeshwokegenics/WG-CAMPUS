@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '../ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, PlusCircle, Edit, Trash2, Loader2, Dot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createEvent, updateEvent, deleteEvent } from '@/app/actions/communication';
@@ -180,4 +181,3 @@ function EventFormDialog({ isOpen, setIsOpen, schoolId, editingEvent, onSuccess 
         </Dialog>
     );
 }
-
