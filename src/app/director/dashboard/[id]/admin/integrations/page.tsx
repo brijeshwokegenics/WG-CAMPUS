@@ -27,28 +27,28 @@ export default function IntegrationsPage() {
                 <Info className="h-4 w-4" />
                 <AlertTitle>Developer Note</AlertTitle>
                 <AlertDescription>
-                   This is a placeholder for the WhatsApp integration settings. The actual integration requires backend development to handle API calls to a provider like Twilio or Vonage and manage security keys.
+                   This form allows you to input your API credentials. However, the "Save" button is a placeholder. A developer must implement the backend server action to securely store these keys (e.g., using a secret manager) and handle the API calls to the provider. Storing secrets directly in the database is not secure.
                 </AlertDescription>
             </Alert>
             <div className="space-y-4">
                  <div className="space-y-2">
                     <Label htmlFor="whatsapp-provider">WhatsApp Provider</Label>
-                    <Input id="whatsapp-provider" placeholder="e.g., Twilio, Vonage" disabled />
+                    <Input id="whatsapp-provider" placeholder="e.g., Twilio, Vonage" />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="whatsapp-api-key">API Key / Account SID</Label>
-                    <Input id="whatsapp-api-key" type="password" placeholder="******************" disabled />
+                    <Input id="whatsapp-api-key" type="password" placeholder="******************" />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="whatsapp-auth-token">Auth Token</Label>
-                    <Input id="whatsapp-auth-token" type="password" placeholder="******************" disabled />
+                    <Input id="whatsapp-auth-token" type="password" placeholder="******************" />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="whatsapp-number">WhatsApp Sender Number</Label>
-                    <Input id="whatsapp-number" placeholder="e.g., +14155238886" disabled />
+                    <Input id="whatsapp-number" placeholder="e.g., +14155238886" />
                 </div>
                  <div className="flex justify-end">
-                    <Button disabled>Save Configuration</Button>
+                    <Button>Save Configuration</Button>
                 </div>
             </div>
         </CardContent>
