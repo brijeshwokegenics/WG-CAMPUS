@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, getDoc, runTransaction, serverTimestamp, increment, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, getDoc, runTransaction, serverTimestamp, increment, orderBy, documentId } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { addDays } from 'date-fns';
 
@@ -224,14 +224,14 @@ export async function getMemberHistory(schoolId: string, memberId: string) {
     const issues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     // Sort manually
-    issues.sort((a, b) => (b.issueDate?.toDate() || 0) - (a.issueDate?.toDate() || 0));
+    issues.sort((a, b) => ((b.issueDate?.toDate() || 0) as number) - ((a.issueDate?.toDate() || 0) as number));
 
 
     const bookIds = [...new Set(issues.map(i => i.bookId))];
     const bookDetails: Record<string, any> = {};
 
     if (bookIds.length > 0) {
-        const booksQuery = query(collection(db, 'libraryBooks'), where('__name__', 'in', bookIds), where('schoolId', '==', schoolId));
+        const booksQuery = query(collection(db, 'libraryBooks'), where(documentId(), 'in', bookIds));
         const booksSnapshot = await getDocs(booksQuery);
         booksSnapshot.forEach(doc => {
             bookDetails[doc.id] = doc.data();
@@ -280,7 +280,7 @@ export async function getFullIssueHistory(schoolId: string) {
 
     const issues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     // Sort manually
-    issues.sort((a, b) => (b.issueDate?.toDate() || 0) - (a.issueDate?.toDate() || 0));
+    issues.sort((a, b) => ((b.issueDate?.toDate() || 0) as number) - ((a.issueDate?.toDate() || 0) as number));
     
     const bookIds = [...new Set(issues.map(i => i.bookId))];
     const studentIds = [...new Set(issues.filter(i => i.memberType === 'Student').map(i => i.memberId))];
@@ -324,10 +324,12 @@ async function getDocsByIds(collectionRef: any, ids: string[], schoolId: string)
 
     for (const chunk of queryChunks) {
         if (chunk.length === 0) continue;
-        const q = query(collectionRef, where('__name__', 'in', chunk), where('schoolId', '==', schoolId));
+        const q = query(collectionRef, where('__name__', 'in', chunk));
         const snapshot = await getDocs(q);
         snapshot.forEach(doc => {
-            details[doc.id] = doc.data();
+            if (doc.data().schoolId === schoolId) {
+                details[doc.id] = doc.data();
+            }
         });
     }
 

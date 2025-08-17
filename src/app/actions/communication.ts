@@ -179,3 +179,60 @@ export async function deleteEvent(id: string, schoolId: string) {
         return { success: false, error: 'Failed to delete event.' };
     }
 }
+
+// ========== MESSAGING ==========
+const MessageSchema = z.object({
+  schoolId: z.string(),
+  senderId: z.string(), // e.g., director's ID
+  senderName: z.string(),
+  recipients: z.array(z.string()).min(1, "At least one recipient is required."),
+  recipientDescription: z.string(), // A string describing the audience, e.g., "Class 5A", "All Teachers"
+  content: z.string().min(1, "Message content cannot be empty."),
+  sentAt: z.date(),
+});
+
+export async function sendMessage(prevState: any, formData: FormData) {
+    const rawData = {
+        schoolId: formData.get('schoolId'),
+        senderId: 'director', // Hardcoded for now
+        senderName: 'Director',
+        recipients: formData.getAll('recipients'),
+        recipientDescription: formData.get('recipientDescription'),
+        content: formData.get('content'),
+        sentAt: new Date(),
+    };
+
+    const parsed = MessageSchema.safeParse(rawData);
+    if (!parsed.success) {
+        return { success: false, error: "Invalid data.", details: parsed.error.flatten() };
+    }
+
+    try {
+        await addDoc(collection(db, 'messages'), parsed.data);
+        revalidatePath(`/director/dashboard/${parsed.data.schoolId}/communication/messaging`);
+        return { success: true, message: "Message sent successfully." };
+    } catch (e) {
+        console.error('Error sending message:', e);
+        return { success: false, error: "Failed to send message." };
+    }
+}
+
+export async function getSentMessages(schoolId: string) {
+    try {
+        const q = query(
+            collection(db, 'messages'),
+            where('schoolId', '==', schoolId),
+            orderBy('sentAt', 'desc')
+        );
+        const snapshot = await getDocs(q);
+        const messages = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            sentAt: doc.data().sentAt.toDate(),
+        }));
+        return { success: true, data: messages };
+    } catch (e) {
+        console.error('Error fetching messages:', e);
+        return { success: false, error: "Failed to fetch messages." };
+    }
+}
