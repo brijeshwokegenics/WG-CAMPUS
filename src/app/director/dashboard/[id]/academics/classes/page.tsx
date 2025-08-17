@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState, useTransition, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle, MoreHorizontal, Loader2 } from 'lucide-react';
@@ -39,7 +39,7 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<ClassData | null>(null);
 
-  const fetchClasses = async () => {
+  const fetchClasses = useCallback(async () => {
     setLoading(true);
     const result = await getClassesForSchool(schoolId);
     if (result.success && result.data) {
@@ -53,11 +53,11 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
       // Optionally, show a toast notification for the error
     }
     setLoading(false);
-  };
+  }, [schoolId]);
 
   useEffect(() => {
     fetchClasses();
-  }, [schoolId]);
+  }, [fetchClasses]);
 
   const handleFormSuccess = () => {
     setIsDialogOpen(false);
