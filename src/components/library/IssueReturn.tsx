@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useTransition, useCallback } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,52 +19,64 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
 
+type Member = {
+    id: string;
+    name: string;
+    type: 'Student' | 'Staff';
+    details: string;
+};
+
 export function IssueReturn({ schoolId }: { schoolId: string }) {
-    const [memberType, setMemberType] = useState<'Student' | 'Staff'>('Student');
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchResults, setSearchResults] = useState<Member[]>([]);
     const [isSearching, startSearchTransition] = useTransition();
     
-    const [selectedMember, setSelectedMember] = useState<any | null>(null);
+    const [selectedMember, setSelectedMember] = useState<Member | null>(null);
     const [memberHistory, setMemberHistory] = useState<any[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
 
-    const debouncedSearch = useDebouncedCallback((term) => {
+    const debouncedSearch = useDebouncedCallback(async (term: string) => {
         if (term.length < 3) {
             setSearchResults([]);
             return;
         }
         startSearchTransition(async () => {
-            if (memberType === 'Student') {
-                const results = await getStudentsForSchool({ schoolId, searchTerm: term });
-                setSearchResults(results);
-            } else {
-                const results = await getUsersForSchool(schoolId, term);
-                setSearchResults(results.data || []);
-            }
+            const [studentRes, staffRes] = await Promise.all([
+                getStudentsForSchool({ schoolId, searchTerm: term }),
+                getUsersForSchool(schoolId, term)
+            ]);
+
+            const students: Member[] = (studentRes || []).map((s: any) => ({
+                id: s.id,
+                name: s.studentName,
+                type: 'Student',
+                details: `${s.className} - ${s.section}`
+            }));
+
+            const staff: Member[] = (staffRes.data || []).map((s: any) => ({
+                id: s.id,
+                name: s.name,
+                type: 'Staff',
+                details: s.role
+            }));
+            
+            setSearchResults([...students, ...staff]);
         });
     }, 500);
 
-    const fetchHistory = async (memberId: string) => {
+    const fetchHistory = useCallback(async (memberId: string) => {
         setLoadingHistory(true);
         const history = await getMemberHistory(schoolId, memberId);
         setMemberHistory(history);
         setLoadingHistory(false);
-    }
+    }, [schoolId]);
 
-    const handleSelectMember = (member: any) => {
+    const handleSelectMember = (member: Member) => {
         setSelectedMember(member);
         setSearchResults([]);
         setSearchTerm('');
         fetchHistory(member.id);
-    }
-    
-    const handleMemberTypeChange = (v: any) => {
-        setMemberType(v);
-        setSearchResults([]);
-        setSelectedMember(null);
-        setSearchTerm('');
-    }
+    };
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
@@ -71,23 +84,23 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
                 <Card>
                     <CardHeader>
                         <CardTitle>Find Member</CardTitle>
+                         <CardDescription>Search for a student or staff member by name or ID.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <RadioGroup value={memberType} onValueChange={handleMemberTypeChange} className="flex gap-4">
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="Student" id="student"/><Label htmlFor="student">Student</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="Staff" id="staff"/><Label htmlFor="staff">Staff</Label></div>
-                        </RadioGroup>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder={`Search by name or ID...`} className="pl-8" value={searchTerm} onChange={e => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}} />
+                            <Input placeholder="Search name or ID..." className="pl-8" value={searchTerm} onChange={e => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}} />
                         </div>
                         {isSearching && <Loader2 className="animate-spin mx-auto"/>}
                         {searchResults.length > 0 && (
                             <div className="border rounded-md max-h-60 overflow-y-auto">
                                 {searchResults.map(res => (
-                                    <div key={res.id} onClick={() => handleSelectMember(res)} className="p-2 hover:bg-muted cursor-pointer text-sm">
-                                        <p className="font-semibold">{res.studentName || res.name}</p>
-                                        <p className="text-xs text-muted-foreground">{res.className ? `${res.className} - ${res.section}` : (res.role ? res.role : `ID: ${res.id}`)}</p>
+                                    <div key={`${res.type}-${res.id}`} onClick={() => handleSelectMember(res)} className="p-2 hover:bg-muted cursor-pointer text-sm">
+                                        <p className="font-semibold flex justify-between items-center">
+                                            {res.name}
+                                            <Badge variant="secondary">{res.type}</Badge>
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">{res.details}</p>
                                     </div>
                                 ))}
                             </div>
@@ -96,7 +109,7 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
                 </Card>
 
                 {selectedMember && (
-                    <IssueBookForm schoolId={schoolId} member={selectedMember} memberType={memberType} onIssueSuccess={() => fetchHistory(selectedMember.id)}/>
+                    <IssueBookForm schoolId={schoolId} member={selectedMember} onIssueSuccess={() => fetchHistory(selectedMember.id)}/>
                 )}
             </div>
 
@@ -105,13 +118,13 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
                     <CardHeader>
                         <CardTitle>Member's Current Status</CardTitle>
                         {selectedMember ? (
-                            <CardDescription>Books currently issued to {selectedMember.studentName || selectedMember.name}.</CardDescription>
+                            <CardDescription>Books currently issued to {selectedMember.name}.</CardDescription>
                         ) : (
                             <CardDescription>Search for and select a member to view their status.</CardDescription>
                         )}
                     </CardHeader>
                     <CardContent>
-                         {loadingHistory ? <Loader2 className="animate-spin mx-auto"/> 
+                         {loadingHistory ? <div className="text-center p-8"><Loader2 className="animate-spin mx-auto"/></div> 
                          : selectedMember ? <IssuedBooksList schoolId={schoolId} history={memberHistory} onReturnSuccess={() => fetchHistory(selectedMember.id)} />
                          : <div className="text-center p-8 text-muted-foreground"><Library className="mx-auto h-12 w-12 text-gray-300" />Please select a member.</div>}
                     </CardContent>
@@ -121,12 +134,12 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
     );
 }
 
-function IssueBookForm({ schoolId, member, memberType, onIssueSuccess }: { schoolId: string, member: any, memberType: string, onIssueSuccess: () => void}) {
+function IssueBookForm({ schoolId, member, onIssueSuccess }: { schoolId: string, member: Member, onIssueSuccess: () => void}) {
     const [searchTerm, setSearchTerm] = useState('');
     const [books, setBooks] = useState<any[]>([]);
     const [isSearching, startSearchTransition] = useTransition();
 
-    const [state, formAction] = useFormState(issueBook, { success: false });
+    const [state, formAction] = useFormState(issueBook, { success: false, error: null });
 
     const debouncedSearch = useDebouncedCallback((term) => {
         if (term.length < 3) {
@@ -144,7 +157,7 @@ function IssueBookForm({ schoolId, member, memberType, onIssueSuccess }: { schoo
         formData.append('schoolId', schoolId);
         formData.append('bookId', bookId);
         formData.append('memberId', member.id);
-        formData.append('memberType', memberType);
+        formData.append('memberType', member.type);
         formAction(formData);
     }
     
@@ -163,7 +176,7 @@ function IssueBookForm({ schoolId, member, memberType, onIssueSuccess }: { schoo
                  {state.error && <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>}
                 <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search for a book by title, author..." className="pl-8" value={searchTerm} onChange={e => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}}/>
+                    <Input placeholder="Search for a book..." className="pl-8" value={searchTerm} onChange={e => {setSearchTerm(e.target.value); debouncedSearch(e.target.value);}}/>
                 </div>
                  {isSearching && <Loader2 className="animate-spin mx-auto"/>}
                  {books.length > 0 && (
@@ -208,15 +221,15 @@ function IssuedBooksList({ schoolId, history, onReturnSuccess }: { schoolId: str
 
     return (
         <div className="space-y-3">
-            {issuedBooks.length > 0 ? issuedBooks.map(item => {
-                const isOverdue = isAfter(new Date(), new Date(item.dueDate));
+            {issuedBooks.length > 0 ? issuedBooks.map((item: any) => {
+                const isOverdue = item.dueDate && isAfter(new Date(), new Date(item.dueDate));
                 return (
                     <div key={item.id} className="border p-3 rounded-md flex justify-between items-start">
                         <div>
                             <p className="font-semibold">{item.bookTitle}</p>
-                            <p className="text-sm">Issued: {format(new Date(item.issueDate), 'dd-MMM-yyyy')}</p>
+                            <p className="text-sm">Issued: {item.issueDate ? format(new Date(item.issueDate), 'dd-MMM-yyyy') : 'N/A'}</p>
                             <p className={cn("text-sm", isOverdue && "font-bold text-destructive")}>
-                                Due: {format(new Date(item.dueDate), 'dd-MMM-yyyy')}
+                                Due: {item.dueDate ? format(new Date(item.dueDate), 'dd-MMM-yyyy') : 'N/A'}
                             </p>
                         </div>
                         <Button size="sm" variant="outline" onClick={() => handleReturn(item.id)} disabled={isReturning && returningId === item.id}>
