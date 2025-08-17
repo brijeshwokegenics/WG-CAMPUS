@@ -43,11 +43,7 @@ export default function ClassesPage({ params }: { params: { id: string } }) {
     setLoading(true);
     const result = await getClassesForSchool(schoolId);
     if (result.success && result.data) {
-      // Sort classes alphanumerically on the client, as Firestore might not support it perfectly by default
-      const sortedClasses = result.data.sort((a, b) => 
-        a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
-      );
-      setClasses(sortedClasses);
+      setClasses(result.data);
     } else {
       console.error(result.error);
       // Optionally, show a toast notification for the error

@@ -177,9 +177,8 @@ export async function getClassesForSchool(schoolId: string) {
 
   try {
     const classesRef = collection(db, 'classes');
-    // Firestore requires an index for ordering by a field different from the where clause field.
-    // Assuming an index on (schoolId, name) exists. If not, this will throw an error or be slow.
-    // A more robust solution might sort in code if indexing is an issue, but this is faster if indexed.
+    // Using orderBy('name') requires a composite index on (schoolId, name) in Firestore.
+    // This is more efficient than client-side sorting for large datasets.
     const q = query(classesRef, where('schoolId', '==', schoolId), orderBy('name'));
     const querySnapshot = await getDocs(q);
 
@@ -188,6 +187,9 @@ export async function getClassesForSchool(schoolId: string) {
       ...doc.data(),
     })) as { id: string; name: string; sections: string[]; schoolId: string }[];
     
+    // As a fallback, if Firestore doesn't sort perfectly (e.g. "Class 10" vs "Class 2"), sort here.
+    classes.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
     return { success: true, data: classes };
   } catch (error) {
     console.error('Error fetching classes:', error);
