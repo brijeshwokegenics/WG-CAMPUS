@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, getDoc, orderBy } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
+import { startOfToday, endOfToday, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+
 
 // ========== EXPENSE CATEGORIES ==========
 const ExpenseCategorySchema = z.object({
@@ -115,4 +117,49 @@ export async function getExpenses(schoolId: string, categoryId?: string) {
   } catch (e) {
     return { success: false, error: 'Failed to fetch expenses.' };
   }
+}
+
+
+export async function getExpensesSummary(schoolId: string) {
+    if (!schoolId) {
+        return { success: false, error: "School ID is required." };
+    }
+
+    try {
+        const todayStart = startOfToday();
+        const todayEnd = endOfToday();
+        const monthStart = startOfMonth(new Date());
+        const monthEnd = endOfMonth(new Date());
+        const yearStart = startOfYear(new Date());
+        const yearEnd = endOfYear(new Date());
+
+        const expensesRef = collection(db, 'expenses');
+        
+        const dailyQuery = query(expensesRef, where('schoolId', '==', schoolId), where('date', '>=', todayStart), where('date', '<=', todayEnd));
+        const monthlyQuery = query(expensesRef, where('schoolId', '==', schoolId), where('date', '>=', monthStart), where('date', '<=', monthEnd));
+        const yearlyQuery = query(expensesRef, where('schoolId', '==', schoolId), where('date', '>=', yearStart), where('date', '<=', yearEnd));
+
+        const [dailySnapshot, monthlySnapshot, yearlySnapshot] = await Promise.all([
+            getDocs(dailyQuery),
+            getDocs(monthlyQuery),
+            getDocs(yearlyQuery),
+        ]);
+
+        const dailyTotal = dailySnapshot.docs.reduce((sum, doc) => sum + doc.data().amount, 0);
+        const monthlyTotal = monthlySnapshot.docs.reduce((sum, doc) => sum + doc.data().amount, 0);
+        const yearlyTotal = yearlySnapshot.docs.reduce((sum, doc) => sum + doc.data().amount, 0);
+
+        return {
+            success: true,
+            data: {
+                daily: dailyTotal,
+                monthly: monthlyTotal,
+                yearly: yearlyTotal,
+            }
+        };
+
+    } catch (error) {
+        console.error("Error fetching expenses summary:", error);
+        return { success: false, error: "Failed to fetch expenses summary." };
+    }
 }

@@ -1,8 +1,12 @@
 
+
 import { getDashboardSummary } from "@/app/actions/academics";
 import { getNotices, getEvents } from "@/app/actions/communication";
+import { getFeeCollectionsSummary } from "@/app/actions/finance";
+import { getExpensesSummary } from "@/app/actions/expenses";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, GraduationCap, Briefcase, BarChart3, Receipt, CircleDollarSign, Megaphone, Calendar } from "lucide-react";
+import { Users, GraduationCap, Briefcase, BarChart3, Receipt, CircleDollarSign, Megaphone, Calendar, TrendingUp, TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -42,16 +46,30 @@ function StatCard({ title, value, icon, link, linkText }: StatCardProps) {
     );
 }
 
+const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount);
+};
+
 export default async function DirectorDashboardPage({ params }: { params: { id: string }}) {
   const schoolId = params.id;
-  const [summaryResult, noticesResult, eventsResult] = await Promise.all([
+  const [summaryResult, noticesResult, eventsResult, collectionsResult, expensesResult] = await Promise.all([
       getDashboardSummary(schoolId),
       getNotices(schoolId),
       getEvents(schoolId),
+      getFeeCollectionsSummary(schoolId),
+      getExpensesSummary(schoolId),
   ]);
 
   const summary = summaryResult.success ? summaryResult.data : { totalStudents: 0, totalStaff: 0, totalClasses: 0 };
-  const recentNotices = noticesResult.slice(0, 4); // getNotices is already sorted by date
+  const collections = collectionsResult.success ? collectionsResult.data : { daily: 0, monthly: 0, yearly: 0 };
+  const expenses = expensesResult.success ? expensesResult.data : { daily: 0, monthly: 0, yearly: 0 };
+
+  const recentNotices = noticesResult.slice(0, 4);
   const upcomingEvents = eventsResult.filter(e => e.start >= new Date()).sort((a,b) => a.start.getTime() - b.start.getTime()).slice(0, 4);
 
 
@@ -63,7 +81,7 @@ export default async function DirectorDashboardPage({ params }: { params: { id: 
         </header>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <StatCard 
                 title="Total Students" 
                 value={summary.totalStudents} 
@@ -85,14 +103,56 @@ export default async function DirectorDashboardPage({ params }: { params: { id: 
                 link={`/director/dashboard/${schoolId}/academics/classes`}
                 linkText="Manage Classes"
             />
-            <StatCard 
-                title="Total Collection" 
-                value="₹0"
-                icon={<CircleDollarSign className="h-6 w-6 text-primary"/>}
-                link={`/director/dashboard/${schoolId}/admin/fees`}
-                linkText="View Fees"
-             />
         </div>
+        
+        {/* Financial Summary */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Financial Overview</CardTitle>
+                <CardDescription>A summary of fee collections and expenses.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <div className="p-4 bg-muted rounded-lg">
+                    <h4 className="font-semibold text-center mb-2">Today's Activity</h4>
+                    <div className="flex justify-around">
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground">Collection</p>
+                            <p className="text-xl font-bold text-green-600">{formatCurrency(collections.daily)}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground">Expense</p>
+                            <p className="text-xl font-bold text-red-600">{formatCurrency(expenses.daily)}</p>
+                        </div>
+                    </div>
+                </div>
+                 <div className="p-4 bg-muted rounded-lg">
+                    <h4 className="font-semibold text-center mb-2">This Month</h4>
+                     <div className="flex justify-around">
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground">Collection</p>
+                            <p className="text-xl font-bold text-green-600">{formatCurrency(collections.monthly)}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground">Expense</p>
+                            <p className="text-xl font-bold text-red-600">{formatCurrency(expenses.monthly)}</p>
+                        </div>
+                    </div>
+                </div>
+                 <div className="p-4 bg-muted rounded-lg">
+                    <h4 className="font-semibold text-center mb-2">This Year</h4>
+                     <div className="flex justify-around">
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground">Collection</p>
+                            <p className="text-xl font-bold text-green-600">{formatCurrency(collections.yearly)}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground">Expense</p>
+                            <p className="text-xl font-bold text-red-600">{formatCurrency(expenses.yearly)}</p>
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>

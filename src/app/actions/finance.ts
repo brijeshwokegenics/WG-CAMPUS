@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -5,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, setDoc, getDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { getStudentById } from './academics';
+import { startOfToday, endOfToday, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 
 // ========== FEE HEADS ==========
 
@@ -371,5 +373,50 @@ export async function getFeeReceipt(receiptId: string, schoolId: string) {
     } catch (error) {
         console.error("Error fetching fee receipt:", error);
         return { success: false, error: "Failed to fetch receipt." };
+    }
+}
+
+
+export async function getFeeCollectionsSummary(schoolId: string) {
+    if (!schoolId) {
+        return { success: false, error: "School ID is required." };
+    }
+
+    try {
+        const todayStart = startOfToday();
+        const todayEnd = endOfToday();
+        const monthStart = startOfMonth(new Date());
+        const monthEnd = endOfMonth(new Date());
+        const yearStart = startOfYear(new Date());
+        const yearEnd = endOfYear(new Date());
+
+        const collectionsRef = collection(db, 'feeCollections');
+        
+        const dailyQuery = query(collectionsRef, where('schoolId', '==', schoolId), where('paymentDate', '>=', todayStart), where('paymentDate', '<=', todayEnd));
+        const monthlyQuery = query(collectionsRef, where('schoolId', '==', schoolId), where('paymentDate', '>=', monthStart), where('paymentDate', '<=', monthEnd));
+        const yearlyQuery = query(collectionsRef, where('schoolId', '==', schoolId), where('paymentDate', '>=', yearStart), where('paymentDate', '<=', yearEnd));
+
+        const [dailySnapshot, monthlySnapshot, yearlySnapshot] = await Promise.all([
+            getDocs(dailyQuery),
+            getDocs(monthlyQuery),
+            getDocs(yearlyQuery),
+        ]);
+
+        const dailyTotal = dailySnapshot.docs.reduce((sum, doc) => sum + doc.data().totalAmount, 0);
+        const monthlyTotal = monthlySnapshot.docs.reduce((sum, doc) => sum + doc.data().totalAmount, 0);
+        const yearlyTotal = yearlySnapshot.docs.reduce((sum, doc) => sum + doc.data().totalAmount, 0);
+
+        return {
+            success: true,
+            data: {
+                daily: dailyTotal,
+                monthly: monthlyTotal,
+                yearly: yearlyTotal,
+            }
+        };
+
+    } catch (error) {
+        console.error("Error fetching fee collections summary:", error);
+        return { success: false, error: "Failed to fetch fee collections summary." };
     }
 }
