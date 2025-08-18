@@ -126,7 +126,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
         if (path.includes('/parent/')) return 'parent';
         if (path.includes('/librarian/')) return 'librarian';
         if (path.includes('/admin/')) return 'admin';
-        if (path.includes('/principal')) return 'principal';
+        if (path.includes('/principal/')) return 'principal';
         return 'director'; // Default role
     };
 
@@ -145,7 +145,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
 
     const dashboardLink = useMemo(() => {
         if (role === 'super-admin') return '/super-admin/dashboard';
-        if (role === 'director' || role === 'principal') return `/director/dashboard/${schoolId}`;
+        if (role === 'director') return `/director/dashboard/${schoolId}`;
         return `/director/dashboard/${schoolId}/${role}/dashboard`;
     }, [role, schoolId]);
 
