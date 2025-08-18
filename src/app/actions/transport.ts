@@ -100,7 +100,7 @@ export async function getRoutes(schoolId: string) {
     const q = query(collection(db, 'transportRoutes'), where('schoolId', '==', schoolId));
     const snapshot = await getDocs(q);
     const routes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    routes.sort((a,b) => a.name.localeCompare(b.name));
+    routes.sort((a,b) => (a.name as string).localeCompare(b.name as string));
     return routes;
 }
 
@@ -284,3 +284,5 @@ export async function updateStudentAssignment(schoolId: string, assignmentId: st
         return { success: false, error: 'Failed to update assignment.' };
     }
 }
+
+    

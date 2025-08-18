@@ -185,9 +185,11 @@ export async function createPassType(prevState: any, formData: FormData) {
 }
 
 export async function getPassTypes(schoolId: string) {
-    const q = query(collection(db, 'gatePassTypes'), where('schoolId', '==', schoolId), orderBy('name'));
+    const q = query(collection(db, 'gatePassTypes'), where('schoolId', '==', schoolId));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as { name: string } }));
+    const passTypes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as { name: string } }));
+    passTypes.sort((a,b) => a.name.localeCompare(b.name));
+    return passTypes;
 }
 
 export async function updatePassType(prevState: any, formData: FormData) {
@@ -224,3 +226,5 @@ export async function deletePassType(id: string, schoolId: string) {
         return { success: false, error: 'Failed to delete.' };
     }
 }
+
+    
