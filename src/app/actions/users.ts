@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
-const UserRole = z.enum(["Teacher", "Accountant", "Librarian", "Admin", "Principal", "HR"]);
+const UserRole = z.enum(["Teacher", "Accountant", "Librarian", "Admin", "Principal", "HR", "Parent"]);
 
 const UserSchema = z.object({
   schoolId: z.string().min(1, 'School ID is required.'),
@@ -51,6 +51,7 @@ export async function createUser(prevState: any, formData: FormData) {
     await addDoc(usersRef, parsed.data);
     
     revalidatePath(`/director/dashboard/${schoolId}/admin/users`);
+    revalidatePath(`/admin/${schoolId}/users`);
     return { success: true, message: 'User created successfully!' };
   } catch (error) {
     console.error('Error creating user:', error);
@@ -124,6 +125,7 @@ export async function updateUser(prevState: any, formData: FormData) {
         await updateDoc(userDocRef, parsed.data);
 
         revalidatePath(`/director/dashboard/${schoolId}/admin/users`);
+        revalidatePath(`/admin/${schoolId}/users`);
         return { success: true, message: 'User updated successfully!' };
     } catch (error) {
         console.error('Error updating user:', error);
@@ -148,6 +150,7 @@ export async function deleteUser({ userId, schoolId }: { userId: string; schoolI
         await deleteDoc(userDocRef);
 
         revalidatePath(`/director/dashboard/${schoolId}/admin/users`);
+        revalidatePath(`/admin/${schoolId}/users`);
         return { success: true };
     } catch (error) {
         console.error("Error deleting user:", error);
@@ -174,6 +177,7 @@ export async function updateUserPassword(docId: string, schoolId: string, newPas
         
         await updateDoc(userDocRef, { password: newPassword });
         revalidatePath(`/director/dashboard/${schoolId}/admin/users`);
+        revalidatePath(`/admin/${schoolId}/users`);
         return { success: true, message: "Password updated successfully." };
 
     } catch (error) {

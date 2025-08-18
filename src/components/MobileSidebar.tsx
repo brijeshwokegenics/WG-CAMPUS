@@ -11,9 +11,10 @@ import { cn } from "@/lib/utils";
 
 
 const getRoleFromPath = (path: string) => {
-    const pathSegments = path.split('/');
     if (path.includes('/teacher/')) return 'teacher';
-    // e.g. /director/dashboard/[id]/admin/dashboard -> segments[4] is 'admin'
+    if (path.includes('/admin/')) return 'admin';
+    // e.g. /director/dashboard/[id]/principal/dashboard -> segments[4] is 'principal'
+    const pathSegments = path.split('/');
     const roleSegment = pathSegments[4];
 
     switch(roleSegment) {
@@ -21,7 +22,6 @@ const getRoleFromPath = (path: string) => {
         case 'parent': return 'parent';
         case 'librarian': return 'librarian';
         case 'principal': return 'principal';
-        case 'admin': return 'admin';
         case 'hr': return 'hr';
         default: return 'director';
     }
@@ -91,9 +91,7 @@ const getNavItems = (role: string, schoolId: string) => {
                     section: "Administration",
                     icon: <Building className="h-5 w-5" />,
                     items: [
-                      { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users` },
-                      { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info` },
-                      { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations` },
+                      { title: "User Management", href: `/admin/${schoolId}/users` },
                     ],
                  }
             ];
@@ -191,7 +189,7 @@ const getNavItems = (role: string, schoolId: string) => {
                     ]
                 }
             ];
-        default: // director or admin
+        default: // director
             return directorNavs;
     }
 }
@@ -222,6 +220,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
         if (role === 'super-admin') return '/super-admin/dashboard';
         if (role === 'director') return `/director/dashboard/${schoolId}`;
         if (role === 'teacher') return `/teacher/${schoolId}/dashboard`;
+        if (role === 'admin') return `/admin/${schoolId}/dashboard`;
         return `/director/dashboard/${schoolId}/${role}/dashboard`;
     }, [role, schoolId]);
 

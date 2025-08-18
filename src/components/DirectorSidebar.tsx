@@ -45,16 +45,18 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 
 const getRoleFromPath = (path: string) => {
     const pathSegments = path.split('/');
-    // e.g. /director/dashboard/[id]/admin/dashboard -> segments[4] is 'admin'
-    const roleSegment = pathSegments[4];
+    // Check for specific role segments first
+    if (path.includes('/teacher/')) return 'teacher';
+    if (path.includes('/admin/')) return 'admin';
+    
+    // Fallback for roles under director's dashboard
+    const roleSegment = pathSegments.length > 4 ? pathSegments[4] : 'director';
 
     switch(roleSegment) {
-        case 'teacher': return 'teacher';
         case 'accountant': return 'accountant';
         case 'parent': return 'parent';
         case 'librarian': return 'librarian';
         case 'principal': return 'principal';
-        case 'admin': return 'admin';
         case 'hr': return 'hr';
         default: return 'director';
     }
@@ -119,14 +121,12 @@ const getNavItems = (role: string, schoolId: string) => {
 
     switch(role) {
         case 'admin':
-            return [
+             return [
                  {
                     section: "Administration",
                     icon: <Building className="h-5 w-5" />,
                     items: [
-                      { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users`, icon: <UserCog className="h-4 w-4" /> },
-                      { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info`, icon: <Info className="h-4 w-4" /> },
-                      { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations`, icon: <Webhook className="h-4 w-4" /> },
+                      { title: "User Management", href: `/admin/${schoolId}/users`, icon: <UserCog className="h-4 w-4" /> },
                     ],
                  }
             ];
@@ -271,6 +271,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
 
   const dashboardLink = useMemo(() => {
     if (role === 'director') return `/director/dashboard/${schoolId}`;
+    if (role === 'admin') return `/admin/${schoolId}/dashboard`;
     return `/director/dashboard/${schoolId}/${role}/dashboard`;
   }, [role, schoolId]);
 

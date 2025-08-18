@@ -92,7 +92,7 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
         // Determine redirect path based on role
         switch(userRole) {
             case 'Admin':
-                redirectPath = `/director/dashboard/${schoolDocId}/admin/dashboard`;
+                redirectPath = `/admin/${schoolDocId}/dashboard`;
                 break;
             case 'Accountant':
                 redirectPath = `/director/dashboard/${schoolDocId}/accountant/dashboard`;
