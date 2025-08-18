@@ -13,6 +13,7 @@ import {
   Briefcase,
   Wallet,
   Banknote,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -27,6 +28,7 @@ const getNavItems = (schoolId: string) => {
             items: [
                     { title: "Fee Structure", href: `/accountant/${schoolId}/fee-structure`, icon: <Banknote className="h-4 w-4" /> },
                     { title: "Fee Collection", href: `/accountant/${schoolId}/fees`, icon: <Wallet className="h-4 w-4" /> },
+                    { title: "Expenses", href: `/accountant/${schoolId}/expenses`, icon: <Receipt className="h-4 w-4" /> },
             ]
         },
         {
