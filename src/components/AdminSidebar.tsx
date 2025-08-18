@@ -12,6 +12,10 @@ import {
   PanelRightClose,
   ChevronDown,
   UserCog,
+  MessageSquare,
+  Users,
+  Calendar,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -23,7 +27,17 @@ const getAdminNavItems = (schoolId: string) => {
         section: "Administration",
         icon: <Building className="h-5 w-5" />,
         items: [
-          { title: "User Management", href: `/admin/${schoolId}/users`, icon: <UserCog className="h-4 w-4" /> },
+          { title: "Parent Management", href: `/admin/${schoolId}/users`, icon: <UserCog className="h-4 w-4" /> },
+          { title: "Student Directory", href: `/director/dashboard/${schoolId}/academics/students`, icon: <Users className="h-4 w-4" /> },
+        ],
+      },
+       {
+        section: "Communication",
+        icon: <MessageSquare className="h-5 w-5" />,
+        items: [
+          { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices`, icon: <ClipboardList className="h-4 w-4" /> },
+          { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar`, icon: <Calendar className="h-4 w-4" /> },
+          { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging`, icon: <MessageSquare className="h-4 w-4" /> },
         ],
       },
     ];
@@ -37,7 +51,7 @@ type SidebarProps = {
 
 export function AdminSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Administration': true});
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Administration': true, 'Communication': true});
   
   const navItems = getAdminNavItems(schoolId);
 
