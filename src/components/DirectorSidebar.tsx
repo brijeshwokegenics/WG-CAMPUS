@@ -44,22 +44,22 @@ import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 const getRoleFromPath = (path: string) => {
-    const pathSegments = path.split('/');
-    // Check for top-level role directories first. This is more specific.
-    if (pathSegments[1] === 'teacher') return 'teacher';
-    if (pathSegments[1] === 'admin') return 'admin';
-    
-    // Fallback for roles nested under director's dashboard
-    const roleSegment = pathSegments.length > 4 ? pathSegments[4] : 'director';
-
-    switch(roleSegment) {
-        case 'accountant': return 'accountant';
-        case 'parent': return 'parent';
-        case 'librarian': return 'librarian';
-        case 'principal': return 'principal';
-        case 'hr': return 'hr';
-        default: return 'director';
+    if (path.startsWith('/teacher')) return 'teacher';
+    if (path.startsWith('/admin')) return 'admin';
+    if (path.startsWith('/director')) {
+        const pathSegments = path.split('/');
+        // Check for specific role dashboards under the director path
+        const roleSegment = pathSegments.length > 4 ? pathSegments[4] : 'director';
+         switch(roleSegment) {
+            case 'accountant': return 'accountant';
+            case 'parent': return 'parent';
+            case 'librarian': return 'librarian';
+            case 'principal': return 'principal';
+            case 'hr': return 'hr';
+            default: return 'director';
+        }
     }
+    return 'director'; // Default for any other case
 };
 
 const getNavItems = (role: string, schoolId: string) => {
