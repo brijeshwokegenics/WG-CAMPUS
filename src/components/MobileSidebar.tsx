@@ -40,6 +40,7 @@ const directorSidebarNavItems = (schoolId: string) => [
     section: "Administration",
     icon: <Building className="h-5 w-5" />,
     items: [
+      { title: "Admin Dashboard", href: `/director/dashboard/${schoolId}/admin/dashboard`},
       { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users` },
       { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure` },
       { title: "Fees Management", href: `/director/dashboard/${schoolId}/admin/fees` },
@@ -61,12 +62,23 @@ const directorSidebarNavItems = (schoolId: string) => [
       { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging` },
     ],
   },
+    {
+    section: "Teacher Menu",
+    icon: <PersonStanding className="h-5 w-5" />,
+    items: [
+      { title: "Teacher Dashboard", href: `/director/dashboard/${schoolId}/teacher/dashboard` },
+      { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance` },
+      { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable` },
+      { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning` },
+    ]
+  },
   {
     section: "Accountant Menu",
     icon: <PersonStanding className="h-5 w-5" />,
     items: [
-      { title: "Fee Structure", href: `/director/dashboard/${schoolId}/accountant/fee-structure` },
-      { title: "Payroll Processing", href: `/director/dashboard/${schoolId}/accountant/payroll` },
+      { title: "Accountant Dashboard", href: `/director/dashboard/${schoolId}/accountant/dashboard` },
+      { title: "Fee Collection", href: `/director/dashboard/${schoolId}/admin/fees` },
+      { title: "Payroll Processing", href: `/director/dashboard/${schoolId}/hr/payroll` },
     ],
   },
   {
@@ -86,7 +98,8 @@ const directorSidebarNavItems = (schoolId: string) => [
     section: "Librarian Menu",
     icon: <BookUser className="h-5 w-5" />,
     items: [
-      { title: "Library Management", href: `/director/dashboard/${schoolId}/librarian/management` },
+      { title: "Librarian Dashboard", href: `/director/dashboard/${schoolId}/librarian/dashboard` },
+      { title: "Library Management", href: `/director/dashboard/${schoolId}/admin/library` },
     ],
   },
 ];

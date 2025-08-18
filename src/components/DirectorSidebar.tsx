@@ -73,6 +73,7 @@ const directorSidebarNavItems = (schoolId: string) => [
     section: "Administration",
     icon: <Building className="h-5 w-5" />,
     items: [
+      { title: "Admin Dashboard", href: `/director/dashboard/${schoolId}/admin/dashboard`, icon: <LayoutDashboard className="h-4 w-4" />},
       { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users`, icon: <UserCog className="h-4 w-4" /> },
       { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure`, icon: <Banknote className="h-4 w-4" /> },
       { title: "Fees Management", href: `/director/dashboard/${schoolId}/admin/fees`, icon: <Wallet className="h-4 w-4" /> },
@@ -95,11 +96,22 @@ const directorSidebarNavItems = (schoolId: string) => [
     ],
   },
   {
+    section: "Teacher Menu",
+    icon: <PersonStanding className="h-5 w-5" />,
+    items: [
+      { title: "Teacher Dashboard", href: `/director/dashboard/${schoolId}/teacher/dashboard`, icon: <LayoutDashboard className="h-4 w-4" /> },
+      { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
+      { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable`, icon: <Calendar className="h-4 w-4" /> },
+      { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning`, icon: <Book className="h-4 w-4" /> },
+    ]
+  },
+  {
     section: "Accountant Menu",
     icon: <PersonStanding className="h-5 w-5" />,
     items: [
-      { title: "Fee Structure", href: `/director/dashboard/${schoolId}/accountant/fee-structure`, icon: <Banknote className="h-4 w-4" /> },
-      { title: "Payroll Processing", href: `/director/dashboard/${schoolId}/accountant/payroll`, icon: <Wallet className="h-4 w-4" /> },
+      { title: "Accountant Dashboard", href: `/director/dashboard/${schoolId}/accountant/dashboard`, icon: <LayoutDashboard className="h-4 w-4" /> },
+      { title: "Fee Collection", href: `/director/dashboard/${schoolId}/admin/fees`, icon: <Wallet className="h-4 w-4" /> },
+      { title: "Payroll Processing", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-4 w-4" /> },
     ],
   },
   {
@@ -119,7 +131,8 @@ const directorSidebarNavItems = (schoolId: string) => [
     section: "Librarian Menu",
     icon: <BookUser className="h-5 w-5" />,
     items: [
-      { title: "Library Management", href: `/director/dashboard/${schoolId}/librarian/management`, icon: <Library className="h-4 w-4" /> },
+      { title: "Librarian Dashboard", href: `/director/dashboard/${schoolId}/librarian/dashboard`, icon: <LayoutDashboard className="h-4 w-4" /> },
+      { title: "Library Management", href: `/director/dashboard/${schoolId}/admin/library`, icon: <Library className="h-4 w-4" /> },
     ],
   },
 ];
