@@ -12,7 +12,7 @@ export default function TeacherDashboardPage({ params }: { params: { id: string 
                 <p className="text-muted-foreground">Welcome! Here are your tools for the day.</p>
             </header>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <Link href={`/director/dashboard/${schoolId}/academics/attendance`}>
+                <Link href={`/teacher/${schoolId}/academics/attendance`}>
                     <Card className="hover:bg-muted/50 transition-colors">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium">Student Attendance</CardTitle>
@@ -23,7 +23,7 @@ export default function TeacherDashboardPage({ params }: { params: { id: string 
                         </CardContent>
                     </Card>
                 </Link>
-                <Link href={`/director/dashboard/${schoolId}/academics/timetable`}>
+                <Link href={`/teacher/${schoolId}/academics/timetable`}>
                      <Card className="hover:bg-muted/50 transition-colors">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium">My Timetable</CardTitle>
@@ -34,7 +34,7 @@ export default function TeacherDashboardPage({ params }: { params: { id: string 
                         </CardContent>
                     </Card>
                 </Link>
-                <Link href={`/director/dashboard/${schoolId}/academics/elearning`}>
+                <Link href={`/teacher/${schoolId}/academics/elearning`}>
                      <Card className="hover:bg-muted/50 transition-colors">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium">E-learning</CardTitle>
@@ -49,3 +49,4 @@ export default function TeacherDashboardPage({ params }: { params: { id: string 
         </div>
     );
 }
+

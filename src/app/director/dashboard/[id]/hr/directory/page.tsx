@@ -10,28 +10,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default async function StaffDirectoryPage({ params }: { params: { id: string } }) {
-  const schoolId = params.id;
-  const { success, data: users } = await getUsersForSchool(schoolId);
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Staff Directory</h1>
-        <p className="text-muted-foreground">
-          A complete directory of all staff members in the school.
-        </p>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>All Staff</CardTitle>
-          <CardDescription>
-            Contact information and roles for all school staff.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
+async function StaffList({ schoolId }: { schoolId: string }) {
+    const { success, data: users } = await getUsersForSchool(schoolId);
+    return (
+        <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[80px]">Photo</TableHead>
@@ -68,6 +53,60 @@ export default async function StaffDirectoryPage({ params }: { params: { id: str
               )}
             </TableBody>
           </Table>
+    );
+}
+
+function StaffListSkeleton() {
+    return (
+        <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[80px]"><Skeleton className="h-5 w-12" /></TableHead>
+                <TableHead><Skeleton className="h-5 w-32" /></TableHead>
+                <TableHead><Skeleton className="h-5 w-24" /></TableHead>
+                <TableHead><Skeleton className="h-5 w-24" /></TableHead>
+                <TableHead><Skeleton className="h-5 w-28" /></TableHead>
+                <TableHead><Skeleton className="h-5 w-36" /></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-10 w-10 rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-36" /></TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+    )
+}
+
+export default async function StaffDirectoryPage({ params }: { params: { id: string } }) {
+  const schoolId = params.id;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Staff Directory</h1>
+        <p className="text-muted-foreground">
+          A complete directory of all staff members in the school.
+        </p>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>All Staff</CardTitle>
+          <CardDescription>
+            Contact information and roles for all school staff.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Suspense fallback={<StaffListSkeleton />}>
+            <StaffList schoolId={schoolId} />
+          </Suspense>
         </CardContent>
       </Card>
     </div>
