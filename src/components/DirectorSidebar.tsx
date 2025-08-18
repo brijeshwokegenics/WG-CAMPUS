@@ -95,27 +95,6 @@ const directorSidebarNavItems = (schoolId: string) => [
       { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging`, icon: <MessageSquare className="h-4 w-4" /> },
     ],
   },
-  {
-    section: "Parent Menu",
-    icon: <Users className="h-5 w-5" />,
-    items: [
-      { title: "Dashboard", href: `/director/dashboard/${schoolId}/parent/dashboard`, icon: <LayoutDashboard className="h-4 w-4" /> },
-      { title: "Child's Profile", href: `/director/dashboard/${schoolId}/parent/profile`, icon: <UserCheck className="h-4 w-4" /> },
-      { title: "Attendance", href: `/director/dashboard/${schoolId}/parent/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
-      { title: "Fees", href: `/director/dashboard/${schoolId}/parent/fees`, icon: <Wallet className="h-4 w-4" /> },
-      { title: "Report Cards", href: `/director/dashboard/${schoolId}/parent/reports`, icon: <FileText className="h-4 w-4" /> },
-      { title: "E-learning", href: `/director/dashboard/${schoolId}/parent/elearning`, icon: <Book className="h-4 w-4" /> },
-      { title: "School Calendar", href: `/director/dashboard/${schoolId}/parent/calendar`, icon: <Calendar className="h-4 w-4" /> },
-    ],
-  },
-  {
-    section: "Librarian Menu",
-    icon: <BookUser className="h-5 w-5" />,
-    items: [
-      { title: "Librarian Dashboard", href: `/director/dashboard/${schoolId}/librarian/dashboard`, icon: <LayoutDashboard className="h-4 w-4" /> },
-      { title: "Library Management", href: `/director/dashboard/${schoolId}/admin/library`, icon: <Library className="h-4 w-4" /> },
-    ],
-  },
 ];
 
 const teacherSidebarNavItems = (schoolId: string) => [
@@ -142,6 +121,63 @@ const teacherSidebarNavItems = (schoolId: string) => [
     }
 ];
 
+const principalSidebarNavItems = (schoolId: string) => [
+    {
+        section: "Administration",
+        icon: <Building className="h-5 w-5" />,
+        items: [
+            { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users`, icon: <UserCog className="h-4 w-4" /> },
+        ]
+    },
+    {
+        section: "Academics",
+        icon: <GraduationCap className="h-5 w-5" />,
+        items: [
+            { title: "Classes", href: `/director/dashboard/${schoolId}/academics/classes`, icon: <Presentation className="h-4 w-4" /> },
+            { title: "Students", href: `/director/dashboard/${schoolId}/academics/students`, icon: <Users className="h-4 w-4" /> },
+            { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports`, icon: <FileText className="h-4 w-4" /> },
+        ]
+    }
+];
+
+const accountantSidebarNavItems = (schoolId: string) => [
+    {
+        section: "Finance",
+        icon: <Wallet className="h-5 w-5" />,
+        items: [
+            { title: "Fee Collection", href: `/director/dashboard/${schoolId}/admin/fees`, icon: <Wallet className="h-4 w-4" /> },
+            { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure`, icon: <Banknote className="h-4 w-4" /> },
+            { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-4 w-4" /> },
+        ]
+    }
+];
+
+const parentSidebarNavItems = (schoolId: string) => [
+    {
+        section: "My Child",
+        icon: <Users className="h-5 w-5" />,
+        items: [
+            { title: "Profile", href: `/director/dashboard/${schoolId}/parent/profile`, icon: <UserCheck className="h-4 w-4" /> },
+            { title: "Attendance", href: `/director/dashboard/${schoolId}/parent/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
+            { title: "Fees", href: `/director/dashboard/${schoolId}/parent/fees`, icon: <Wallet className="h-4 w-4" /> },
+            { title: "Report Cards", href: `/director/dashboard/${schoolId}/parent/reports`, icon: <FileText className="h-4 w-4" /> },
+            { title: "E-learning", href: `/director/dashboard/${schoolId}/parent/elearning`, icon: <Book className="h-4 w-4" /> },
+            { title: "School Calendar", href: `/director/dashboard/${schoolId}/parent/calendar`, icon: <Calendar className="h-4 w-4" /> },
+        ]
+    }
+];
+
+const librarianSidebarNavItems = (schoolId: string) => [
+    {
+        section: "Library",
+        icon: <Library className="h-5 w-5" />,
+        items: [
+             { title: "Issue / Return", href: `/director/dashboard/${schoolId}/admin/library`, icon: <BookCheck className="h-4 w-4" /> },
+             { title: "Book Catalog", href: `/director/dashboard/${schoolId}/admin/library`, icon: <Book className="h-4 w-4" /> },
+        ]
+    }
+];
+
 
 type SidebarProps = {
   schoolId: string;
@@ -151,7 +187,7 @@ type SidebarProps = {
 
 export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'HR': true, 'Administration': true, 'Communication': true});
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'HR': true, 'Administration': true, 'Communication': true, 'Finance': true, 'Library': true, 'My Child': true});
 
   const getRoleFromPath = (path: string) => {
     if (path.includes('/teacher/')) return 'teacher';
@@ -166,9 +202,20 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
   const role = getRoleFromPath(pathname);
 
   const navItems = useMemo(() => {
-    if(role === 'teacher') return teacherSidebarNavItems(schoolId);
-    // Add other role checks here
-    return directorSidebarNavItems(schoolId);
+    switch (role) {
+      case 'teacher':
+        return teacherSidebarNavItems(schoolId);
+      case 'principal':
+        return principalSidebarNavItems(schoolId);
+      case 'accountant':
+        return accountantSidebarNavItems(schoolId);
+      case 'parent':
+        return parentSidebarNavItems(schoolId);
+      case 'librarian':
+        return librarianSidebarNavItems(schoolId);
+      default:
+        return directorSidebarNavItems(schoolId);
+    }
   }, [schoolId, role]);
 
 

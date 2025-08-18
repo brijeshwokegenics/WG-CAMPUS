@@ -4,7 +4,7 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, School, ChevronDown, GraduationCap, Briefcase, Building, MessageSquare, PersonStanding, BookUser, LayoutDashboard, Users, UserCog, Printer, ClipboardList, Calendar, FileText, Book, Wallet, Banknote, Warehouse, Bus, Library, Hotel, Ticket, Info, Webhook, UserCheck, FolderKanban, Presentation } from "lucide-react";
+import { Menu, School, ChevronDown, GraduationCap, Briefcase, Building, MessageSquare, PersonStanding, BookUser, LayoutDashboard, Users, UserCog, Printer, ClipboardList, Calendar, FileText, Book, Wallet, Banknote, Warehouse, Bus, Library, Hotel, Ticket, Info, Webhook, UserCheck, FolderKanban, Presentation, BookCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -62,27 +62,6 @@ const directorSidebarNavItems = (schoolId: string) => [
       { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging` },
     ],
   },
-  {
-    section: "Parent Menu",
-    icon: <Users className="h-5 w-5" />,
-    items: [
-      { title: "Dashboard", href: `/director/dashboard/${schoolId}/parent/dashboard` },
-      { title: "Child's Profile", href: `/director/dashboard/${schoolId}/parent/profile` },
-      { title: "Attendance", href: `/director/dashboard/${schoolId}/parent/attendance` },
-      { title: "Fees", href: `/director/dashboard/${schoolId}/parent/fees` },
-      { title: "Report Cards", href: `/director/dashboard/${schoolId}/parent/reports` },
-      { title: "E-learning", href: `/director/dashboard/${schoolId}/parent/elearning` },
-      { title: "School Calendar", href: `/director/dashboard/${schoolId}/parent/calendar` },
-    ],
-  },
-  {
-    section: "Librarian Menu",
-    icon: <BookUser className="h-5 w-5" />,
-    items: [
-      { title: "Librarian Dashboard", href: `/director/dashboard/${schoolId}/librarian/dashboard` },
-      { title: "Library Management", href: `/director/dashboard/${schoolId}/admin/library` },
-    ],
-  },
 ];
 
 const teacherSidebarNavItems = (schoolId: string) => [
@@ -109,6 +88,62 @@ const teacherSidebarNavItems = (schoolId: string) => [
     }
 ];
 
+const principalSidebarNavItems = (schoolId: string) => [
+    {
+        section: "Administration",
+        icon: <Building className="h-5 w-5" />,
+        items: [
+            { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users` },
+        ]
+    },
+    {
+        section: "Academics",
+        icon: <GraduationCap className="h-5 w-5" />,
+        items: [
+            { title: "Classes", href: `/director/dashboard/${schoolId}/academics/classes` },
+            { title: "Students", href: `/director/dashboard/${schoolId}/academics/students` },
+            { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports` },
+        ]
+    }
+];
+
+const accountantSidebarNavItems = (schoolId: string) => [
+    {
+        section: "Finance",
+        icon: <Wallet className="h-5 w-5" />,
+        items: [
+            { title: "Fee Collection", href: `/director/dashboard/${schoolId}/admin/fees` },
+            { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure` },
+            { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll` },
+        ]
+    }
+];
+
+const parentSidebarNavItems = (schoolId: string) => [
+    {
+        section: "My Child",
+        icon: <Users className="h-5 w-5" />,
+        items: [
+            { title: "Profile", href: `/director/dashboard/${schoolId}/parent/profile` },
+            { title: "Attendance", href: `/director/dashboard/${schoolId}/parent/attendance` },
+            { title: "Fees", href: `/director/dashboard/${schoolId}/parent/fees` },
+            { title: "Report Cards", href: `/director/dashboard/${schoolId}/parent/reports` },
+            { title: "E-learning", href: `/director/dashboard/${schoolId}/parent/elearning` },
+            { title: "School Calendar", href: `/director/dashboard/${schoolId}/parent/calendar` },
+        ]
+    }
+];
+
+const librarianSidebarNavItems = (schoolId: string) => [
+    {
+        section: "Library",
+        icon: <Library className="h-5 w-5" />,
+        items: [
+             { title: "Issue / Return", href: `/director/dashboard/${schoolId}/admin/library` },
+             { title: "Book Catalog", href: `/director/dashboard/${schoolId}/admin/library` },
+        ]
+    }
+];
 
 type MobileSidebarProps = {
   schoolId?: string;
@@ -132,11 +167,16 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
 
     const role = schoolId ? getRoleFromPath(pathname) : 'super-admin';
     
-    const directorNavItems = useMemo(() => {
+    const navItemsForRole = useMemo(() => {
         if (!schoolId) return [];
-        if (role === 'teacher') return teacherSidebarNavItems(schoolId);
-        // Add other role checks here
-        return directorSidebarNavItems(schoolId);
+        switch (role) {
+            case 'teacher': return teacherSidebarNavItems(schoolId);
+            case 'principal': return principalSidebarNavItems(schoolId);
+            case 'accountant': return accountantSidebarNavItems(schoolId);
+            case 'parent': return parentSidebarNavItems(schoolId);
+            case 'librarian': return librarianSidebarNavItems(schoolId);
+            default: return directorSidebarNavItems(schoolId);
+        }
     }, [schoolId, role]);
 
     const toggleSection = (section: string) => {
@@ -154,8 +194,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
         { title: 'Dashboard', href: dashboardLink, icon: <LayoutDashboard className="h-5 w-5" /> },
     ];
     
-    // Determine which set of nav items to use
-    const mainNavItems = schoolId ? directorNavItems : superAdminNavItems || [];
+    const mainNavItems = schoolId ? navItemsForRole : superAdminNavItems || [];
     const isDirectorOrSuperAdmin = !!schoolId;
 
     return (
@@ -191,7 +230,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
                                 {item.title}
                             </Link>
                         ))}
-                         {isDirectorOrSuperAdmin ? mainNavItems.map((section, index) => (
+                         {isDirectorOrSuperAdmin ? mainNavItems.map((section: any, index) => (
                             <div key={index} className="space-y-1">
                                 <Button
                                     variant="ghost"
@@ -206,7 +245,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
                                 </Button>
                                 {openSections[section.section] && (
                                     <div className="pl-8 space-y-1 border-l-2 border-muted ml-4">
-                                        {section.items.map((item, itemIndex) =>
+                                        {section.items.map((item: any, itemIndex: number) =>
                                             item.href && (
                                                 <Link
                                                     key={itemIndex}
