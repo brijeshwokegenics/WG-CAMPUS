@@ -182,66 +182,47 @@ export async function getAssignedStudents(schoolId: string, routeId?: string) {
         return [];
     }
     
-    // Firestore 'in' queries are limited to 30 items per query.
-    // We need to chunk the studentIds array if it's larger than 30.
     const studentDataMap = new Map<string, any>();
-    const studentIdChunks = [];
+    const studentIdChunks: string[][] = [];
     for (let i = 0; i < studentIds.length; i += 30) {
         studentIdChunks.push(studentIds.slice(i, i + 30));
     }
 
-    // Fetch all student documents in chunks
     for (const chunk of studentIdChunks) {
-        if (chunk.length === 0) continue;
-        const studentsQuery = query(collection(db, 'students'), where(documentId(), 'in', chunk));
-        const studentsSnapshot = await getDocs(studentsQuery);
-        studentsSnapshot.forEach(doc => {
-            const data = doc.data();
-            // Important: only set data if student belongs to the school
-            if (data.schoolId === schoolId) {
-                studentDataMap.set(doc.id, data);
-            }
-        });
-    }
-
-    // Get unique class IDs from the fetched students
-    const classIds = [...new Set(Array.from(studentDataMap.values()).map(student => student.classId).filter(Boolean))];
-
-    // Fetch class names
-    const classDataMap = new Map<string, string>();
-    if (classIds.length > 0) {
-        // Chunk the classIds array if it's larger than 30
-        const classIdChunks = [];
-        for (let i = 0; i < classIds.length; i += 30) {
-            classIdChunks.push(classIds.slice(i, i + 30));
-        }
-        for (const chunk of classIdChunks) {
-            if (chunk.length === 0) continue;
-            const classesQuery = query(collection(db, 'classes'), where(documentId(), 'in', chunk));
-            const classesSnapshot = await getDocs(classesQuery);
-            classesSnapshot.forEach(doc => {
-                 // Important: only set data if class belongs to the school
-                 if (doc.data().schoolId === schoolId) {
-                    classDataMap.set(doc.id, doc.data().name);
+        if (chunk.length > 0) {
+            const studentsQuery = query(collection(db, 'students'), where(documentId(), 'in', chunk));
+            const studentsSnapshot = await getDocs(studentsQuery);
+            studentsSnapshot.forEach(doc => {
+                if (doc.data().schoolId === schoolId) {
+                    studentDataMap.set(doc.id, doc.data());
                 }
             });
         }
     }
+    
+    const classIds = [...new Set(Array.from(studentDataMap.values()).map(student => student.classId).filter(Boolean))];
+    const classDataMap = new Map<string, string>();
+    if(classIds.length > 0) {
+        const classesQuery = query(collection(db, 'classes'), where(documentId(), 'in', classIds));
+        const classesSnapshot = await getDocs(classesQuery);
+        classesSnapshot.forEach(doc => {
+            if (doc.data().schoolId === schoolId) {
+                classDataMap.set(doc.id, doc.data().name);
+            }
+        });
+    }
 
-    // Join student data with assignment data
     const populatedAssignments = assignments.map(assignment => {
         const studentInfo = studentDataMap.get(assignment.studentId);
-        if (!studentInfo) return null; // Skip if student not found or doesn't belong to school
+        if (!studentInfo) return null;
 
-        const className = classDataMap.get(studentInfo.classId) || 'N/A';
-        
         return {
             ...assignment,
             studentName: studentInfo.studentName,
-            className: className,
+            className: classDataMap.get(studentInfo.classId) || 'N/A',
             section: studentInfo.section,
         };
-    }).filter(Boolean); // remove null entries
+    }).filter(Boolean);
 
     return populatedAssignments as any[];
 }
