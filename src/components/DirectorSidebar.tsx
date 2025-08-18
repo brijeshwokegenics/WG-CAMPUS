@@ -200,6 +200,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
 
   const dashboardLink = useMemo(() => {
     if (role === 'director') return `/director/dashboard/${schoolId}`;
+    if (role === 'principal') return `/director/dashboard/${schoolId}/principal/dashboard`;
     return `/director/dashboard/${schoolId}/${role}/dashboard`;
   }, [role, schoolId]);
 

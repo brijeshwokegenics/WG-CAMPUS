@@ -4,7 +4,7 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, School, ChevronDown, GraduationCap, Briefcase, Building, MessageSquare, PersonStanding, BookUser, LayoutDashboard, Users, UserCog, Printer, ClipboardList, Calendar, FileText, Book, Wallet, Banknote, Warehouse, Bus, Library, Hotel, Ticket, Info, Webhook, UserCheck } from "lucide-react";
+import { Menu, School, ChevronDown, GraduationCap, Briefcase, Building, MessageSquare, PersonStanding, BookUser, LayoutDashboard, Users, UserCog, Printer, ClipboardList, Calendar, FileText, Book, Wallet, Banknote, Warehouse, Bus, Library, Hotel, Ticket, Info, Webhook, UserCheck, FolderKanban, Presentation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -146,6 +146,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
     const dashboardLink = useMemo(() => {
         if (role === 'super-admin') return '/super-admin/dashboard';
         if (role === 'director') return `/director/dashboard/${schoolId}`;
+        if (role === 'principal') return `/director/dashboard/${schoolId}/principal/dashboard`;
         return `/director/dashboard/${schoolId}/${role}/dashboard`;
     }, [role, schoolId]);
 
