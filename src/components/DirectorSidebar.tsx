@@ -43,33 +43,10 @@ import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
-const getRoleFromPath = (path: string) => {
-    // Check for top-level routes first to be specific
-    if (path.startsWith('/admin/')) return 'admin';
-    if (path.startsWith('/teacher/')) return 'teacher';
-    if (path.startsWith('/accountant/')) return 'accountant';
 
-    const pathSegments = path.split('/');
-    // Check for nested dashboards
-    if (path.startsWith('/director/dashboard/')) {
-        const potentialRoleSegment = pathSegments[4];
-        if (['hr', 'principal', 'librarian', 'parent'].includes(potentialRoleSegment) && pathSegments[5] === 'dashboard') {
-            return potentialRoleSegment;
-        }
-    }
-    
-    // Default to director if inside the director's dashboard layout
-    if (path.startsWith('/director/')) {
-        return 'director';
-    }
-
-    // A fallback, though it shouldn't be reached in this layout
-    return 'director';
-};
-
-const getNavItems = (role: string, schoolId: string) => {
-    const allNavs = {
-      academics: {
+const getNavItems = (schoolId: string) => {
+    return [
+      {
         section: "Academics",
         icon: <GraduationCap className="h-5 w-5" />,
         items: [
@@ -85,7 +62,7 @@ const getNavItems = (role: string, schoolId: string) => {
           { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning`, icon: <Book className="h-4 w-4" /> },
         ],
       },
-      hr: {
+      {
         section: "HR",
         icon: <Briefcase className="h-5 w-5" />,
         items: [
@@ -96,7 +73,7 @@ const getNavItems = (role: string, schoolId: string) => {
           { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-4 w-4" /> },
         ],
       },
-      admin: {
+      {
         section: "Administration",
         icon: <Building className="h-5 w-5" />,
         items: [
@@ -113,7 +90,7 @@ const getNavItems = (role: string, schoolId: string) => {
           { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations`, icon: <Webhook className="h-4 w-4" /> },
         ],
       },
-      communication: {
+      {
         section: "Communication",
         icon: <MessageSquare className="h-5 w-5" />,
         items: [
@@ -122,13 +99,7 @@ const getNavItems = (role: string, schoolId: string) => {
           { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging`, icon: <MessageSquare className="h-4 w-4" /> },
         ],
       }
-    };
-    
-    switch(role) {
-        case 'director':
-        default:
-             return Object.values(allNavs);
-    }
+    ];
 }
 
 
@@ -142,8 +113,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
   const pathname = usePathname();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'HR': true, 'Administration': true, 'Communication': true, 'Finance': true, 'Library': true, 'My Child': true});
   
-  const role = getRoleFromPath(pathname);
-  const navItems = getNavItems(role, schoolId);
+  const navItems = getNavItems(schoolId);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -171,14 +141,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
     </TooltipProvider>
   );
 
-  const dashboardLink = useMemo(() => {
-    if (role === 'director') return `/director/dashboard/${schoolId}`;
-    if (role === 'hr') return `/director/dashboard/${schoolId}/hr/dashboard`;
-    if (role === 'principal') return `/director/dashboard/${schoolId}/principal/dashboard`;
-    if (role === 'librarian') return `/director/dashboard/${schoolId}/librarian/dashboard`;
-    if (role === 'parent') return `/director/dashboard/${schoolId}/parent/dashboard`;
-    return `/director/dashboard/${schoolId}`;
-  }, [role, schoolId]);
+  const dashboardLink = `/director/dashboard/${schoolId}`;
 
 
   return (
@@ -210,7 +173,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
                                 variant="ghost"
                                 size="icon"
                                 className="w-full flex justify-center items-center"
-                                onClick={toggleSidebar}
+                                 onClick={() => !isCollapsed && toggleSection(section.section)}
                             >
                                 {section.icon}
                                 <span className="sr-only">{section.section}</span>

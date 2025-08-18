@@ -11,33 +11,17 @@ import { cn } from "@/lib/utils";
 
 
 const getRoleFromPath = (path: string) => {
-    // Check for top-level routes first to be specific
-    if (path.startsWith('/admin/')) return 'admin';
-    if (path.startsWith('/teacher/')) return 'teacher';
-    if (path.startsWith('/accountant/')) return 'accountant';
-
     const pathSegments = path.split('/');
-    // Check for nested dashboards
-    if (path.startsWith('/director/dashboard/')) {
-        const potentialRoleSegment = pathSegments[4];
-        if (['hr', 'principal', 'librarian', 'parent'].includes(potentialRoleSegment) && pathSegments[5] === 'dashboard') {
-            return potentialRoleSegment;
-        }
+    if (pathSegments.length > 2) {
+        return pathSegments[1];
     }
-    
-    // Default to director if inside the director's dashboard layout
-    if (path.startsWith('/director/')) {
-        return 'director';
-    }
-
-    // A fallback for super-admin or other top-level routes
     return 'super-admin'; 
 };
 
 
 const getNavItems = (role: string, schoolId: string) => {
-    const allNavs = {
-      academics: {
+    const directorNavs = [
+      {
         section: "Academics",
         icon: <GraduationCap className="h-5 w-5" />,
         items: [
@@ -53,7 +37,7 @@ const getNavItems = (role: string, schoolId: string) => {
           { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning` },
         ],
       },
-      hr: {
+      {
         section: "HR",
         icon: <Briefcase className="h-5 w-5" />,
         items: [
@@ -64,7 +48,7 @@ const getNavItems = (role: string, schoolId: string) => {
           { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll` },
         ],
       },
-      admin: {
+      {
         section: "Administration",
         icon: <Building className="h-5 w-5" />,
         items: [
@@ -81,7 +65,7 @@ const getNavItems = (role: string, schoolId: string) => {
           { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations` },
         ],
       },
-      communication: {
+      {
         section: "Communication",
         icon: <MessageSquare className="h-5 w-5" />,
         items: [
@@ -90,15 +74,91 @@ const getNavItems = (role: string, schoolId: string) => {
           { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging` },
         ],
       }
-    };
+    ];
+
+    const adminNavs = [
+        {
+            section: "Administration",
+            icon: <Building className="h-5 w-5" />,
+            items: [
+            { title: "Parent Management", href: `/admin/${schoolId}/users`},
+            { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure`},
+            { title: "Fees Management", href: `/director/dashboard/${schoolId}/admin/fees`},
+            { title: "Inventory", href: `/director/dashboard/${schoolId}/admin/inventory`},
+            { title: "Transport", href: `/director/dashboard/${schoolId}/admin/transport`},
+            { title: "Library", href: `/director/dashboard/${schoolId}/admin/library`},
+            { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel`},
+            { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass`},
+            { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info`},
+            { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations`},
+            { title: "Student Directory", href: `/director/dashboard/${schoolId}/academics/students`},
+            ],
+        },
+        {
+            section: "Communication",
+            icon: <MessageSquare className="h-5 w-5" />,
+            items: [
+            { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices`},
+            { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar`},
+            { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging`},
+            ],
+        },
+    ];
+
+    const teacherNavs = [
+      {
+        section: "Academics",
+        icon: <GraduationCap className="h-5 w-5" />,
+        items: [
+          { title: "Classes & Sections", href: `/teacher/${schoolId}/academics/classes` },
+          { title: "Attendance", href: `/teacher/${schoolId}/academics/attendance` },
+          { title: "Timetable", href: `/teacher/${schoolId}/academics/timetable` },
+          { title: "Exams", href: `/teacher/${schoolId}/academics/exams` },
+          { title: "Reports", href: `/teacher/dashboard/${schoolId}/academics/reports` },
+          { title: "E-learning", href: `/teacher/${schoolId}/academics/elearning` },
+        ],
+      },
+      {
+        section: "Communication",
+        icon: <MessageSquare className="h-5 w-5" />,
+        items: [
+          { title: "Notices", href: `/teacher/${schoolId}/communication/notices`},
+          { title: "Calendar", href: `/teacher/${schoolId}/communication/calendar`},
+          { title: "Messaging", href: `/teacher/${schoolId}/communication/messaging`},
+        ],
+      },
+    ];
     
+    const accountantNavs = [
+        {
+            section: "Finance",
+            icon: <Wallet className="h-5 w-5" />,
+            items: [
+                    { title: "Fee Structure", href: `/accountant/${schoolId}/fee-structure` },
+                    { title: "Fee Collection", href: `/accountant/${schoolId}/fees` },
+                    { title: "Expenses", href: `/accountant/${schoolId}/expenses` },
+            ]
+        },
+        {
+            section: "HR",
+            icon: <Briefcase className="h-5 w-5"/>,
+            items: [
+                { title: "Payroll", href: `/accountant/${schoolId}/payroll` },
+            ]
+        }
+    ];
+    
+    const frontDeskNavs = [
+      { section: "Gate Pass", icon: <Ticket className="h-5 w-5" />, items: [{ title: "Gate Pass", href: `/front-desk/${schoolId}/dashboard` }] }
+    ];
+
     switch(role) {
-        case 'admin':
-            return [allNavs.admin, allNavs.communication];
-        case 'director':
-            return Object.values(allNavs);
-        default: 
-            return Object.values(allNavs);
+        case 'director': return directorNavs;
+        case 'admin': return adminNavs;
+        case 'teacher': return teacherNavs;
+        case 'accountant': return accountantNavs;
+        case 'front-desk': return frontDeskNavs;
+        default: return [];
     }
 }
 
@@ -126,15 +186,8 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
 
     const dashboardLink = useMemo(() => {
         if (role === 'super-admin') return '/super-admin/dashboard';
-        if (role === 'director') return `/director/dashboard/${schoolId}`;
-        if (role === 'teacher') return `/teacher/${schoolId}/dashboard`;
-        if (role === 'admin') return `/admin/${schoolId}/dashboard`;
-        if (role === 'accountant') return `/accountant/${schoolId}/dashboard`;
-        if (role === 'hr') return `/director/dashboard/${schoolId}/hr/dashboard`;
-        if (role === 'principal') return `/director/dashboard/${schoolId}/principal/dashboard`;
-        if (role === 'librarian') return `/director/dashboard/${schoolId}/librarian/dashboard`;
-        if (role === 'parent') return `/director/dashboard/${schoolId}/parent/dashboard`;
-        return `/director/dashboard/${schoolId}`;
+        if (!schoolId) return '/';
+        return `/${role}/${schoolId}/dashboard`;
     }, [role, schoolId]);
 
     const baseNavLinks = [

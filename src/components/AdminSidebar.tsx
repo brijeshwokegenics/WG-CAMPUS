@@ -131,7 +131,7 @@ export function AdminSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarPr
                                     variant="ghost"
                                     size="icon"
                                     className="w-full flex justify-center items-center"
-                                    onClick={toggleSidebar}
+                                     onClick={() => !isCollapsed && toggleSection(section.section)}
                                 >
                                     {section.icon}
                                     <span className="sr-only">{section.section}</span>
