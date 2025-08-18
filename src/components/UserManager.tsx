@@ -35,7 +35,7 @@ import { Alert, AlertDescription } from './ui/alert';
 
 import { createUser, getUsersForSchool, updateUser, deleteUser, updateUserPassword } from '@/app/actions/users';
 
-const UserRole = z.enum(["Teacher", "Accountant", "Librarian", "Admin", "Principal", "HR", "Parent"]);
+const UserRole = z.enum(["Teacher", "Accountant", "Librarian", "Admin", "Principal", "HR", "Parent", "Front Desk"]);
 
 const BaseUserSchema = z.object({
   name: z.string().min(2, 'User name must be at least 2 characters.'),
@@ -257,6 +257,7 @@ function AddUserDialog({ isOpen, setIsOpen, schoolId, onSuccess }: { isOpen: boo
                                     <SelectItem value="Admin">Admin</SelectItem>
                                     <SelectItem value="HR">HR</SelectItem>
                                     <SelectItem value="Parent">Parent</SelectItem>
+                                    <SelectItem value="Front Desk">Front Desk</SelectItem>
                                 </SelectContent>
                             </Select>
                         )} />
@@ -367,6 +368,7 @@ function EditUserDialog({ isOpen, setIsOpen, schoolId, user, onSuccess }: { isOp
                                         <SelectItem value="Admin">Admin</SelectItem>
                                         <SelectItem value="HR">HR</SelectItem>
                                         <SelectItem value="Parent">Parent</SelectItem>
+                                        <SelectItem value="Front Desk">Front Desk</SelectItem>
                                     </SelectContent>
                                 </Select>
                             )} />
