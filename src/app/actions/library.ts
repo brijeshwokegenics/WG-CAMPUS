@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { z } from 'zod';
@@ -117,9 +118,13 @@ export async function getBooks(schoolId: string, categoryId?: string, searchTerm
         constraints.push(where('categoryId', '==', categoryId));
     }
     
-    let booksQuery = query(collection(db, 'libraryBooks'), ...constraints, orderBy('title'));
+    // Removed orderBy('title') to avoid needing a composite index.
+    let booksQuery = query(collection(db, 'libraryBooks'), ...constraints);
     let books = (await getDocs(booksQuery)).docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+    // Sort in-code instead of in the query
+    books.sort((a, b) => (a.title as string).localeCompare(b.title as string));
+    
     if (searchTerm) {
         const lowercasedTerm = searchTerm.toLowerCase();
         // This is a client-side filter. For large datasets, a more advanced search solution like Algolia would be better.
