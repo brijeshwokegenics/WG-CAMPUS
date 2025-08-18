@@ -11,11 +11,13 @@ import { cn } from "@/lib/utils";
 
 
 const getRoleFromPath = (path: string) => {
-    if (path.includes('/teacher/')) return 'teacher';
-    if (path.includes('/admin/')) return 'admin';
-    // e.g. /director/dashboard/[id]/principal/dashboard -> segments[4] is 'principal'
     const pathSegments = path.split('/');
-    const roleSegment = pathSegments[4];
+    // Check for top-level role directories first. This is more specific.
+    if (pathSegments[1] === 'teacher') return 'teacher';
+    if (pathSegments[1] === 'admin') return 'admin';
+    
+    // Fallback for roles nested under director's dashboard
+    const roleSegment = pathSegments.length > 4 ? pathSegments[4] : 'director';
 
     switch(roleSegment) {
         case 'accountant': return 'accountant';

@@ -45,11 +45,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 
 const getRoleFromPath = (path: string) => {
     const pathSegments = path.split('/');
-    // Check for specific role segments first
-    if (path.includes('/teacher/')) return 'teacher';
-    if (path.includes('/admin/')) return 'admin';
+    // Check for top-level role directories first. This is more specific.
+    if (pathSegments[1] === 'teacher') return 'teacher';
+    if (pathSegments[1] === 'admin') return 'admin';
     
-    // Fallback for roles under director's dashboard
+    // Fallback for roles nested under director's dashboard
     const roleSegment = pathSegments.length > 4 ? pathSegments[4] : 'director';
 
     switch(roleSegment) {
@@ -272,6 +272,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
   const dashboardLink = useMemo(() => {
     if (role === 'director') return `/director/dashboard/${schoolId}`;
     if (role === 'admin') return `/admin/${schoolId}/dashboard`;
+    if (role === 'teacher') return `/teacher/${schoolId}/dashboard`;
     return `/director/dashboard/${schoolId}/${role}/dashboard`;
   }, [role, schoolId]);
 
