@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 
 import { updateStudent } from '@/app/actions/academics';
+import { getUsersForSchool } from '@/app/actions/users';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { FileUpload } from './FileUpload';
 import { Checkbox } from './ui/checkbox';
+import { Combobox } from './ui/combobox';
 
 
 const FormSchema = z.object({
@@ -57,14 +59,27 @@ const FormSchema = z.object({
   hostelRequired: z.enum(['Yes', 'No']).optional(),
   feesPaid: z.boolean().default(false).optional(),
   passedFinalExam: z.boolean().default(false).optional(),
+  parentId: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
 type ClassData = { id: string; name: string; sections: string[]; };
+type ParentUser = { id: string; name: string; };
 
 export function StudentForm({ schoolId, studentData, classes }: { schoolId: string, studentData: any, classes: ClassData[] }) {
   const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
+  const [parentUsers, setParentUsers] = useState<ParentUser[]>([]);
   const initialState = { success: false, error: null, message: null };
+
+  useEffect(() => {
+      async function fetchParents() {
+          const res = await getUsersForSchool(schoolId, 'Parent');
+          if (res.success) {
+              setParentUsers(res.data || []);
+          }
+      }
+      fetchParents();
+  }, [schoolId]);
 
   const defaultValues = {
       ...studentData,
@@ -72,6 +87,7 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
       schoolId: schoolId,
       feesPaid: studentData.feesPaid || false,
       passedFinalExam: studentData.passedFinalExam || false,
+      parentId: studentData.parentId || '',
   };
     
   const { register, handleSubmit, control, formState: { errors, isSubmitting }, watch, reset, setValue } = useForm<FormValues>({
@@ -118,6 +134,8 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
     });
     formAction(formData);
   };
+
+  const parentOptions = parentUsers.map(p => ({ label: p.name, value: p.id }));
   
 
   return (
@@ -208,6 +226,29 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
                        Passed Final Exam?
                     </Label>
                 </div>
+            </div>
+        </fieldset>
+        
+        {/* Link Parent */}
+        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4">
+             <legend className="-ml-1 px-1 text-sm font-medium">Link Parent Account</legend>
+             <div className="space-y-2">
+                <Label>Parent Account</Label>
+                <Controller
+                    name="parentId"
+                    control={control}
+                    render={({ field }) => (
+                         <Combobox
+                            options={parentOptions}
+                            value={field.value || ''}
+                            onChange={field.onChange}
+                            placeholder="Select a parent..."
+                            searchPlaceholder="Search for parent..."
+                            emptyPlaceholder="No parent account found."
+                         />
+                    )}
+                 />
+                <p className='text-xs text-muted-foreground'>If the parent is not listed, please create a new user with the "Parent" role in User Management.</p>
             </div>
         </fieldset>
 

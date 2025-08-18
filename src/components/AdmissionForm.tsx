@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { CalendarIcon, Loader2, Mail, MessageSquare, CheckCircle2 } from 'lucide-react';
 
 import { admitStudent, getClassesForSchool } from '@/app/actions/academics';
+import { getUsersForSchool } from '@/app/actions/users';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { FileUpload } from './FileUpload';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
+import { Combobox } from './ui/combobox';
 
 const FormSchema = z.object({
   schoolId: z.string(),
@@ -52,13 +54,16 @@ const FormSchema = z.object({
   previousMarks: z.string().optional(),
   transportRequired: z.enum(['Yes', 'No']).optional(),
   hostelRequired: z.enum(['Yes', 'No']).optional(),
+  parentId: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
 type ClassData = { id: string; name: string; sections: string[]; };
+type ParentUser = { id: string; name: string; };
 
 export function AdmissionForm({ schoolId }: { schoolId: string }) {
   const [classes, setClasses] = useState<ClassData[]>([]);
+  const [parentUsers, setParentUsers] = useState<ParentUser[]>([]);
   const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
   const [newlyAdmittedStudent, setNewlyAdmittedStudent] = useState<any | null>(null);
 
@@ -77,13 +82,19 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
   const [state, formAction] = useFormState(admitStudent, initialState);
 
   useEffect(() => {
-    async function fetchClasses() {
-      const result = await getClassesForSchool(schoolId);
-      if (result.success && result.data) {
-        setClasses(result.data);
+    async function fetchInitialData() {
+      const [classRes, parentRes] = await Promise.all([
+          getClassesForSchool(schoolId),
+          getUsersForSchool(schoolId, 'Parent')
+      ]);
+      if (classRes.success && classRes.data) {
+        setClasses(classRes.data);
+      }
+      if(parentRes.success && parentRes.data) {
+          setParentUsers(parentRes.data);
       }
     }
-    fetchClasses();
+    fetchInitialData();
   }, [schoolId]);
 
   const watchedClassId = watch("classId");
@@ -113,6 +124,8 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
     });
     formAction(formData);
   };
+
+  const parentOptions = parentUsers.map(p => ({ label: p.name, value: p.id }));
   
   if (newlyAdmittedStudent) {
     return (
@@ -199,6 +212,30 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
             {errors.section && <p className="text-sm text-destructive">{errors.section.message}</p>}
           </div>
         </fieldset>
+
+        {/* Link Parent */}
+        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4">
+             <legend className="-ml-1 px-1 text-sm font-medium">Link Parent Account</legend>
+             <div className="space-y-2">
+                <Label>Parent Account (Optional)</Label>
+                <Controller
+                    name="parentId"
+                    control={control}
+                    render={({ field }) => (
+                         <Combobox
+                            options={parentOptions}
+                            value={field.value || ''}
+                            onChange={field.onChange}
+                            placeholder="Select a parent..."
+                            searchPlaceholder="Search for parent..."
+                            emptyPlaceholder="No parent account found."
+                         />
+                    )}
+                 />
+                <p className='text-xs text-muted-foreground'>If the parent is not listed, please create a new user with the "Parent" role in User Management.</p>
+            </div>
+        </fieldset>
+
 
         {/* Student Details */}
         <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-4">

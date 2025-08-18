@@ -50,6 +50,7 @@ const StudentSchema = z.object({
   feesPaid: z.boolean().default(false).optional(),
   passedFinalExam: z.boolean().default(false).optional(),
   currentSession: z.string().optional(),
+  parentId: z.string().optional(),
 });
 
 const UpdateStudentSchema = StudentSchema.omit({schoolId: true});
