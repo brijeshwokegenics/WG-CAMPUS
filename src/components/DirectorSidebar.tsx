@@ -49,6 +49,7 @@ const getRoleFromPath = (path: string) => {
     if (path.includes('/librarian/')) return 'librarian';
     if (path.includes('/principal/')) return 'principal';
     if (path.includes('/admin/')) return 'admin';
+    if (path.includes('/hr/')) return 'hr';
     return 'director'; // Default role
 };
 
@@ -74,6 +75,7 @@ const getNavItems = (role: string, schoolId: string) => {
         section: "HR",
         icon: <Briefcase className="h-5 w-5" />,
         items: [
+          { title: "HR Dashboard", href: `/director/dashboard/${schoolId}/hr/dashboard`, icon: <LayoutDashboard className="h-4 w-4" />},
           { title: "Staff Directory", href: `/director/dashboard/${schoolId}/hr/directory`, icon: <BookUser className="h-4 w-4" /> },
           { title: "Staff Attendance", href: `/director/dashboard/${schoolId}/hr/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
           { title: "Staff Salary", href: `/director/dashboard/${schoolId}/hr/salary`, icon: <Banknote className="h-4 w-4" /> },
@@ -109,6 +111,19 @@ const getNavItems = (role: string, schoolId: string) => {
     ];
 
     switch(role) {
+        case 'hr':
+            return [
+                 {
+                    section: "HR",
+                    icon: <Briefcase className="h-5 w-5" />,
+                    items: [
+                      { title: "Staff Directory", href: `/director/dashboard/${schoolId}/hr/directory`, icon: <BookUser className="h-4 w-4" /> },
+                      { title: "Staff Attendance", href: `/director/dashboard/${schoolId}/hr/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
+                      { title: "Staff Salary", href: `/director/dashboard/${schoolId}/hr/salary`, icon: <Banknote className="h-4 w-4" /> },
+                      { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-4 w-4" /> },
+                    ],
+                  }
+            ];
         case 'teacher':
             return [
                 {

@@ -109,6 +109,9 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
             case 'Principal':
                  redirectPath = `/director/dashboard/${schoolDocId}/principal/dashboard`;
                  break;
+            case 'HR':
+                redirectPath = `/director/dashboard/${schoolDocId}/hr/dashboard`;
+                break;
             // Add other role-based redirects here
             default:
                 // Default to director dashboard for now if role has no specific landing page
