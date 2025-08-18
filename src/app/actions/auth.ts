@@ -98,7 +98,7 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
                 redirectPath = `/director/dashboard/${schoolDocId}/accountant/dashboard`;
                 break;
             case 'Teacher':
-                redirectPath = `/director/dashboard/${schoolDocId}/teacher/dashboard`;
+                redirectPath = `/teacher/${schoolDocId}/dashboard`;
                 break;
              case 'Librarian':
                 redirectPath = `/director/dashboard/${schoolDocId}/librarian/dashboard`;
