@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
-const UserRole = z.enum(["Teacher", "Accountant", "Librarian", "Admin", "Principal", "HR", "Parent", "Front Desk"]);
+const UserRole = z.enum(["Teacher", "Accountant", "Librarian", "Admin", "Principal", "HR", "Parent", "Front Desk", "Non-Teaching Staff"]);
 
 const UserSchema = z.object({
   schoolId: z.string().min(1, 'School ID is required.'),
