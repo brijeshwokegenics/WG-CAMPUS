@@ -45,16 +45,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 
 const getRoleFromPath = (path: string) => {
     const pathSegments = path.split('/');
-    // Check for specific role dashboards under the director layout
-    // e.g., /director/dashboard/[id]/accountant/dashboard
-    if (pathSegments[1] === 'director' && pathSegments.length > 4) {
-        const roleSegment = pathSegments[4];
-        if (['accountant', 'hr', 'principal', 'librarian', 'parent', 'admin'].includes(roleSegment)) {
-            return roleSegment;
+    if (path.startsWith('/director/dashboard/')) {
+        const potentialRoleSegment = pathSegments[4];
+        if (['accountant', 'hr', 'principal', 'librarian', 'parent', 'admin'].includes(potentialRoleSegment)) {
+            return potentialRoleSegment;
         }
     }
     // If it's a director path but not a specific sub-role dashboard, it's the director.
-    if (pathSegments[1] === 'director') {
+    if (path.startsWith('/director')) {
         return 'director';
     }
     return 'director'; // Default for any other case within this layout
@@ -185,6 +183,10 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
   const dashboardLink = useMemo(() => {
     if (role === 'director') return `/director/dashboard/${schoolId}`;
     if (role === 'accountant') return `/director/dashboard/${schoolId}/accountant/dashboard`;
+    if (role === 'hr') return `/director/dashboard/${schoolId}/hr/dashboard`;
+    if (role === 'principal') return `/director/dashboard/${schoolId}/principal/dashboard`;
+    if (role === 'librarian') return `/director/dashboard/${schoolId}/librarian/dashboard`;
+    if (role === 'parent') return `/director/dashboard/${schoolId}/parent/dashboard`;
     return `/director/dashboard/${schoolId}`;
   }, [role, schoolId]);
 
