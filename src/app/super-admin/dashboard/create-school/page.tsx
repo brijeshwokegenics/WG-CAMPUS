@@ -21,15 +21,8 @@ function SubmitButton() {
 }
 
 export default function CreateSchoolPage() {
-  const [schoolId, setSchoolId] = useState("");
   const initialState: State = { message: null, errors: {} };
   const [state, dispatch] = useFormState(createSchool, initialState);
-
-  useEffect(() => {
-    // Generate ID on the client side to avoid hydration mismatch
-    const generatedId = `SCH-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-    setSchoolId(generatedId);
-  }, []);
 
   useEffect(() => {
     if (state?.message === "School created successfully!") {
@@ -127,21 +120,12 @@ export default function CreateSchoolPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" name="phone" type="tel" placeholder="e.g., (555) 123-4567" required aria-invalid={!!state.errors?.phone} />
-                  {state.errors?.phone && (
-                    <p className="text-sm text-destructive">{state.errors.phone.join(", ")}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="school-id">Generated School ID</Label>
-                  <Input id="school-id" name="schoolId" value={schoolId} readOnly className="bg-muted" aria-invalid={!!state.errors?.schoolId} />
-                   {state.errors?.schoolId && (
-                    <p className="text-sm text-destructive">{state.errors.schoolId.join(", ")}</p>
-                  )}
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input id="phone" name="phone" type="tel" placeholder="e.g., (555) 123-4567" required aria-invalid={!!state.errors?.phone} />
+                {state.errors?.phone && (
+                  <p className="text-sm text-destructive">{state.errors.phone.join(", ")}</p>
+                )}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

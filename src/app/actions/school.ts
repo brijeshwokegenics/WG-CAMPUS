@@ -31,7 +31,6 @@ const SchoolSchema = z.object({
   state: z.string().min(2, "State is required."),
   zipcode: z.string().min(3, "Zip code is required."),
   phone: z.string().min(6, "Phone number is required."),
-  schoolId: z.string().min(3, "School ID is required."),
   password: z.string().min(6, "Password must be at least 6 characters."),
   confirmPassword: z.string().min(6, "Confirm Password must be at least 6 characters."),
   schoolLogoUrl: z.string().url().optional().or(z.literal('')),
@@ -44,7 +43,7 @@ const SchoolSchema = z.object({
 });
 
 
-const UpdateSchoolSchema = BaseSchoolSchema;
+const UpdateSchoolSchema = BaseSchoolSchema.omit({schoolId: true});
 
 const UpdatePasswordSchema = z.object({
     password: z.string().min(6, { message: "Password must be at least 6 characters long." }),
@@ -95,9 +94,8 @@ export async function getSchool(id: string) {
 
 export async function createSchool(prevState: State, formData: FormData): Promise<State> {
   const raw = Object.fromEntries(formData.entries());
-  // Manually add 'enabled' since it's not in the form
-  const rawWithDefaults = { ...raw, enabled: true };
-  const parsed = SchoolSchema.safeParse(rawWithDefaults);
+  
+  const parsed = SchoolSchema.safeParse(raw);
 
   if (!parsed.success) {
     const errors: Record<string, string[]> = {};
@@ -114,6 +112,16 @@ export async function createSchool(prevState: State, formData: FormData): Promis
 
   const { confirmPassword, ...schoolData } = parsed.data;
 
+  // Generate School ID on the server
+  const schoolId = `SCH-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+  
+  const dataToSave = {
+      ...schoolData,
+      schoolId: schoolId,
+      enabled: true
+  };
+
+
   try {
     const schoolsRef = collection(db, 'schools');
     const q = query(schoolsRef, where("contactEmail", "==", schoolData.contactEmail));
@@ -123,17 +131,17 @@ export async function createSchool(prevState: State, formData: FormData): Promis
         return { message: 'This email is already registered.', errors: { contactEmail: ["This email is already in use."] } };
     }
 
-    const schoolIdQuery = query(schoolsRef, where("schoolId", "==", schoolData.schoolId));
+    const schoolIdQuery = query(schoolsRef, where("schoolId", "==", dataToSave.schoolId));
     const schoolIdSnapshot = await getDocs(schoolIdQuery);
 
     if (!schoolIdSnapshot.empty) {
       return {
-        message: "A school with this School ID already exists.",
-        errors: { schoolId: ["This School ID is already in use."] },
+        message: "A school with this School ID already exists. Please try again.",
+        errors: { },
       };
     }
 
-    await addDoc(collection(db, 'schools'), schoolData);
+    await addDoc(collection(db, 'schools'), dataToSave);
     
     revalidatePath('/super-admin/dashboard/schools');
     return { message: 'School created successfully!', errors: {} };
