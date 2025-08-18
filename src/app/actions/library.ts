@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, getDoc, runTransaction, serverTimestamp, increment, orderBy, documentId } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, getDoc, runTransaction, serverTimestamp, increment, orderBy, documentId, Query } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { addDays } from 'date-fns';
 
@@ -270,6 +270,28 @@ export async function returnBook(issueId: string, schoolId: string) {
     }
 }
 
+async function getDocsByIds(collectionRef: Query, ids: string[], schoolId: string) {
+    const details: Record<string, any> = {};
+    if (ids.length === 0) return details;
+
+    const queryChunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += 30) {
+        queryChunks.push(ids.slice(i, i + 30));
+    }
+
+    for (const chunk of queryChunks) {
+        if (chunk.length === 0) continue;
+        const q = query(collectionRef, where(documentId(), 'in', chunk));
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => {
+            if (doc.data().schoolId === schoolId) {
+                details[doc.id] = doc.data();
+            }
+        });
+    }
+    return details;
+}
+
 export async function getFullIssueHistory(schoolId: string) {
     const q = query(
         collection(db, 'libraryIssues'),
@@ -309,29 +331,3 @@ export async function getFullIssueHistory(schoolId: string) {
         }
     });
 }
-
-async function getDocsByIds(collectionRef: any, ids: string[], schoolId: string) {
-    const details: Record<string, any> = {};
-    if (ids.length === 0) return details;
-
-    // Firestore 'in' queries are limited to 30 items per query.
-    // We need to chunk the ids array if it's larger than 30.
-    const queryChunks: string[][] = [];
-    for (let i = 0; i < ids.length; i += 30) {
-        queryChunks.push(ids.slice(i, i + 30));
-    }
-
-    for (const chunk of queryChunks) {
-        if (chunk.length === 0) continue;
-        const q = query(collectionRef, where('__name__', 'in', chunk));
-        const snapshot = await getDocs(q);
-        snapshot.forEach(doc => {
-            if (doc.data().schoolId === schoolId) {
-                details[doc.id] = doc.data();
-            }
-        });
-    }
-
-    return details;
-}
-

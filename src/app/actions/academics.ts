@@ -439,7 +439,6 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
     }
 
     try {
-        // If searching by admission ID, do a direct document lookup
         if (admissionId) {
             const studentDoc = await getDoc(doc(db, 'students', admissionId));
             if (studentDoc.exists() && studentDoc.data().schoolId === schoolId) {
@@ -453,54 +452,47 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
                     feesPaid: studentData.feesPaid || false, passedFinalExam: studentData.passedFinalExam || false,
                 }];
             }
-            return []; // Return empty if ID search yields no results
+            return [];
         }
         
-        const studentsRef = collection(db, 'students');
         let queryConstraints: QueryConstraint[] = [where('schoolId', '==', schoolId)];
-
-        // Build the query constraints dynamically
         if (classId) queryConstraints.push(where('classId', '==', classId));
         if (section) queryConstraints.push(where('section', '==', section));
         if (passedOnly) queryConstraints.push(where('passedFinalExam', '==', true));
-        // For search term, Firestore requires specific indexing for partial string matches which is complex.
-        // A common approach for "starts-with" search is to use an inequality.
-        // This is more efficient than fetching all and filtering in code.
         if (searchTerm) {
             const endTerm = searchTerm.slice(0, -1) + String.fromCharCode(searchTerm.charCodeAt(searchTerm.length - 1) + 1);
             queryConstraints.push(where('studentName', '>=', searchTerm));
             queryConstraints.push(where('studentName', '<', endTerm));
         }
         
-        const studentsQuery = query(studentsRef, ...queryConstraints);
+        const studentsQuery = query(collection(db, 'students'), ...queryConstraints);
         const studentsSnapshot = await getDocs(studentsQuery);
 
         if (studentsSnapshot.empty) return [];
 
-        const classCache = new Map();
-        const getClassName = async (cId: string) => {
-            if (!cId) return 'N/A';
-            if (classCache.has(cId)) return classCache.get(cId);
-            const classDoc = await getDoc(doc(db, 'classes', cId));
-            if (classDoc.exists()) {
-                const className = classDoc.data().name;
-                classCache.set(cId, className);
-                return className;
-            }
-            return 'N/A';
-        };
+        const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        const studentsData = await Promise.all(studentsSnapshot.docs.map(async (d) => {
-            const data = d.data();
-            const className = await getClassName(data.classId);
-            return {
-                id: d.id, studentName: data.studentName, className,
-                section: data.section, fatherName: data.fatherName, parentMobile: data.parentMobile,
-                feesPaid: data.feesPaid || false, passedFinalExam: data.passedFinalExam || false,
-            };
+        // Batch fetch class names
+        const classIds = [...new Set(students.map(s => s.classId))];
+        const classMap = new Map<string, string>();
+
+        if (classIds.length > 0) {
+            const classesQuery = query(collection(db, 'classes'), where(documentId(), 'in', classIds));
+            const classesSnapshot = await getDocs(classesQuery);
+            classesSnapshot.forEach(doc => classMap.set(doc.id, doc.data().name));
+        }
+
+        return students.map(s => ({
+            id: s.id,
+            studentName: s.studentName,
+            className: classMap.get(s.classId) || 'N/A',
+            section: s.section,
+            fatherName: s.fatherName,
+            parentMobile: s.parentMobile,
+            feesPaid: s.feesPaid || false,
+            passedFinalExam: s.passedFinalExam || false,
         }));
-        
-        return studentsData;
+
     } catch (error) {
         console.error("Error fetching students:", error);
         return [];
