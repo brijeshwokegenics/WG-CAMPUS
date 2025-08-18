@@ -87,6 +87,7 @@ export async function createExpense(prevState: any, formData: FormData) {
     const rawData = {
         ...Object.fromEntries(formData),
         date: new Date(formData.get('date') as string),
+        amount: Number(formData.get('amount')),
     };
     const parsed = ExpenseSchema.safeParse(rawData);
     if (!parsed.success) return { success: false, error: 'Invalid data.', details: parsed.error.flatten() };
