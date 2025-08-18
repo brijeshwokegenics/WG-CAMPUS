@@ -216,15 +216,14 @@ export async function generatePayrollForMonth(prevState: any, formData: FormData
         const salaries = salariesRes.data;
 
         // 3. Get all attendance records for the month
-        const startDate = startOfMonth(new Date(year, monthIndex - 1));
-        const endDate = endOfMonth(new Date(year, monthIndex - 1));
-        const monthDates = eachDayOfInterval({ start: startDate, end: endDate });
-        
-        const attendancePromises = monthDates.map(date => 
-            getStaffAttendanceForDate({ schoolId, date: format(date, 'yyyy-MM-dd') })
-        );
-        const attendanceResults = await Promise.all(attendancePromises);
-        const monthlyAttendance = attendanceResults.map(res => res.data).filter(Boolean);
+        const attendanceRes = await getMonthlyStaffAttendance({ schoolId, month });
+        if (!attendanceRes.success) throw new Error("Could not fetch attendance.");
+        const monthlyAttendance = attendanceRes.data?.attendance || [];
+
+        const monthDates = eachDayOfInterval({ 
+            start: startOfMonth(new Date(year, monthIndex - 1)), 
+            end: endOfMonth(new Date(year, monthIndex - 1)) 
+        });
 
         // 4. Process payroll for each user
         const payrollData = users.map(user => {
@@ -238,8 +237,17 @@ export async function generatePayrollForMonth(prevState: any, formData: FormData
             }
 
             const totalDays = monthDates.length;
-            const presentDays = monthlyAttendance.filter(att => att && att[user.id] === 'Present').length;
-            const leaveDays = monthlyAttendance.filter(att => att && att[user.id] === 'Leave').length;
+            const presentDays = monthDates.filter(date => {
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const record = monthlyAttendance.find((att:any) => att.date === dateStr);
+                return record && record.attendance[user.id] === 'Present';
+            }).length;
+             const leaveDays = monthDates.filter(date => {
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const record = monthlyAttendance.find((att:any) => att.date === dateStr);
+                return record && record.attendance[user.id] === 'Leave';
+            }).length;
+            
             const absentDays = totalDays - presentDays - leaveDays;
             
             const payableDays = presentDays + leaveDays; // Assumes leaves are paid
@@ -289,7 +297,7 @@ export async function generatePayrollForMonth(prevState: any, formData: FormData
         });
 
         revalidatePath(`/director/dashboard/${schoolId}/hr/payroll`);
-        return { success: true, message: `Payroll for ${format(startDate, 'MMMM yyyy')} generated successfully.` };
+        return { success: true, message: `Payroll for ${format(startOfMonth(new Date(year, monthIndex-1)), 'MMMM yyyy')} generated successfully.` };
 
     } catch (error) {
         console.error("Error generating payroll:", error);

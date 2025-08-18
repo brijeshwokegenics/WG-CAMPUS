@@ -431,6 +431,21 @@ export async function admitStudent(prevState: any, formData: FormData) {
   }
 }
 
+// Helper function to fetch docs in batches
+async function getDocsInBatches(ids: string[], collectionName: string) {
+    if (ids.length === 0) return new Map();
+    const docMap = new Map();
+    const idChunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += 30) {
+        idChunks.push(ids.slice(i, i + 30));
+    }
+    for (const chunk of idChunks) {
+        const q = query(collection(db, collectionName), where(documentId(), 'in', chunk));
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => docMap.set(doc.id, doc.data()));
+    }
+    return docMap;
+}
 
 export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, classId, section, passedOnly }: { schoolId: string, searchTerm?: string, admissionId?: string, classId?: string, section?: string, passedOnly?: boolean }) {
     if (!schoolId) {
@@ -474,18 +489,12 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
 
         // Batch fetch class names
         const classIds = [...new Set(students.map(s => s.classId))];
-        const classMap = new Map<string, string>();
-
-        if (classIds.length > 0) {
-            const classesQuery = query(collection(db, 'classes'), where(documentId(), 'in', classIds));
-            const classesSnapshot = await getDocs(classesQuery);
-            classesSnapshot.forEach(doc => classMap.set(doc.id, doc.data().name));
-        }
+        const classMap = await getDocsInBatches(classIds, 'classes');
 
         return students.map(s => ({
             id: s.id,
             studentName: s.studentName,
-            className: classMap.get(s.classId) || 'N/A',
+            className: classMap.get(s.classId)?.name || 'N/A',
             section: s.section,
             fatherName: s.fatherName,
             parentMobile: s.parentMobile,
