@@ -32,9 +32,11 @@ export async function createBookCategory(prevState: any, formData: FormData) {
 }
 
 export async function getBookCategories(schoolId: string) {
-  const q = query(collection(db, 'libraryCategories'), where('schoolId', '==', schoolId), orderBy('name'));
+  const q = query(collection(db, 'libraryCategories'), where('schoolId', '==', schoolId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  categories.sort((a,b) => (a.name as string).localeCompare(b.name as string));
+  return categories;
 }
 
 export async function updateBookCategory(prevState: any, formData: FormData) {
@@ -332,3 +334,4 @@ async function getDocsByIds(collectionRef: any, ids: string[], schoolId: string)
 
     return details;
 }
+
