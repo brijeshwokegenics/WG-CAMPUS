@@ -96,25 +96,6 @@ const directorSidebarNavItems = (schoolId: string) => [
     ],
   },
   {
-    section: "Teacher Menu",
-    icon: <PersonStanding className="h-5 w-5" />,
-    items: [
-      { title: "Teacher Dashboard", href: `/director/dashboard/${schoolId}/teacher/dashboard`, icon: <LayoutDashboard className="h-4 w-4" /> },
-      { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
-      { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable`, icon: <Calendar className="h-4 w-4" /> },
-      { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning`, icon: <Book className="h-4 w-4" /> },
-    ]
-  },
-  {
-    section: "Accountant Menu",
-    icon: <PersonStanding className="h-5 w-5" />,
-    items: [
-      { title: "Accountant Dashboard", href: `/director/dashboard/${schoolId}/accountant/dashboard`, icon: <LayoutDashboard className="h-4 w-4" /> },
-      { title: "Fee Collection", href: `/director/dashboard/${schoolId}/admin/fees`, icon: <Wallet className="h-4 w-4" /> },
-      { title: "Payroll Processing", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-4 w-4" /> },
-    ],
-  },
-  {
     section: "Parent Menu",
     icon: <Users className="h-5 w-5" />,
     items: [
@@ -137,6 +118,30 @@ const directorSidebarNavItems = (schoolId: string) => [
   },
 ];
 
+const teacherSidebarNavItems = (schoolId: string) => [
+    {
+        section: "Academics",
+        icon: <GraduationCap className="h-5 w-5" />,
+        items: [
+            { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes`, icon: <Presentation className="h-4 w-4" /> },
+            { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
+            { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable`, icon: <Calendar className="h-4 w-4" /> },
+            { title: "Exams", href: `/director/dashboard/${schoolId}/academics/exams`, icon: <FileText className="h-4 w-4" /> },
+            { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports`, icon: <FileText className="h-4 w-4" /> },
+            { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning`, icon: <Book className="h-4 w-4" /> },
+        ]
+    },
+    {
+        section: "Communication",
+        icon: <MessageSquare className="h-5 w-5" />,
+        items: [
+            { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices`, icon: <ClipboardList className="h-4 w-4" /> },
+            { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar`, icon: <Calendar className="h-4 w-4" /> },
+            { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging`, icon: <MessageSquare className="h-4 w-4" /> },
+        ]
+    }
+];
+
 
 type SidebarProps = {
   schoolId: string;
@@ -146,9 +151,25 @@ type SidebarProps = {
 
 export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'HR': true, 'Administration': true});
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'HR': true, 'Administration': true, 'Communication': true});
 
-  const navItems = useMemo(() => directorSidebarNavItems(schoolId), [schoolId]);
+  const getRoleFromPath = (path: string) => {
+    if (path.includes('/teacher/')) return 'teacher';
+    if (path.includes('/accountant/')) return 'accountant';
+    if (path.includes('/parent/')) return 'parent';
+    if (path.includes('/librarian/')) return 'librarian';
+    if (path.includes('/admin/')) return 'admin';
+    return 'director'; // Default role
+  };
+
+  const role = getRoleFromPath(pathname);
+
+  const navItems = useMemo(() => {
+    if(role === 'teacher') return teacherSidebarNavItems(schoolId);
+    // Add other role checks here
+    return directorSidebarNavItems(schoolId);
+  }, [schoolId, role]);
+
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -176,13 +197,19 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
     </TooltipProvider>
   );
 
+  const dashboardLink = useMemo(() => {
+    if (role === 'director') return `/director/dashboard/${schoolId}`;
+    return `/director/dashboard/${schoolId}/${role}/dashboard`;
+  }, [role, schoolId]);
+
+
   return (
     <div className={cn(
         "hidden md:flex flex-col bg-card border-r transition-all duration-300",
         isCollapsed ? 'w-[72px]' : 'w-64'
       )}>
       <div className={cn("flex h-16 items-center border-b", isCollapsed ? "justify-center px-2" : "justify-between px-4")}>
-        <Link href={`/director/dashboard/${schoolId}`} className="flex items-center gap-2 font-semibold">
+        <Link href={dashboardLink} className="flex items-center gap-2 font-semibold">
           <School className="h-6 w-6 text-primary" />
           <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>WG Campus</span>
         </Link>
@@ -192,7 +219,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
         </Button>
       </div>
       <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
-        <NavLink item={{ title: "Dashboard", href: `/director/dashboard/${schoolId}`, icon: <LayoutDashboard className="h-5 w-5" /> }} />
+        <NavLink item={{ title: "Dashboard", href: dashboardLink, icon: <LayoutDashboard className="h-5 w-5" /> }} />
         
         {navItems.map((section) => (
           <div key={section.section}>

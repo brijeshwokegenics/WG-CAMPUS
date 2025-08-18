@@ -62,25 +62,6 @@ const directorSidebarNavItems = (schoolId: string) => [
       { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging` },
     ],
   },
-    {
-    section: "Teacher Menu",
-    icon: <PersonStanding className="h-5 w-5" />,
-    items: [
-      { title: "Teacher Dashboard", href: `/director/dashboard/${schoolId}/teacher/dashboard` },
-      { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance` },
-      { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable` },
-      { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning` },
-    ]
-  },
-  {
-    section: "Accountant Menu",
-    icon: <PersonStanding className="h-5 w-5" />,
-    items: [
-      { title: "Accountant Dashboard", href: `/director/dashboard/${schoolId}/accountant/dashboard` },
-      { title: "Fee Collection", href: `/director/dashboard/${schoolId}/admin/fees` },
-      { title: "Payroll Processing", href: `/director/dashboard/${schoolId}/hr/payroll` },
-    ],
-  },
   {
     section: "Parent Menu",
     icon: <Users className="h-5 w-5" />,
@@ -104,6 +85,30 @@ const directorSidebarNavItems = (schoolId: string) => [
   },
 ];
 
+const teacherSidebarNavItems = (schoolId: string) => [
+    {
+        section: "Academics",
+        icon: <GraduationCap className="h-5 w-5" />,
+        items: [
+            { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes` },
+            { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance` },
+            { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable` },
+            { title: "Exams", href: `/director/dashboard/${schoolId}/academics/exams` },
+            { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports` },
+            { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning` },
+        ]
+    },
+    {
+        section: "Communication",
+        icon: <MessageSquare className="h-5 w-5" />,
+        items: [
+            { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices` },
+            { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar` },
+            { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging` },
+        ]
+    }
+];
+
 
 type MobileSidebarProps = {
   schoolId?: string;
@@ -115,19 +120,41 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
     const [open, setOpen] = useState(false);
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
-    const directorNavItems = useMemo(() => (schoolId ? directorSidebarNavItems(schoolId) : []), [schoolId]);
+    const getRoleFromPath = (path: string) => {
+        if (path.includes('/teacher/')) return 'teacher';
+        if (path.includes('/accountant/')) return 'accountant';
+        if (path.includes('/parent/')) return 'parent';
+        if (path.includes('/librarian/')) return 'librarian';
+        if (path.includes('/admin/')) return 'admin';
+        return 'director'; // Default role
+    };
+
+    const role = schoolId ? getRoleFromPath(pathname) : 'super-admin';
+    
+    const directorNavItems = useMemo(() => {
+        if (!schoolId) return [];
+        if (role === 'teacher') return teacherSidebarNavItems(schoolId);
+        // Add other role checks here
+        return directorSidebarNavItems(schoolId);
+    }, [schoolId, role]);
 
     const toggleSection = (section: string) => {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
 
+    const dashboardLink = useMemo(() => {
+        if (role === 'super-admin') return '/super-admin/dashboard';
+        if (role === 'director') return `/director/dashboard/${schoolId}`;
+        return `/director/dashboard/${schoolId}/${role}/dashboard`;
+    }, [role, schoolId]);
+
     const baseNavLinks = [
-        { title: 'Dashboard', href: schoolId ? `/director/dashboard/${schoolId}` : '/super-admin/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+        { title: 'Dashboard', href: dashboardLink, icon: <LayoutDashboard className="h-5 w-5" /> },
     ];
     
     // Determine which set of nav items to use
     const mainNavItems = schoolId ? directorNavItems : superAdminNavItems || [];
-    const isDirector = !!schoolId;
+    const isDirectorOrSuperAdmin = !!schoolId;
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
@@ -162,7 +189,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
                                 {item.title}
                             </Link>
                         ))}
-                         {isDirector ? mainNavItems.map((section, index) => (
+                         {isDirectorOrSuperAdmin ? mainNavItems.map((section, index) => (
                             <div key={index} className="space-y-1">
                                 <Button
                                     variant="ghost"
