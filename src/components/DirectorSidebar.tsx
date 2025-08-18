@@ -47,8 +47,8 @@ const getRoleFromPath = (path: string) => {
     if (path.includes('/accountant/')) return 'accountant';
     if (path.includes('/parent/')) return 'parent';
     if (path.includes('/librarian/')) return 'librarian';
-    if (path.includes('/admin/')) return 'admin';
     if (path.includes('/principal/')) return 'principal';
+    if (path.includes('/admin/')) return 'admin';
     return 'director'; // Default role
 };
 
@@ -115,21 +115,21 @@ const getNavItems = (role: string, schoolId: string) => {
                     section: "Academics",
                     icon: <GraduationCap className="h-5 w-5" />,
                     items: [
-                        { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes`, icon: <Presentation className="h-4 w-4" /> },
-                        { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
-                        { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable`, icon: <Calendar className="h-4 w-4" /> },
-                        { title: "Exams", href: `/director/dashboard/${schoolId}/academics/exams`, icon: <FileText className="h-4 w-4" /> },
-                        { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports`, icon: <FileText className="h-4 w-4" /> },
-                        { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning`, icon: <Book className="h-4 w-4" /> },
+                        { title: "Classes & Sections", href: `/teacher/${schoolId}/academics/classes`, icon: <Presentation className="h-4 w-4" /> },
+                        { title: "Attendance", href: `/teacher/${schoolId}/academics/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
+                        { title: "Timetable", href: `/teacher/${schoolId}/academics/timetable`, icon: <Calendar className="h-4 w-4" /> },
+                        { title: "Exams", href: `/teacher/${schoolId}/academics/exams`, icon: <FileText className="h-4 w-4" /> },
+                        { title: "Reports", href: `/teacher/${schoolId}/academics/reports`, icon: <FileText className="h-4 w-4" /> },
+                        { title: "E-learning", href: `/teacher/${schoolId}/academics/elearning`, icon: <Book className="h-4 w-4" /> },
                     ]
                 },
                 {
                     section: "Communication",
                     icon: <MessageSquare className="h-5 w-5" />,
                     items: [
-                        { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices`, icon: <ClipboardList className="h-4 w-4" /> },
-                        { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar`, icon: <Calendar className="h-4 w-4" /> },
-                        { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging`, icon: <MessageSquare className="h-4 w-4" /> },
+                        { title: "Notices", href: `/teacher/${schoolId}/communication/notices`, icon: <ClipboardList className="h-4 w-4" /> },
+                        { title: "Calendar", href: `/teacher/${schoolId}/communication/calendar`, icon: <Calendar className="h-4 w-4" /> },
+                        { title: "Messaging", href: `/teacher/${schoolId}/communication/messaging`, icon: <MessageSquare className="h-4 w-4" /> },
                     ]
                 }
             ];

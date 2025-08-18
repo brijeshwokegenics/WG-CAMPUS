@@ -15,8 +15,8 @@ const getRoleFromPath = (path: string) => {
     if (path.includes('/accountant/')) return 'accountant';
     if (path.includes('/parent/')) return 'parent';
     if (path.includes('/librarian/')) return 'librarian';
-    if (path.includes('/admin/')) return 'admin';
     if (path.includes('/principal/')) return 'principal';
+    if (path.includes('/admin/')) return 'admin';
     return 'director'; // Default role
 };
 
@@ -83,21 +83,21 @@ const getNavItems = (role: string, schoolId: string) => {
                     section: "Academics",
                     icon: <GraduationCap className="h-5 w-5" />,
                     items: [
-                        { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes` },
-                        { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance` },
-                        { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable` },
-                        { title: "Exams", href: `/director/dashboard/${schoolId}/academics/exams` },
-                        { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports` },
-                        { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning` },
+                        { title: "Classes & Sections", href: `/teacher/${schoolId}/academics/classes` },
+                        { title: "Attendance", href: `/teacher/${schoolId}/academics/attendance` },
+                        { title: "Timetable", href: `/teacher/${schoolId}/academics/timetable` },
+                        { title: "Exams", href: `/teacher/${schoolId}/academics/exams` },
+                        { title: "Reports", href: `/teacher/${schoolId}/academics/reports` },
+                        { title: "E-learning", href: `/teacher/${schoolId}/academics/elearning` },
                     ]
                 },
                 {
                     section: "Communication",
                     icon: <MessageSquare className="h-5 w-5" />,
                     items: [
-                        { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices` },
-                        { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar` },
-                        { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging` },
+                        { title: "Notices", href: `/teacher/${schoolId}/communication/notices` },
+                        { title: "Calendar", href: `/teacher/${schoolId}/communication/calendar` },
+                        { title: "Messaging", href: `/teacher/${schoolId}/communication/messaging` },
                     ]
                 }
             ];
@@ -188,6 +188,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
     const dashboardLink = useMemo(() => {
         if (role === 'super-admin') return '/super-admin/dashboard';
         if (role === 'director' || role === 'admin') return `/director/dashboard/${schoolId}`;
+        if (role === 'teacher') return `/teacher/${schoolId}/dashboard`;
         return `/director/dashboard/${schoolId}/${role}/dashboard`;
     }, [role, schoolId]);
 
