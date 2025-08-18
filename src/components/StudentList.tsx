@@ -24,7 +24,7 @@ import { deleteStudent, getStudentsForSchool } from '@/app/actions/academics';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Skeleton } from './ui/skeleton';
 
 type StudentListProps = {
     schoolId: string;
@@ -37,16 +37,13 @@ type StudentListProps = {
 export function StudentList({ schoolId, name, admissionId, classId, section }: StudentListProps) {
     const [students, setStudents] = useState<any[]>([]);
     const [isDeleting, startDeleteTransition] = useTransition();
-    const [isLoading, startFetchTransition] = useTransition();
 
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const fetchStudents = async () => {
-        startFetchTransition(async () => {
-             const studentData = await getStudentsForSchool({ schoolId, searchTerm: name, admissionId, classId, section });
-            setStudents(studentData);
-        });
+        const studentData = await getStudentsForSchool({ schoolId, searchTerm: name, admissionId, classId, section });
+        setStudents(studentData);
     };
 
     useEffect(() => {
@@ -98,9 +95,7 @@ export function StudentList({ schoolId, name, admissionId, classId, section }: S
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {isLoading ? (
-                    <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin"/></TableCell></TableRow>
-                ) : paginatedStudents.length > 0 ? (
+                {paginatedStudents.length > 0 ? (
                 paginatedStudents.map((student) => (
                     <TableRow key={student.id}>
                     <TableCell className="font-mono text-xs">{student.id}</TableCell>
