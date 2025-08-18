@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or, documentId, orderBy,getCountFromServer } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or, documentId, orderBy,getCountFromServer, limit, startAfter, DocumentSnapshot, endBefore } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 
@@ -447,30 +447,30 @@ async function getDocsInBatches(ids: string[], collectionName: string) {
     return docMap;
 }
 
-export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, classId, section, passedOnly }: { schoolId: string, searchTerm?: string, admissionId?: string, classId?: string, section?: string, passedOnly?: boolean }) {
+export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, classId, section, passedOnly, page = 1, rowsPerPage = 10 }: { schoolId: string, searchTerm?: string, admissionId?: string, classId?: string, section?: string, passedOnly?: boolean, page?: number, rowsPerPage?: number }) {
     if (!schoolId) {
-        console.error("School ID is required.");
-        return [];
+        return { success: false, error: "School ID is required.", students: [], total: 0 };
     }
 
     try {
+        let queryConstraints: QueryConstraint[] = [where('schoolId', '==', schoolId)];
+
         if (admissionId) {
-            const studentDoc = await getDoc(doc(db, 'students', admissionId));
+             const studentDoc = await getDoc(doc(db, 'students', admissionId));
             if (studentDoc.exists() && studentDoc.data().schoolId === schoolId) {
                 const studentData = studentDoc.data();
                 const classDoc = await getDoc(doc(db, 'classes', studentData.classId));
                 const className = classDoc.exists() ? classDoc.data().name : 'N/A';
-                return [{
+                return { success: true, students: [{
                     id: studentDoc.id, studentName: studentData.studentName,
                     className: className, section: studentData.section,
                     fatherName: studentData.fatherName, parentMobile: studentData.parentMobile,
                     feesPaid: studentData.feesPaid || false, passedFinalExam: studentData.passedFinalExam || false,
-                }];
+                }], total: 1};
             }
-            return [];
+             return { success: true, students: [], total: 0 };
         }
         
-        let queryConstraints: QueryConstraint[] = [where('schoolId', '==', schoolId)];
         if (classId) queryConstraints.push(where('classId', '==', classId));
         if (section) queryConstraints.push(where('section', '==', section));
         if (passedOnly) queryConstraints.push(where('passedFinalExam', '==', true));
@@ -481,17 +481,29 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
         }
         
         const studentsQuery = query(collection(db, 'students'), ...queryConstraints);
-        const studentsSnapshot = await getDocs(studentsQuery);
+        const totalSnapshot = await getCountFromServer(studentsQuery);
+        const total = totalSnapshot.data().count;
 
-        if (studentsSnapshot.empty) return [];
+        let paginatedQuery = query(studentsQuery, orderBy('studentName'), limit(rowsPerPage));
+        
+        if(page > 1) {
+            const lastVisibleQuery = query(studentsQuery, orderBy('studentName'), limit((page - 1) * rowsPerPage));
+            const lastVisibleSnapshot = await getDocs(lastVisibleQuery);
+            const lastVisible = lastVisibleSnapshot.docs[lastVisibleSnapshot.docs.length - 1];
+            if(lastVisible) {
+                paginatedQuery = query(studentsQuery, orderBy('studentName'), startAfter(lastVisible), limit(rowsPerPage));
+            }
+        }
+
+        const studentsSnapshot = await getDocs(paginatedQuery);
+        if (studentsSnapshot.empty) return { success: true, students: [], total: 0 };
 
         const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // Batch fetch class names
         const classIds = [...new Set(students.map(s => s.classId))];
         const classMap = await getDocsInBatches(classIds, 'classes');
 
-        return students.map(s => ({
+        const studentData = students.map(s => ({
             id: s.id,
             studentName: s.studentName,
             className: classMap.get(s.classId)?.name || 'N/A',
@@ -502,9 +514,11 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
             passedFinalExam: s.passedFinalExam || false,
         }));
 
+        return { success: true, students: studentData, total };
+
     } catch (error) {
         console.error("Error fetching students:", error);
-        return [];
+        return { success: false, error: "Failed to fetch students.", students: [], total: 0 };
     }
 }
 
@@ -734,10 +748,12 @@ export async function getMonthlyAttendance({ schoolId, classId, section, month }
         const endDate = endOfMonth(new Date(year, monthIndex - 1));
 
         // Get all students for the class and section first
-        const students = await getStudentsForSchool({ schoolId, classId, section });
-        if (students.length === 0) {
+        const studentResult = await getStudentsForSchool({ schoolId, classId, section });
+        if (!studentResult.success || studentResult.students.length === 0) {
             return { success: true, data: { students: [], attendance: [] } };
         }
+        const students = studentResult.students;
+
 
         const attendanceRef = collection(db, 'attendance');
         // Firestore limitation: Cannot have inequality filters on multiple fields.
