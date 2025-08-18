@@ -16,6 +16,15 @@ import {
   Users,
   Calendar,
   ClipboardList,
+  Banknote,
+  Wallet,
+  Warehouse,
+  Bus,
+  Library,
+  Hotel,
+  Ticket,
+  Info,
+  Webhook,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -28,6 +37,15 @@ const getAdminNavItems = (schoolId: string) => {
         icon: <Building className="h-5 w-5" />,
         items: [
           { title: "Parent Management", href: `/admin/${schoolId}/users`, icon: <UserCog className="h-4 w-4" /> },
+          { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure`, icon: <Banknote className="h-4 w-4" /> },
+          { title: "Fees Management", href: `/director/dashboard/${schoolId}/admin/fees`, icon: <Wallet className="h-4 w-4" /> },
+          { title: "Inventory", href: `/director/dashboard/${schoolId}/admin/inventory`, icon: <Warehouse className="h-4 w-4" /> },
+          { title: "Transport", href: `/director/dashboard/${schoolId}/admin/transport`, icon: <Bus className="h-4 w-4" /> },
+          { title: "Library", href: `/director/dashboard/${schoolId}/admin/library`, icon: <Library className="h-4 w-4" /> },
+          { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel`, icon: <Hotel className="h-4 w-4" /> },
+          { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass`, icon: <Ticket className="h-4 w-4" /> },
+          { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info`, icon: <Info className="h-4 w-4" /> },
+          { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations`, icon: <Webhook className="h-4 w-4" /> },
           { title: "Student Directory", href: `/director/dashboard/${schoolId}/academics/students`, icon: <Users className="h-4 w-4" /> },
         ],
       },

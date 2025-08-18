@@ -12,9 +12,8 @@ import { cn } from "@/lib/utils";
 
 const getRoleFromPath = (path: string) => {
     const pathSegments = path.split('/');
-    // Check for top-level role directories first. This is more specific.
-    if (pathSegments[1] === 'teacher') return 'teacher';
-    if (pathSegments[1] === 'admin') return 'admin';
+    if (path.startsWith('/teacher')) return 'teacher';
+    if (path.startsWith('/admin')) return 'admin';
     
     // Fallback for roles nested under director's dashboard
     const roleSegment = pathSegments.length > 4 ? pathSegments[4] : 'director';
@@ -93,9 +92,28 @@ const getNavItems = (role: string, schoolId: string) => {
                     section: "Administration",
                     icon: <Building className="h-5 w-5" />,
                     items: [
-                      { title: "User Management", href: `/admin/${schoolId}/users` },
+                      { title: "Parent Management", href: `/admin/${schoolId}/users` },
+                      { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure` },
+                      { title: "Fees Management", href: `/director/dashboard/${schoolId}/admin/fees` },
+                      { title: "Inventory", href: `/director/dashboard/${schoolId}/admin/inventory` },
+                      { title: "Transport", href: `/director/dashboard/${schoolId}/admin/transport` },
+                      { title: "Library", href: `/director/dashboard/${schoolId}/admin/library` },
+                      { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel` },
+                      { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass` },
+                      { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info` },
+                      { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations` },
+                      { title: "Student Directory", href: `/director/dashboard/${schoolId}/academics/students` },
                     ],
-                 }
+                 },
+                 {
+                    section: "Communication",
+                    icon: <MessageSquare className="h-5 w-5" />,
+                    items: [
+                      { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices` },
+                      { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar` },
+                      { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging` },
+                    ],
+                  },
             ];
         case 'hr':
             return [
@@ -205,7 +223,7 @@ type MobileSidebarProps = {
 export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: MobileSidebarProps) {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
-    const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+    const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Administration': true, 'Communication': true});
 
     const role = schoolId ? getRoleFromPath(pathname) : 'super-admin';
     
