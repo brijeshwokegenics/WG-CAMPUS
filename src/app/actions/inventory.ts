@@ -198,11 +198,13 @@ export async function getInventoryItems(schoolId: string, categoryId?: string) {
     if (categoryId) {
         constraints.push(where('categoryId', '==', categoryId));
     }
-    constraints.push(orderBy('name'));
     
     const q = query(collection(db, 'inventoryItems'), ...constraints);
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Sort in-code
+    items.sort((a,b) => (a.name as string).localeCompare(b.name as string));
+    return items;
 }
 
 
