@@ -117,52 +117,54 @@ export function AdminSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarPr
           <span className="sr-only">Toggle sidebar</span>
         </Button>
       </div>
-      <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
-        <NavLink item={{ title: "Dashboard", href: dashboardLink, icon: <LayoutDashboard className="h-5 w-5" /> }} />
-        
-        {navItems.map((section) => (
-          <div key={section.section}>
-            {isCollapsed ? (
-                <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                           <Button
-                                variant="ghost"
-                                size="icon"
-                                className="w-full flex justify-center items-center"
-                                onClick={toggleSidebar}
-                            >
-                                {section.icon}
-                                <span className="sr-only">{section.section}</span>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="right">{section.section}</TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            ) : (
-              <Button
-                variant="ghost"
-                className="w-full justify-between items-center px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
-                onClick={() => toggleSection(section.section)}
-              >
-                <div className="flex items-center gap-3">
-                    {section.icon}
-                    <span>{section.section}</span>
-                </div>
-                <ChevronDown className={cn("h-5 w-5 transition-transform", openSections[section.section] ? 'rotate-180' : '')} />
-              </Button>
-            )}
+       <div className="flex-1 overflow-y-auto">
+            <nav className="px-2 py-4 space-y-2">
+                <NavLink item={{ title: "Dashboard", href: dashboardLink, icon: <LayoutDashboard className="h-5 w-5" /> }} />
+                
+                {navItems.map((section) => (
+                <div key={section.section}>
+                    {isCollapsed ? (
+                        <TooltipProvider delayDuration={0}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="w-full flex justify-center items-center"
+                                    onClick={toggleSidebar}
+                                >
+                                    {section.icon}
+                                    <span className="sr-only">{section.section}</span>
+                                </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="right">{section.section}</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    ) : (
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-between items-center px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+                        onClick={() => toggleSection(section.section)}
+                    >
+                        <div className="flex items-center gap-3">
+                            {section.icon}
+                            <span>{section.section}</span>
+                        </div>
+                        <ChevronDown className={cn("h-5 w-5 transition-transform", openSections[section.section] ? 'rotate-180' : '')} />
+                    </Button>
+                    )}
 
-            {!isCollapsed && openSections[section.section] && (
-              <div className="pl-4 mt-1 space-y-1 border-l-2 border-muted ml-4">
-                {section.items.map((item) => (
-                    <NavLink key={item.href} item={item} isSubItem={true} />
+                    {!isCollapsed && openSections[section.section] && (
+                    <div className="pl-4 mt-1 space-y-1 border-l-2 border-muted ml-4">
+                        {section.items.map((item) => (
+                            <NavLink key={item.href} item={item} isSubItem={true} />
+                        ))}
+                    </div>
+                    )}
+                </div>
                 ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </nav>
+            </nav>
+      </div>
     </div>
   );
 }

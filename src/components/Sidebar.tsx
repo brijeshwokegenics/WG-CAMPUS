@@ -80,17 +80,19 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
           <span className="sr-only">Toggle sidebar</span>
         </Button>
       </div>
-      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-        {sidebarNavItems.map((item, index) =>
-          item.isSection ? (
-            <h2 key={index} className={cn("mb-2 mt-4 px-3 text-lg font-semibold tracking-tight", isCollapsed && "hidden")}>
-                {item.title}
-            </h2>
-          ) : (
-            <NavLink key={item.href} item={item} />
-          )
-        )}
-      </nav>
+      <div className="flex-1 overflow-y-auto">
+        <nav className="px-4 py-4 space-y-1">
+            {sidebarNavItems.map((item, index) =>
+            item.isSection ? (
+                <h2 key={index} className={cn("mb-2 mt-4 px-3 text-lg font-semibold tracking-tight", isCollapsed && "hidden")}>
+                    {item.title}
+                </h2>
+            ) : (
+                <NavLink key={item.href} item={item} />
+            )
+            )}
+        </nav>
+      </div>
       <div className="mt-auto p-4 space-y-4 border-t">
         <ThemeToggle isCollapsed={isCollapsed}/>
          <TooltipProvider delayDuration={0}>

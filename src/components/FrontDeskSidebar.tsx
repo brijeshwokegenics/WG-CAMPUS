@@ -62,10 +62,12 @@ export function FrontDeskSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideb
           <span className="sr-only">Toggle sidebar</span>
         </Button>
       </div>
-      <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
-        <NavLink item={{ title: "Dashboard", href: dashboardLink, icon: <LayoutDashboard className="h-5 w-5" /> }} />
-        <NavLink item={{ title: "Gate Pass", href: dashboardLink, icon: <Ticket className="h-5 w-5" /> }} />
-      </nav>
+       <div className="flex-1 overflow-y-auto">
+            <nav className="px-2 py-4 space-y-2">
+                <NavLink item={{ title: "Dashboard", href: dashboardLink, icon: <LayoutDashboard className="h-5 w-5" /> }} />
+                <NavLink item={{ title: "Gate Pass", href: dashboardLink, icon: <Ticket className="h-5 w-5" /> }} />
+            </nav>
+      </div>
     </div>
   );
 }
