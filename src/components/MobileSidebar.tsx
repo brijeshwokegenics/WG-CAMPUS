@@ -79,6 +79,18 @@ const getNavItems = (role: string, schoolId: string) => {
     ];
 
     switch(role) {
+        case 'admin':
+            return [
+                 {
+                    section: "Administration",
+                    icon: <Building className="h-5 w-5" />,
+                    items: [
+                      { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users` },
+                      { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info` },
+                      { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations` },
+                    ],
+                 }
+            ];
         case 'hr':
             return [
                 {
@@ -202,7 +214,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
 
     const dashboardLink = useMemo(() => {
         if (role === 'super-admin') return '/super-admin/dashboard';
-        if (role === 'director' || role === 'admin') return `/director/dashboard/${schoolId}`;
+        if (role === 'director') return `/director/dashboard/${schoolId}`;
         if (role === 'teacher') return `/teacher/${schoolId}/dashboard`;
         return `/director/dashboard/${schoolId}/${role}/dashboard`;
     }, [role, schoolId]);

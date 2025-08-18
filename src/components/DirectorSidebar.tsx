@@ -36,6 +36,7 @@ import {
   BookUser,
   Printer,
   Webhook,
+  BookCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
@@ -111,6 +112,18 @@ const getNavItems = (role: string, schoolId: string) => {
     ];
 
     switch(role) {
+        case 'admin':
+            return [
+                 {
+                    section: "Administration",
+                    icon: <Building className="h-5 w-5" />,
+                    items: [
+                      { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users`, icon: <UserCog className="h-4 w-4" /> },
+                      { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info`, icon: <Info className="h-4 w-4" /> },
+                      { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations`, icon: <Webhook className="h-4 w-4" /> },
+                    ],
+                 }
+            ];
         case 'hr':
             return [
                  {
@@ -251,7 +264,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
   );
 
   const dashboardLink = useMemo(() => {
-    if (role === 'director' || role === 'admin') return `/director/dashboard/${schoolId}`;
+    if (role === 'director') return `/director/dashboard/${schoolId}`;
     return `/director/dashboard/${schoolId}/${role}/dashboard`;
   }, [role, schoolId]);
 
