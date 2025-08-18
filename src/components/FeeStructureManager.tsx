@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FeeHeadManager } from './FeeHeadManager';
 import { ClassFeeStructure } from './ClassFeeStructure';
 import { Banknote, GraduationCap } from 'lucide-react';
-import { getClassesForSchool, getFeeHeads } from '@/app/actions/academics';
+import { getClassesForSchool } from '@/app/actions/academics';
+import { getFeeHeads } from '@/app/actions/finance';
 
 type ClassData = { id: string; name: string; sections: string[]; };
 type FeeHead = { id: string; name: string; description?: string; type: "One-time" | "Annual" | "Monthly" | "Quarterly"; };
