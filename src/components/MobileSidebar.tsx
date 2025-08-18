@@ -11,22 +11,15 @@ import { cn } from "@/lib/utils";
 
 
 const getRoleFromPath = (path: string) => {
-    if (path.startsWith('/teacher')) return 'teacher';
-    if (path.startsWith('/admin')) return 'admin';
-    if (path.startsWith('/director')) {
-        const pathSegments = path.split('/');
-        // Check for specific role dashboards under the director path
-        const roleSegment = pathSegments.length > 4 ? pathSegments[4] : 'director';
-         switch(roleSegment) {
-            case 'accountant': return 'accountant';
-            case 'parent': return 'parent';
-            case 'librarian': return 'librarian';
-            case 'principal': return 'principal';
-            case 'hr': return 'hr';
-            default: return 'director';
-        }
+    const pathSegments = path.split('/');
+    if (pathSegments.length > 1) {
+        const primaryRoute = pathSegments[1];
+        if (primaryRoute === 'director') return 'director';
+        if (primaryRoute === 'admin') return 'admin';
+        if (primaryRoute === 'teacher') return 'teacher';
     }
-    return 'director'; // Default for any other case
+    // For super-admin or any other top-level routes
+    return 'super-admin'; 
 };
 
 const getNavItems = (role: string, schoolId: string) => {
@@ -116,101 +109,8 @@ const getNavItems = (role: string, schoolId: string) => {
                     ],
                   },
             ];
-        case 'hr':
-            return [
-                {
-                    section: "HR",
-                    icon: <Briefcase className="h-5 w-5" />,
-                    items: [
-                      { title: "Staff Directory", href: `/director/dashboard/${schoolId}/hr/directory` },
-                      { title: "Staff Attendance", href: `/director/dashboard/${schoolId}/hr/attendance` },
-                      { title: "Staff Salary", href: `/director/dashboard/${schoolId}/hr/salary` },
-                      { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll` },
-                    ],
-                }
-            ];
-        case 'teacher':
-            return [
-                {
-                    section: "Academics",
-                    icon: <GraduationCap className="h-5 w-5" />,
-                    items: [
-                        { title: "Classes & Sections", href: `/teacher/${schoolId}/academics/classes` },
-                        { title: "Attendance", href: `/teacher/${schoolId}/academics/attendance` },
-                        { title: "Timetable", href: `/teacher/${schoolId}/academics/timetable` },
-                        { title: "Exams", href: `/teacher/${schoolId}/academics/exams` },
-                        { title: "Reports", href: `/teacher/${schoolId}/academics/reports` },
-                        { title: "E-learning", href: `/teacher/${schoolId}/academics/elearning` },
-                    ]
-                },
-                {
-                    section: "Communication",
-                    icon: <MessageSquare className="h-5 w-5" />,
-                    items: [
-                        { title: "Notices", href: `/teacher/${schoolId}/communication/notices` },
-                        { title: "Calendar", href: `/teacher/${schoolId}/communication/calendar` },
-                        { title: "Messaging", href: `/teacher/${schoolId}/communication/messaging` },
-                    ]
-                }
-            ];
-        case 'principal':
-            return [
-                 {
-                    section: "Administration",
-                    icon: <Building className="h-5 w-5" />,
-                    items: [
-                        { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users` },
-                    ]
-                },
-                {
-                    section: "Academics",
-                    icon: <GraduationCap className="h-5 w-5" />,
-                    items: [
-                        { title: "Classes", href: `/director/dashboard/${schoolId}/academics/classes` },
-                        { title: "Students", href: `/director/dashboard/${schoolId}/academics/students` },
-                        { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports` },
-                    ]
-                }
-            ];
-        case 'accountant':
-             return [
-                {
-                    section: "Finance",
-                    icon: <Wallet className="h-5 w-5" />,
-                    items: [
-                        { title: "Fee Collection", href: `/director/dashboard/${schoolId}/admin/fees` },
-                        { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure` },
-                        { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll` },
-                    ]
-                }
-            ];
-        case 'parent':
-            return [
-                {
-                    section: "My Child",
-                    icon: <Users className="h-5 w-5" />,
-                    items: [
-                        { title: "Profile", href: `/director/dashboard/${schoolId}/parent/profile` },
-                        { title: "Attendance", href: `/director/dashboard/${schoolId}/parent/attendance` },
-                        { title: "Fees", href: `/director/dashboard/${schoolId}/parent/fees` },
-                        { title: "Report Cards", href: `/director/dashboard/${schoolId}/parent/reports` },
-                        { title: "E-learning", href: `/director/dashboard/${schoolId}/parent/elearning` },
-                        { title: "School Calendar", href: `/director/dashboard/${schoolId}/parent/calendar` },
-                    ]
-                }
-            ];
-        case 'librarian':
-             return [
-                {
-                    section: "Library",
-                    icon: <Library className="h-5 w-5" />,
-                    items: [
-                         { title: "Issue / Return", href: `/director/dashboard/${schoolId}/admin/library` },
-                         { title: "Book Catalog", href: `/director/dashboard/${schoolId}/admin/library` },
-                    ]
-                }
-            ];
-        default: // director
+        case 'director':
+        default: 
             return directorNavs;
     }
 }
@@ -242,7 +142,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
         if (role === 'director') return `/director/dashboard/${schoolId}`;
         if (role === 'teacher') return `/teacher/${schoolId}/dashboard`;
         if (role === 'admin') return `/admin/${schoolId}/dashboard`;
-        return `/director/dashboard/${schoolId}/${role}/dashboard`;
+        return `/director/dashboard/${schoolId}`;
     }, [role, schoolId]);
 
     const baseNavLinks = [
