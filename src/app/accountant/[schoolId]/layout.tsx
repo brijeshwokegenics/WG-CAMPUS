@@ -26,7 +26,7 @@ export default function AccountantDashboardLayout({
   };
   
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-screen">
       <AccountantSidebar 
         schoolId={params.schoolId}
         isCollapsed={isSidebarCollapsed}
@@ -73,7 +73,7 @@ export default function AccountantDashboardLayout({
               </DropdownMenu>
             </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-muted/40">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/40">
           {children}
         </main>
       </div>

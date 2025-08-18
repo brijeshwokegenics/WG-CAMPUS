@@ -104,7 +104,7 @@ export function AdminSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarPr
 
   return (
     <div className={cn(
-        "hidden md:flex flex-col bg-card border-r transition-all duration-300",
+        "hidden md:flex flex-col bg-card border-r transition-all duration-300 h-screen sticky top-0",
         isCollapsed ? 'w-[72px]' : 'w-64'
       )}>
       <div className={cn("flex h-16 items-center border-b", isCollapsed ? "justify-center px-2" : "justify-between px-4")}>
@@ -117,7 +117,7 @@ export function AdminSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarPr
           <span className="sr-only">Toggle sidebar</span>
         </Button>
       </div>
-       <div className="flex-1 overflow-y-auto">
+       <div className="flex-1 overflow-y-auto custom-scrollbar">
             <nav className="px-2 py-4 space-y-2">
                 <NavLink item={{ title: "Dashboard", href: dashboardLink, icon: <LayoutDashboard className="h-5 w-5" /> }} />
                 
