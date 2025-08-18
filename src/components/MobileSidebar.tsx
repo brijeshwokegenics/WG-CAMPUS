@@ -11,20 +11,29 @@ import { cn } from "@/lib/utils";
 
 
 const getRoleFromPath = (path: string) => {
-    const pathSegments = path.split('/');
-    const mainRole = pathSegments[1];
+    // Check for top-level routes first to be specific
+    if (path.startsWith('/admin/')) return 'admin';
+    if (path.startsWith('/teacher/')) return 'teacher';
+    if (path.startsWith('/accountant/')) return 'accountant';
 
+    const pathSegments = path.split('/');
+    // Check for nested dashboards
     if (path.startsWith('/director/dashboard/')) {
         const potentialRoleSegment = pathSegments[4];
-        if (['accountant', 'hr', 'principal', 'librarian', 'parent', 'admin'].includes(potentialRoleSegment)) {
+        if (['hr', 'principal', 'librarian', 'parent'].includes(potentialRoleSegment) && pathSegments[5] === 'dashboard') {
             return potentialRoleSegment;
         }
     }
     
-    if (['director', 'admin', 'teacher'].includes(mainRole)) return mainRole;
-    
+    // Default to director if inside the director's dashboard layout
+    if (path.startsWith('/director/')) {
+        return 'director';
+    }
+
+    // A fallback for super-admin or other top-level routes
     return 'super-admin'; 
 };
+
 
 const getNavItems = (role: string, schoolId: string) => {
     const allNavs = {
@@ -88,24 +97,6 @@ const getNavItems = (role: string, schoolId: string) => {
             return [allNavs.admin, allNavs.communication];
         case 'director':
             return Object.values(allNavs);
-        case 'accountant':
-             return [
-                {
-                    section: "Finance",
-                    icon: <Wallet className="h-5 w-5" />,
-                    items: [
-                         { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure` },
-                         { title: "Fee Collection", href: `/director/dashboard/${schoolId}/admin/fees` },
-                    ]
-                },
-                {
-                    section: "HR",
-                    icon: <Briefcase className="h-5 w-5"/>,
-                    items: [
-                        { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll` },
-                    ]
-                }
-            ];
         default: 
             return Object.values(allNavs);
     }
@@ -138,7 +129,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
         if (role === 'director') return `/director/dashboard/${schoolId}`;
         if (role === 'teacher') return `/teacher/${schoolId}/dashboard`;
         if (role === 'admin') return `/admin/${schoolId}/dashboard`;
-        if (role === 'accountant') return `/director/dashboard/${schoolId}/accountant/dashboard`;
+        if (role === 'accountant') return `/accountant/${schoolId}/dashboard`;
         if (role === 'hr') return `/director/dashboard/${schoolId}/hr/dashboard`;
         if (role === 'principal') return `/director/dashboard/${schoolId}/principal/dashboard`;
         if (role === 'librarian') return `/director/dashboard/${schoolId}/librarian/dashboard`;

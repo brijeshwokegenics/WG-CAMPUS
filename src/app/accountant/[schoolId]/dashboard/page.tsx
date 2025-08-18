@@ -3,8 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Banknote, Wallet } from "lucide-react";
 import Link from "next/link";
 
-export default function AccountantDashboardPage({ params }: { params: { id: string } }) {
-    const schoolId = params.id;
+export default function AccountantDashboardPage({ params }: { params: { schoolId: string } }) {
+    const schoolId = params.schoolId;
     return (
         <div className="space-y-6">
             <header className="mb-4">
@@ -12,7 +12,7 @@ export default function AccountantDashboardPage({ params }: { params: { id: stri
                 <p className="text-muted-foreground">Welcome! Manage all financial activities for the school.</p>
             </header>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <Link href={`/director/dashboard/${schoolId}/admin/fees`}>
+                <Link href={`/accountant/${schoolId}/fees`}>
                      <Card className="hover:bg-muted/50 transition-colors">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium">Fee Collection</CardTitle>
@@ -21,7 +21,7 @@ export default function AccountantDashboardPage({ params }: { params: { id: stri
                         <CardContent><p className="text-xs text-muted-foreground">Collect fees and view student history.</p></CardContent>
                     </Card>
                 </Link>
-                <Link href={`/director/dashboard/${schoolId}/admin/fee-structure`}>
+                <Link href={`/accountant/${schoolId}/fee-structure`}>
                      <Card className="hover:bg-muted/50 transition-colors">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium">Fee Structure</CardTitle>
@@ -30,7 +30,7 @@ export default function AccountantDashboardPage({ params }: { params: { id: stri
                         <CardContent><p className="text-xs text-muted-foreground">Define fee heads and class structures.</p></CardContent>
                     </Card>
                 </Link>
-                <Link href={`/director/dashboard/${schoolId}/hr/payroll`}>
+                <Link href={`/accountant/${schoolId}/payroll`}>
                      <Card className="hover:bg-muted/50 transition-colors">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium">Payroll</CardTitle>

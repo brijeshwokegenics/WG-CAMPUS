@@ -44,18 +44,27 @@ import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 const getRoleFromPath = (path: string) => {
+    // Check for top-level routes first to be specific
+    if (path.startsWith('/admin/')) return 'admin';
+    if (path.startsWith('/teacher/')) return 'teacher';
+    if (path.startsWith('/accountant/')) return 'accountant';
+
     const pathSegments = path.split('/');
+    // Check for nested dashboards
     if (path.startsWith('/director/dashboard/')) {
         const potentialRoleSegment = pathSegments[4];
-        if (['accountant', 'hr', 'principal', 'librarian', 'parent', 'admin'].includes(potentialRoleSegment)) {
+        if (['hr', 'principal', 'librarian', 'parent'].includes(potentialRoleSegment) && pathSegments[5] === 'dashboard') {
             return potentialRoleSegment;
         }
     }
-    // If it's a director path but not a specific sub-role dashboard, it's the director.
-    if (path.startsWith('/director')) {
+    
+    // Default to director if inside the director's dashboard layout
+    if (path.startsWith('/director/')) {
         return 'director';
     }
-    return 'director'; // Default for any other case within this layout
+
+    // A fallback, though it shouldn't be reached in this layout
+    return 'director';
 };
 
 const getNavItems = (role: string, schoolId: string) => {
@@ -116,24 +125,6 @@ const getNavItems = (role: string, schoolId: string) => {
     };
     
     switch(role) {
-        case 'accountant':
-            return [
-                {
-                    section: "Finance",
-                    icon: <Wallet className="h-5 w-5" />,
-                    items: [
-                         { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure`, icon: <Banknote className="h-4 w-4" /> },
-                         { title: "Fee Collection", href: `/director/dashboard/${schoolId}/admin/fees`, icon: <Wallet className="h-4 w-4" /> },
-                    ]
-                },
-                {
-                    section: "HR",
-                    icon: <Briefcase className="h-5 w-5"/>,
-                    items: [
-                        { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-4 w-4" /> },
-                    ]
-                }
-            ];
         case 'director':
         default:
              return Object.values(allNavs);
@@ -182,7 +173,6 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
 
   const dashboardLink = useMemo(() => {
     if (role === 'director') return `/director/dashboard/${schoolId}`;
-    if (role === 'accountant') return `/director/dashboard/${schoolId}/accountant/dashboard`;
     if (role === 'hr') return `/director/dashboard/${schoolId}/hr/dashboard`;
     if (role === 'principal') return `/director/dashboard/${schoolId}/principal/dashboard`;
     if (role === 'librarian') return `/director/dashboard/${schoolId}/librarian/dashboard`;
