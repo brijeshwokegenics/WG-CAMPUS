@@ -1,6 +1,29 @@
 
 import { PayrollManager } from "@/components/PayrollManager";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Suspense } from "react";
+
+function PayrollSkeleton() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Generate &amp; View Payroll</CardTitle>
+                <CardDescription>Select a month to run payroll, or view previously generated records.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex flex-col md:flex-row items-end gap-4 p-4 border rounded-lg mb-6">
+                    <div className="space-y-2 w-full md:w-auto">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-10 w-48" />
+                    </div>
+                    <Skeleton className="h-10 w-full md:w-36" />
+                </div>
+                <Skeleton className="h-40 w-full" />
+            </CardContent>
+        </Card>
+    )
+}
 
 export default function PayrollPage({ params }: { params: { id:string } }) {
   const schoolId = params.id;
@@ -12,7 +35,9 @@ export default function PayrollPage({ params }: { params: { id:string } }) {
           Generate monthly payroll and view historical payroll data.
         </p>
       </div>
-      <PayrollManager schoolId={schoolId} />
+      <Suspense fallback={<PayrollSkeleton />}>
+        <PayrollManager schoolId={schoolId} />
+      </Suspense>
     </div>
   );
 }

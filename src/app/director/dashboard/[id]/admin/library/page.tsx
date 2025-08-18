@@ -2,6 +2,21 @@
 import { LibraryManager } from "@/components/library/LibraryManager";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function LibrarySkeleton() {
+    return (
+        <Card>
+            <CardContent className="pt-6">
+                <div className="space-y-4">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
 
 export default function LibraryPage({ params }: { params: { id: string } }) {
   const schoolId = params.id;
@@ -14,7 +29,7 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
           Manage book catalog, circulation, and member activities.
         </p>
       </div>
-      <Suspense fallback={<div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+      <Suspense fallback={<LibrarySkeleton />}>
         <LibraryManager schoolId={schoolId} />
       </Suspense>
     </div>

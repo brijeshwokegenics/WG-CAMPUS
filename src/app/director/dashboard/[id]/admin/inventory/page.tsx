@@ -1,6 +1,22 @@
+
 import { InventoryManager } from "@/components/InventoryManager";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function InventorySkeleton() {
+    return (
+        <Card>
+            <CardContent className="pt-6">
+                <div className="space-y-4">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
 
 export default function InventoryPage({ params }: { params: { id: string } }) {
   const schoolId = params.id;
@@ -13,7 +29,7 @@ export default function InventoryPage({ params }: { params: { id: string } }) {
           Track and manage school assets, supplies, and equipment.
         </p>
       </div>
-      <Suspense fallback={<div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+      <Suspense fallback={<InventorySkeleton />}>
         <InventoryManager schoolId={schoolId} />
       </Suspense>
     </div>
