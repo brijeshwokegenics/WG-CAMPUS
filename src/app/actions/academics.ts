@@ -371,23 +371,58 @@ export async function admitStudent(prevState: any, formData: FormData) {
   const { schoolId } = parsed.data;
 
   try {
+      let parentId = parsed.data.parentId;
+
+      // If no parentId is provided, create a new parent user
+      if (!parentId) {
+          const usersRef = collection(db, 'users');
+          const parentUserId = parsed.data.parentMobile;
+
+          // Check if a parent with this mobile number already exists
+          const q = query(usersRef, where('schoolId', '==', schoolId), where('userId', '==', parentUserId));
+          const existingParent = await getDocs(q);
+
+          if (existingParent.empty) {
+              const newParentData = {
+                  schoolId: schoolId,
+                  name: `${parsed.data.studentName}'s Parent`,
+                  email: parsed.data.parentEmail || '',
+                  phone: parsed.data.parentMobile,
+                  role: 'Parent',
+                  userId: parentUserId,
+                  password: parentUserId, // Set password to mobile number by default
+                  enabled: true,
+              };
+              const newParentRef = await addDoc(usersRef, newParentData);
+              parentId = newParentRef.id;
+          } else {
+              parentId = existingParent.docs[0].id;
+          }
+      }
+
+      const studentDataToSave = {
+          ...parsed.data,
+          parentId: parentId, // Add the parentId to the student document
+      };
+
       const studentsRef = collection(db, 'students');
-      
-      const newStudentRef = await addDoc(studentsRef, parsed.data);
+      const newStudentRef = await addDoc(studentsRef, studentDataToSave);
       
       revalidatePath(`/director/dashboard/${schoolId}/academics/admissions`);
       revalidatePath(`/director/dashboard/${schoolId}/academics/students`);
 
-      // Fetch the newly created student data to return
       const newStudentDoc = await getDoc(newStudentRef);
       const newStudentData = {
           id: newStudentDoc.id,
           ...newStudentDoc.data(),
       };
+      
+      const parentUserId = parsed.data.parentMobile;
+      const successMessage = `Student admitted successfully with ID: ${newStudentRef.id}. Parent login created - User ID: ${parentUserId}, Password: ${parentUserId}`;
 
       return { 
           success: true, 
-          message: `Student admitted successfully with ID: ${newStudentRef.id}`,
+          message: successMessage,
           student: newStudentData,
       };
   } catch (error) {
@@ -395,6 +430,7 @@ export async function admitStudent(prevState: any, formData: FormData) {
       return { success: false, error: 'An unexpected error occurred during admission.' };
   }
 }
+
 
 export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, classId, section, passedOnly }: { schoolId: string, searchTerm?: string, admissionId?: string, classId?: string, section?: string, passedOnly?: boolean }) {
     if (!schoolId) {

@@ -59,11 +59,9 @@ const FormSchema = z.object({
 
 type FormValues = z.infer<typeof FormSchema>;
 type ClassData = { id: string; name: string; sections: string[]; };
-type ParentUser = { id: string; name: string; };
 
 export function AdmissionForm({ schoolId }: { schoolId: string }) {
   const [classes, setClasses] = useState<ClassData[]>([]);
-  const [parentUsers, setParentUsers] = useState<ParentUser[]>([]);
   const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
   const [newlyAdmittedStudent, setNewlyAdmittedStudent] = useState<any | null>(null);
 
@@ -83,15 +81,9 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
 
   useEffect(() => {
     async function fetchInitialData() {
-      const [classRes, parentRes] = await Promise.all([
-          getClassesForSchool(schoolId),
-          getUsersForSchool(schoolId, 'Parent')
-      ]);
+      const classRes = await getClassesForSchool(schoolId);
       if (classRes.success && classRes.data) {
         setClasses(classRes.data);
-      }
-      if(parentRes.success && parentRes.data) {
-          setParentUsers(parentRes.data);
       }
     }
     fetchInitialData();
@@ -125,7 +117,6 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
     formAction(formData);
   };
 
-  const parentOptions = parentUsers.map(p => ({ label: p.name, value: p.id }));
   
   if (newlyAdmittedStudent) {
     return (
@@ -136,7 +127,7 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
                     <div>
                         <CardTitle className="text-green-800">Admission Successful!</CardTitle>
                         <CardDescription className="text-green-700">
-                            Student {newlyAdmittedStudent.studentName} has been admitted with ID: {newlyAdmittedStudent.id}.
+                           {state.message}
                         </CardDescription>
                     </div>
                 </div>
@@ -212,31 +203,7 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
             {errors.section && <p className="text-sm text-destructive">{errors.section.message}</p>}
           </div>
         </fieldset>
-
-        {/* Link Parent */}
-        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4">
-             <legend className="-ml-1 px-1 text-sm font-medium">Link Parent Account</legend>
-             <div className="space-y-2">
-                <Label>Parent Account (Optional)</Label>
-                <Controller
-                    name="parentId"
-                    control={control}
-                    render={({ field }) => (
-                         <Combobox
-                            options={parentOptions}
-                            value={field.value || ''}
-                            onChange={field.onChange}
-                            placeholder="Select a parent..."
-                            searchPlaceholder="Search for parent..."
-                            emptyPlaceholder="No parent account found."
-                         />
-                    )}
-                 />
-                <p className='text-xs text-muted-foreground'>If the parent is not listed, please create a new user with the "Parent" role in User Management.</p>
-            </div>
-        </fieldset>
-
-
+        
         {/* Student Details */}
         <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-4">
           <legend className="-ml-1 px-1 text-sm font-medium">Student Details</legend>
@@ -298,7 +265,7 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
             {errors.motherName && <p className="text-sm text-destructive">{errors.motherName.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="parentMobile">Parent Mobile</Label>
+            <Label htmlFor="parentMobile">Parent Mobile (this will be the Parent's User ID)</Label>
             <Input id="parentMobile" type="tel" {...register("parentMobile")} />
             {errors.parentMobile && <p className="text-sm text-destructive">{errors.parentMobile.message}</p>}
           </div>
