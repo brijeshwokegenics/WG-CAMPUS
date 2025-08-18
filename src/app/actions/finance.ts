@@ -231,6 +231,8 @@ export async function collectFee(prevState: any, formData: FormData) {
         const newDocRef = await addDoc(collection(db, 'feeCollections'), dataToSave);
         
         revalidatePath(`/director/dashboard/${schoolId}/admin/fees`);
+        revalidatePath(`/accountant/${schoolId}/fees`);
+        revalidatePath(`/director/dashboard/${schoolId}`);
         
         return { success: true, message: `Fee collected successfully. Receipt No: ${dataToSave.receiptNumber}`, receiptId: newDocRef.id };
 
@@ -420,3 +422,5 @@ export async function getFeeCollectionsSummary(schoolId: string) {
         return { success: false, error: "Failed to fetch fee collections summary." };
     }
 }
+
+    

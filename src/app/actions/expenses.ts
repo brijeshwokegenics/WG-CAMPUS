@@ -94,6 +94,7 @@ export async function createExpense(prevState: any, formData: FormData) {
     try {
         await addDoc(collection(db, 'expenses'), parsed.data);
         revalidatePath(`/accountant/${parsed.data.schoolId}/expenses`);
+        revalidatePath(`/director/dashboard/${parsed.data.schoolId}`);
         return { success: true, message: 'Expense recorded successfully.' };
     } catch (e) {
         return { success: false, error: 'Failed to record expense.' };
@@ -163,3 +164,5 @@ export async function getExpensesSummary(schoolId: string) {
         return { success: false, error: "Failed to fetch expenses summary." };
     }
 }
+
+    
