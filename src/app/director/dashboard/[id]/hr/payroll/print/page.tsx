@@ -18,6 +18,7 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
     const [staffData, setStaffData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [numberToWords, setNumberToWords] = useState<any>(null);
+    const [payDate, setPayDate] = useState('');
 
 
     useEffect(() => {
@@ -51,6 +52,7 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
     
     useEffect(() => {
         if (!loading && staffData && school) {
+            setPayDate(format(new Date(), 'dd MMMM, yyyy'));
             setTimeout(() => window.print(), 1000);
         }
     }, [loading, staffData, school]);
@@ -93,7 +95,7 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
                         <p><strong>Employee Name:</strong> <span className='font-semibold text-base'>{name}</span></p>
                         <p><strong>Employee ID:</strong> {userId}</p>
                          <p><strong>Pay Period:</strong> {format(new Date(`${month}-02`), 'MMMM yyyy')}</p>
-                        <p><strong>Pay Date:</strong> {format(new Date(), 'dd MMMM, yyyy')}</p>
+                        <p><strong>Pay Date:</strong> {payDate}</p>
                         <p><strong>Total Days:</strong> {attendanceDetails.totalDays}</p>
                         <p><strong>Present Days:</strong> {attendanceDetails.presentDays + attendanceDetails.leaveDays}</p>
                     </div>
