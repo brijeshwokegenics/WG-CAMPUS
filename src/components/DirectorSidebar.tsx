@@ -44,14 +44,20 @@ import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 const getRoleFromPath = (path: string) => {
-    if (path.includes('/teacher/')) return 'teacher';
-    if (path.includes('/accountant/')) return 'accountant';
-    if (path.includes('/parent/')) return 'parent';
-    if (path.includes('/librarian/')) return 'librarian';
-    if (path.includes('/principal/')) return 'principal';
-    if (path.includes('/admin/')) return 'admin';
-    if (path.includes('/hr/')) return 'hr';
-    return 'director'; // Default role
+    const pathSegments = path.split('/');
+    // e.g. /director/dashboard/[id]/admin/dashboard -> segments[4] is 'admin'
+    const roleSegment = pathSegments[4];
+
+    switch(roleSegment) {
+        case 'teacher': return 'teacher';
+        case 'accountant': return 'accountant';
+        case 'parent': return 'parent';
+        case 'librarian': return 'librarian';
+        case 'principal': return 'principal';
+        case 'admin': return 'admin';
+        case 'hr': return 'hr';
+        default: return 'director';
+    }
 };
 
 const getNavItems = (role: string, schoolId: string) => {

@@ -11,14 +11,20 @@ import { cn } from "@/lib/utils";
 
 
 const getRoleFromPath = (path: string) => {
+    const pathSegments = path.split('/');
     if (path.includes('/teacher/')) return 'teacher';
-    if (path.includes('/accountant/')) return 'accountant';
-    if (path.includes('/parent/')) return 'parent';
-    if (path.includes('/librarian/')) return 'librarian';
-    if (path.includes('/principal/')) return 'principal';
-    if (path.includes('/admin/')) return 'admin';
-    if (path.includes('/hr/')) return 'hr';
-    return 'director'; // Default role
+    // e.g. /director/dashboard/[id]/admin/dashboard -> segments[4] is 'admin'
+    const roleSegment = pathSegments[4];
+
+    switch(roleSegment) {
+        case 'accountant': return 'accountant';
+        case 'parent': return 'parent';
+        case 'librarian': return 'librarian';
+        case 'principal': return 'principal';
+        case 'admin': return 'admin';
+        case 'hr': return 'hr';
+        default: return 'director';
+    }
 };
 
 const getNavItems = (role: string, schoolId: string) => {
