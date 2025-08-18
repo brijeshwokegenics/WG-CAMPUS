@@ -45,18 +45,24 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 
 const getRoleFromPath = (path: string) => {
     const pathSegments = path.split('/');
-    if (pathSegments.length > 1) {
-        const primaryRoute = pathSegments[1];
-        if (primaryRoute === 'director') {
-            return 'director';
+    // Check for specific role dashboards under the director layout
+    // e.g., /director/dashboard/[id]/accountant/dashboard
+    if (pathSegments[1] === 'director' && pathSegments.length > 4) {
+        const roleSegment = pathSegments[4];
+        if (['accountant', 'hr', 'principal', 'librarian', 'parent', 'admin'].includes(roleSegment)) {
+            return roleSegment;
         }
+    }
+    // If it's a director path but not a specific sub-role dashboard, it's the director.
+    if (pathSegments[1] === 'director') {
+        return 'director';
     }
     return 'director'; // Default for any other case within this layout
 };
 
 const getNavItems = (role: string, schoolId: string) => {
-    const directorNavs = [
-      {
+    const allNavs = {
+      academics: {
         section: "Academics",
         icon: <GraduationCap className="h-5 w-5" />,
         items: [
@@ -72,7 +78,7 @@ const getNavItems = (role: string, schoolId: string) => {
           { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning`, icon: <Book className="h-4 w-4" /> },
         ],
       },
-      {
+      hr: {
         section: "HR",
         icon: <Briefcase className="h-5 w-5" />,
         items: [
@@ -83,7 +89,7 @@ const getNavItems = (role: string, schoolId: string) => {
           { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-4 w-4" /> },
         ],
       },
-      {
+      admin: {
         section: "Administration",
         icon: <Building className="h-5 w-5" />,
         items: [
@@ -100,7 +106,7 @@ const getNavItems = (role: string, schoolId: string) => {
           { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations`, icon: <Webhook className="h-4 w-4" /> },
         ],
       },
-      {
+      communication: {
         section: "Communication",
         icon: <MessageSquare className="h-5 w-5" />,
         items: [
@@ -108,10 +114,32 @@ const getNavItems = (role: string, schoolId: string) => {
           { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar`, icon: <Calendar className="h-4 w-4" /> },
           { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging`, icon: <MessageSquare className="h-4 w-4" /> },
         ],
-      },
-    ];
-
-    return directorNavs;
+      }
+    };
+    
+    switch(role) {
+        case 'accountant':
+            return [
+                {
+                    section: "Finance",
+                    icon: <Wallet className="h-5 w-5" />,
+                    items: [
+                         { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure`, icon: <Banknote className="h-4 w-4" /> },
+                         { title: "Fee Collection", href: `/director/dashboard/${schoolId}/admin/fees`, icon: <Wallet className="h-4 w-4" /> },
+                    ]
+                },
+                {
+                    section: "HR",
+                    icon: <Briefcase className="h-5 w-5"/>,
+                    items: [
+                        { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-4 w-4" /> },
+                    ]
+                }
+            ];
+        case 'director':
+        default:
+             return Object.values(allNavs);
+    }
 }
 
 
@@ -156,6 +184,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
 
   const dashboardLink = useMemo(() => {
     if (role === 'director') return `/director/dashboard/${schoolId}`;
+    if (role === 'accountant') return `/director/dashboard/${schoolId}/accountant/dashboard`;
     return `/director/dashboard/${schoolId}`;
   }, [role, schoolId]);
 
