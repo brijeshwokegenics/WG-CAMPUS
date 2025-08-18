@@ -63,7 +63,7 @@ export default function DirectorDashboardLayout({
                     <span>Profile</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                   <Link href="/">
+                   <Link href="/school/login">
                     <DropdownMenuItem>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>

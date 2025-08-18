@@ -9,141 +9,160 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-const directorSidebarNavItems = (schoolId: string) => [
-  {
-    section: "Academics",
-    icon: <GraduationCap className="h-5 w-5" />,
-    items: [
-      { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes` },
-      { title: "Admissions", href: `/director/dashboard/${schoolId}/academics/admissions` },
-      { title: "Students", href: `/director/dashboard/${schoolId}/academics/students` },
-      { title: "Promote Students", href: `/director/dashboard/${schoolId}/academics/promote` },
-      { title: "Print Center", href: `/director/dashboard/${schoolId}/academics/print` },
-      { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance` },
-      { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable` },
-      { title: "Exams", href: `/director/dashboard/${schoolId}/academics/exams` },
-      { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports` },
-      { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning` },
-    ],
-  },
-  {
-    section: "HR",
-    icon: <Briefcase className="h-5 w-5" />,
-    items: [
-      { title: "Staff Directory", href: `/director/dashboard/${schoolId}/hr/directory` },
-      { title: "Staff Attendance", href: `/director/dashboard/${schoolId}/hr/attendance` },
-      { title: "Staff Salary", href: `/director/dashboard/${schoolId}/hr/salary` },
-      { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll` },
-    ],
-  },
-  {
-    section: "Administration",
-    icon: <Building className="h-5 w-5" />,
-    items: [
-      { title: "Admin Dashboard", href: `/director/dashboard/${schoolId}/admin/dashboard`},
-      { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users` },
-      { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure` },
-      { title: "Fees Management", href: `/director/dashboard/${schoolId}/admin/fees` },
-      { title: "Inventory", href: `/director/dashboard/${schoolId}/admin/inventory` },
-      { title: "Transport", href: `/director/dashboard/${schoolId}/admin/transport` },
-      { title: "Library", href: `/director/dashboard/${schoolId}/admin/library` },
-      { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel` },
-      { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass` },
-      { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info` },
-      { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations` },
-    ],
-  },
-  {
-    section: "Communication",
-    icon: <MessageSquare className="h-5 w-5" />,
-    items: [
-      { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices` },
-      { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar` },
-      { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging` },
-    ],
-  },
-];
 
-const teacherSidebarNavItems = (schoolId: string) => [
-    {
+const getRoleFromPath = (path: string) => {
+    if (path.includes('/teacher/')) return 'teacher';
+    if (path.includes('/accountant/')) return 'accountant';
+    if (path.includes('/parent/')) return 'parent';
+    if (path.includes('/librarian/')) return 'librarian';
+    if (path.includes('/admin/')) return 'admin';
+    if (path.includes('/principal/')) return 'principal';
+    return 'director'; // Default role
+};
+
+const getNavItems = (role: string, schoolId: string) => {
+    const directorNavs = [
+      {
         section: "Academics",
         icon: <GraduationCap className="h-5 w-5" />,
         items: [
-            { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes` },
-            { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance` },
-            { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable` },
-            { title: "Exams", href: `/director/dashboard/${schoolId}/academics/exams` },
-            { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports` },
-            { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning` },
-        ]
-    },
-    {
-        section: "Communication",
-        icon: <MessageSquare className="h-5 w-5" />,
+          { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes` },
+          { title: "Admissions", href: `/director/dashboard/${schoolId}/academics/admissions` },
+          { title: "Students", href: `/director/dashboard/${schoolId}/academics/students` },
+          { title: "Promote Students", href: `/director/dashboard/${schoolId}/academics/promote` },
+          { title: "Print Center", href: `/director/dashboard/${schoolId}/academics/print` },
+          { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance` },
+          { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable` },
+          { title: "Exams", href: `/director/dashboard/${schoolId}/academics/exams` },
+          { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports` },
+          { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning` },
+        ],
+      },
+      {
+        section: "HR",
+        icon: <Briefcase className="h-5 w-5" />,
         items: [
-            { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices` },
-            { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar` },
-            { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging` },
-        ]
-    }
-];
-
-const principalSidebarNavItems = (schoolId: string) => [
-    {
+          { title: "Staff Directory", href: `/director/dashboard/${schoolId}/hr/directory` },
+          { title: "Staff Attendance", href: `/director/dashboard/${schoolId}/hr/attendance` },
+          { title: "Staff Salary", href: `/director/dashboard/${schoolId}/hr/salary` },
+          { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll` },
+        ],
+      },
+      {
         section: "Administration",
         icon: <Building className="h-5 w-5" />,
         items: [
-            { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users` },
-        ]
-    },
-    {
-        section: "Academics",
-        icon: <GraduationCap className="h-5 w-5" />,
+          { title: "Admin Dashboard", href: `/director/dashboard/${schoolId}/admin/dashboard`},
+          { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users` },
+          { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure` },
+          { title: "Fees Management", href: `/director/dashboard/${schoolId}/admin/fees` },
+          { title: "Inventory", href: `/director/dashboard/${schoolId}/admin/inventory` },
+          { title: "Transport", href: `/director/dashboard/${schoolId}/admin/transport` },
+          { title: "Library", href: `/director/dashboard/${schoolId}/admin/library` },
+          { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel` },
+          { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass` },
+          { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info` },
+          { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations` },
+        ],
+      },
+      {
+        section: "Communication",
+        icon: <MessageSquare className="h-5 w-5" />,
         items: [
-            { title: "Classes", href: `/director/dashboard/${schoolId}/academics/classes` },
-            { title: "Students", href: `/director/dashboard/${schoolId}/academics/students` },
-            { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports` },
-        ]
-    }
-];
+          { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices` },
+          { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar` },
+          { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging` },
+        ],
+      },
+    ];
 
-const accountantSidebarNavItems = (schoolId: string) => [
-    {
-        section: "Finance",
-        icon: <Wallet className="h-5 w-5" />,
-        items: [
-            { title: "Fee Collection", href: `/director/dashboard/${schoolId}/admin/fees` },
-            { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure` },
-            { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll` },
-        ]
+    switch(role) {
+        case 'teacher':
+            return [
+                {
+                    section: "Academics",
+                    icon: <GraduationCap className="h-5 w-5" />,
+                    items: [
+                        { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes` },
+                        { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance` },
+                        { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable` },
+                        { title: "Exams", href: `/director/dashboard/${schoolId}/academics/exams` },
+                        { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports` },
+                        { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning` },
+                    ]
+                },
+                {
+                    section: "Communication",
+                    icon: <MessageSquare className="h-5 w-5" />,
+                    items: [
+                        { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices` },
+                        { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar` },
+                        { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging` },
+                    ]
+                }
+            ];
+        case 'principal':
+            return [
+                 {
+                    section: "Administration",
+                    icon: <Building className="h-5 w-5" />,
+                    items: [
+                        { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users` },
+                    ]
+                },
+                {
+                    section: "Academics",
+                    icon: <GraduationCap className="h-5 w-5" />,
+                    items: [
+                        { title: "Classes", href: `/director/dashboard/${schoolId}/academics/classes` },
+                        { title: "Students", href: `/director/dashboard/${schoolId}/academics/students` },
+                        { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports` },
+                    ]
+                }
+            ];
+        case 'accountant':
+             return [
+                {
+                    section: "Finance",
+                    icon: <Wallet className="h-5 w-5" />,
+                    items: [
+                        { title: "Fee Collection", href: `/director/dashboard/${schoolId}/admin/fees` },
+                        { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure` },
+                        { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll` },
+                    ]
+                }
+            ];
+        case 'parent':
+            return [
+                {
+                    section: "My Child",
+                    icon: <Users className="h-5 w-5" />,
+                    items: [
+                        { title: "Profile", href: `/director/dashboard/${schoolId}/parent/profile` },
+                        { title: "Attendance", href: `/director/dashboard/${schoolId}/parent/attendance` },
+                        { title: "Fees", href: `/director/dashboard/${schoolId}/parent/fees` },
+                        { title: "Report Cards", href: `/director/dashboard/${schoolId}/parent/reports` },
+                        { title: "E-learning", href: `/director/dashboard/${schoolId}/parent/elearning` },
+                        { title: "School Calendar", href: `/director/dashboard/${schoolId}/parent/calendar` },
+                    ]
+                }
+            ];
+        case 'librarian':
+             return [
+                {
+                    section: "Library",
+                    icon: <Library className="h-5 w-5" />,
+                    items: [
+                         { title: "Issue / Return", href: `/director/dashboard/${schoolId}/admin/library` },
+                         { title: "Book Catalog", href: `/director/dashboard/${schoolId}/admin/library` },
+                    ]
+                }
+            ];
+        default: // director or admin
+            return directorNavs;
     }
-];
+}
 
-const parentSidebarNavItems = (schoolId: string) => [
-    {
-        section: "My Child",
-        icon: <Users className="h-5 w-5" />,
-        items: [
-            { title: "Profile", href: `/director/dashboard/${schoolId}/parent/profile` },
-            { title: "Attendance", href: `/director/dashboard/${schoolId}/parent/attendance` },
-            { title: "Fees", href: `/director/dashboard/${schoolId}/parent/fees` },
-            { title: "Report Cards", href: `/director/dashboard/${schoolId}/parent/reports` },
-            { title: "E-learning", href: `/director/dashboard/${schoolId}/parent/elearning` },
-            { title: "School Calendar", href: `/director/dashboard/${schoolId}/parent/calendar` },
-        ]
-    }
-];
-
-const librarianSidebarNavItems = (schoolId: string) => [
-    {
-        section: "Library",
-        icon: <Library className="h-5 w-5" />,
-        items: [
-             { title: "Issue / Return", href: `/director/dashboard/${schoolId}/admin/library` },
-             { title: "Book Catalog", href: `/director/dashboard/${schoolId}/admin/library` },
-        ]
-    }
-];
 
 type MobileSidebarProps = {
   schoolId?: string;
@@ -155,28 +174,11 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
     const [open, setOpen] = useState(false);
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
-    const getRoleFromPath = (path: string) => {
-        if (path.includes('/teacher/')) return 'teacher';
-        if (path.includes('/accountant/')) return 'accountant';
-        if (path.includes('/parent/')) return 'parent';
-        if (path.includes('/librarian/')) return 'librarian';
-        if (path.includes('/admin/')) return 'admin';
-        if (path.includes('/principal/')) return 'principal';
-        return 'director'; // Default role
-    };
-
     const role = schoolId ? getRoleFromPath(pathname) : 'super-admin';
     
     const navItemsForRole = useMemo(() => {
         if (!schoolId) return [];
-        switch (role) {
-            case 'teacher': return teacherSidebarNavItems(schoolId);
-            case 'principal': return principalSidebarNavItems(schoolId);
-            case 'accountant': return accountantSidebarNavItems(schoolId);
-            case 'parent': return parentSidebarNavItems(schoolId);
-            case 'librarian': return librarianSidebarNavItems(schoolId);
-            default: return directorSidebarNavItems(schoolId);
-        }
+        return getNavItems(role, schoolId);
     }, [schoolId, role]);
 
     const toggleSection = (section: string) => {
@@ -185,8 +187,7 @@ export function MobileSidebar({ schoolId, navItems: superAdminNavItems }: Mobile
 
     const dashboardLink = useMemo(() => {
         if (role === 'super-admin') return '/super-admin/dashboard';
-        if (role === 'director') return `/director/dashboard/${schoolId}`;
-        if (role === 'principal') return `/director/dashboard/${schoolId}/principal/dashboard`;
+        if (role === 'director' || role === 'admin') return `/director/dashboard/${schoolId}`;
         return `/director/dashboard/${schoolId}/${role}/dashboard`;
     }, [role, schoolId]);
 
