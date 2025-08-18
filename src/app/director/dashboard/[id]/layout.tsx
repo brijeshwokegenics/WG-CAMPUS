@@ -26,7 +26,7 @@ export default function DirectorDashboardLayout({
   };
   
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <DirectorSidebar 
         schoolId={params.id}
         isCollapsed={isSidebarCollapsed}
@@ -73,7 +73,7 @@ export default function DirectorDashboardLayout({
               </DropdownMenu>
             </div>
         </header>
-        <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/40">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-muted/40">
           {children}
         </main>
       </div>
