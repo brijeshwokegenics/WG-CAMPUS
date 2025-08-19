@@ -42,7 +42,6 @@ const eventColors: Record<string, string> = {
     Other: 'bg-gray-100 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200',
 };
 
-// Moved DayContent outside of CalendarManager to prevent re-creation on every render.
 const DayContent = (props: any & { events: Event[] }) => {
     const dayEvents = props.events.filter(e => props.date >= e.start && props.date <= e.end);
     return (
@@ -59,10 +58,14 @@ const DayContent = (props: any & { events: Event[] }) => {
 
 
 export function CalendarManager({ schoolId, initialEvents }: { schoolId: string, initialEvents: Event[] }) {
-    const [month, setMonth] = useState(new Date());
+    const [month, setMonth] = useState<Date | undefined>(undefined);
     const [events, setEvents] = useState(initialEvents);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+
+    useEffect(() => {
+        setMonth(new Date());
+    }, []);
 
     const handleFormSuccess = (newEvent: Event, isUpdate: boolean) => {
         setIsDialogOpen(false);
@@ -86,6 +89,15 @@ export function CalendarManager({ schoolId, initialEvents }: { schoolId: string,
     }
 
     const eventMatchers: Matcher[] = events.map(event => ({ from: event.start, to: event.end }));
+    
+    if(!month) {
+        return (
+            <Card>
+                <CardHeader><CardTitle>Loading Calendar...</CardTitle></CardHeader>
+                <CardContent className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></CardContent>
+            </Card>
+        )
+    }
 
     return (
         <Card>
