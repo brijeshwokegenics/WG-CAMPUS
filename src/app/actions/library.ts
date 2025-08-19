@@ -219,14 +219,17 @@ export async function getMemberHistory(schoolId: string, memberId: string) {
     const q = query(
         collection(db, 'libraryIssues'),
         where('schoolId', '==', schoolId),
-        where('memberId', '==', memberId),
-        orderBy('issueDate', 'desc')
+        where('memberId', '==', memberId)
     );
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) return [];
     
-    const issues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    let issues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Sort in-code to avoid needing a composite index
+    issues.sort((a, b) => (b.issueDate?.toDate() || 0) - (a.issueDate?.toDate() || 0));
+
     const bookIds = [...new Set(issues.map(i => i.bookId))];
     const bookDetails: Record<string, any> = {};
 
@@ -306,6 +309,7 @@ export async function getFullIssueHistory(schoolId: string) {
     issues.sort((a, b) => {
         const dateA = a.issueDate?.toDate() || 0;
         const dateB = b.issueDate?.toDate() || 0;
+        // @ts-ignore
         return dateB - dateA;
     });
 
