@@ -151,7 +151,7 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
     }
 
     return (
-         <div className="bg-gray-100 min-h-screen p-4 sm:p-8 flex items-center justify-center">
+         <>
             <style type="text/css" media="print">
               {`
                 @page { size: A4; margin: 0; }
@@ -171,137 +171,139 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
               `}
             </style>
             
-            <div className="report-card-container w-full max-w-4xl bg-white shadow-2xl rounded-lg font-sans">
-                <div className="p-8 border-4 border-blue-900 rounded-lg min-h-[29.7cm]">
-                    <div className="text-center mb-6 border-b-4 border-double border-blue-900 pb-4">
-                        <h1 className="text-4xl font-bold uppercase text-blue-900 tracking-wider">{school.schoolName}</h1>
-                        <p className="text-sm text-gray-600 mt-1">{school.address}, {school.city}, {school.state} - {school.zipcode}</p>
-                        <p className="text-sm text-gray-600">Phone: {school.phone} | Email: {school.contactEmail}</p>
-                        <h2 className="text-2xl font-semibold mt-4 text-blue-800 bg-blue-100 py-1 rounded-md">ACADEMIC REPORT CARD</h2>
-                    </div>
+            <div className="bg-gray-100 min-h-screen p-4 sm:p-8 flex items-center justify-center">
+                <div className="report-card-container w-full max-w-4xl bg-white shadow-2xl rounded-lg font-sans">
+                    <div className="p-8 border-4 border-blue-900 rounded-lg min-h-[29.7cm]">
+                        <div className="text-center mb-6 border-b-4 border-double border-blue-900 pb-4">
+                            <h1 className="text-4xl font-bold uppercase text-blue-900 tracking-wider">{school.schoolName}</h1>
+                            <p className="text-sm text-gray-600 mt-1">{school.address}, {school.city}, {school.state} - {school.zipcode}</p>
+                            <p className="text-sm text-gray-600">Phone: {school.phone} | Email: {school.contactEmail}</p>
+                            <h2 className="text-2xl font-semibold mt-4 text-blue-800 bg-blue-100 py-1 rounded-md">ACADEMIC REPORT CARD</h2>
+                        </div>
 
-                    <div className="mb-6 grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                        <p><strong>Student Name:</strong> <span className='font-semibold text-base'>{student.studentName}</span></p>
-                        <p><strong>Admission ID:</strong> {studentId}</p>
-                        <p><strong>Class & Section:</strong> {student.className} - {student.section}</p>
-                        <p><strong>Date of Birth:</strong> {format(student.dob, 'PPP')}</p>
-                        <p><strong>Father's Name:</strong> {student.fatherName}</p>
-                        <p><strong>Session:</strong> {examTerms[0]?.session || ''}</p>
-                    </div>
+                        <div className="mb-6 grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                            <p><strong>Student Name:</strong> <span className='font-semibold text-base'>{student.studentName}</span></p>
+                            <p><strong>Admission ID:</strong> {studentId}</p>
+                            <p><strong>Class & Section:</strong> {student.className} - {student.section}</p>
+                            <p><strong>Date of Birth:</strong> {format(student.dob, 'PPP')}</p>
+                            <p><strong>Father's Name:</strong> {student.fatherName}</p>
+                            <p><strong>Session:</strong> {examTerms[0]?.session || ''}</p>
+                        </div>
 
-                    <table className="w-full border-collapse border border-gray-400 text-sm">
-                        <thead className="bg-blue-100 text-blue-900">
-                            <tr>
-                                <th rowSpan={2} className="border border-gray-400 p-2 font-semibold">Subjects</th>
-                                {examTerms.map(term => (
-                                    <th key={term.id} colSpan={2} className="border border-gray-400 p-2 font-semibold">{term.name}</th>
-                                ))}
-                                <th colSpan={3} className="border border-gray-400 p-2 font-semibold bg-blue-200">Grand Total</th>
-                            </tr>
-                            <tr>
-                                {examTermIds.map(termId => (
-                                    <React.Fragment key={termId}>
-                                        <th className="border border-gray-400 p-2 font-medium">Max</th>
-                                        <th className="border border-gray-400 p-2 font-medium">Obt.</th>
-                                    </React.Fragment>
-                                ))}
-                                <th className="border border-gray-400 p-2 font-medium bg-blue-200">Max</th>
-                                <th className="border border-gray-400 p-2 font-medium bg-blue-200">Obt.</th>
-                                <th className="border border-gray-400 p-2 font-medium bg-blue-200">Pass/Fail</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {uniqueSubjects.map(subjectName => {
-                                let subjectRowMax = 0;
-                                let subjectRowObtained = 0;
-                                let subjectPassed = true;
+                        <table className="w-full border-collapse border border-gray-400 text-sm">
+                            <thead className="bg-blue-100 text-blue-900">
+                                <tr>
+                                    <th rowSpan={2} className="border border-gray-400 p-2 font-semibold">Subjects</th>
+                                    {examTerms.map(term => (
+                                        <th key={term.id} colSpan={2} className="border border-gray-400 p-2 font-semibold">{term.name}</th>
+                                    ))}
+                                    <th colSpan={3} className="border border-gray-400 p-2 font-semibold bg-blue-200">Grand Total</th>
+                                </tr>
+                                <tr>
+                                    {examTermIds.map(termId => (
+                                        <React.Fragment key={termId}>
+                                            <th className="border border-gray-400 p-2 font-medium">Max</th>
+                                            <th className="border border-gray-400 p-2 font-medium">Obt.</th>
+                                        </React.Fragment>
+                                    ))}
+                                    <th className="border border-gray-400 p-2 font-medium bg-blue-200">Max</th>
+                                    <th className="border border-gray-400 p-2 font-medium bg-blue-200">Obt.</th>
+                                    <th className="border border-gray-400 p-2 font-medium bg-blue-200">Pass/Fail</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {uniqueSubjects.map(subjectName => {
+                                    let subjectRowMax = 0;
+                                    let subjectRowObtained = 0;
+                                    let subjectPassed = true;
 
-                                examTermIds.forEach(termId => {
-                                    const subjectInfo = allSubjects[termId]?.find(s => s.subjectName === subjectName);
-                                    const marksInfo = allMarks[termId]?.marks.find((m: any) => m.subjectName === subjectName);
-                                    const max = subjectInfo?.maxMarks || 0;
-                                    const obtained = (marksInfo?.marksObtained !== undefined && marksInfo?.marksObtained !== null) ? marksInfo.marksObtained : 0;
-                                    
-                                    if (max > 0 && (obtained / max) * 100 < 33) {
-                                        subjectPassed = false;
-                                    }
-                                });
-
-                                return (
-                                    <tr key={subjectName} className="text-center even:bg-gray-50">
-                                        <td className="border border-gray-400 p-2 text-left font-semibold">{subjectName}</td>
-                                        {examTermIds.map(termId => {
-                                            const subjectInfo = allSubjects[termId]?.find(s => s.subjectName === subjectName);
-                                            const marksInfo = allMarks[termId]?.marks.find((m: any) => m.subjectName === subjectName);
-                                            const max = subjectInfo?.maxMarks || 0;
-                                            const obtained = (marksInfo?.marksObtained !== undefined && marksInfo?.marksObtained !== null) ? marksInfo.marksObtained : marksInfo;
-                                            
-                                            subjectRowMax += max;
-                                            if (obtained) subjectRowObtained += obtained;
-
-                                            return (
-                                                <React.Fragment key={`${termId}-${subjectName}`}>
-                                                    <td className="border border-gray-400 p-2">{max || '-'}</td>
-                                                    <td className={`border border-gray-400 p-2 font-medium ${max > 0 && obtained !== undefined && (obtained/max * 100 < 33) ? 'text-red-600' : ''}`}>
-                                                        {obtained !== undefined ? obtained : '-'}
-                                                    </td>
-                                                </React.Fragment>
-                                            )
-                                        })}
-                                        <td className="border border-gray-400 p-2 font-semibold bg-blue-50">{subjectRowMax}</td>
-                                        <td className="border border-gray-400 p-2 font-semibold bg-blue-50">{subjectRowObtained}</td>
-                                        <td className={`border border-gray-400 p-2 font-semibold bg-blue-50 ${subjectPassed ? 'text-green-600' : 'text-red-600'}`}>
-                                            {subjectPassed ? 'P' : 'F'}
-                                        </td>
-                                    </tr>
-                                )
-                            })}
-                            <tr className="font-bold bg-blue-100 text-blue-900 text-center">
-                                <td className="border border-gray-400 p-2 text-left">Total</td>
-                                {examTermIds.map(termId => {
-                                    let termMaxTotal = 0;
-                                    let termObtainedTotal = 0;
-                                    uniqueSubjects.forEach(subjectName => {
+                                    examTermIds.forEach(termId => {
                                         const subjectInfo = allSubjects[termId]?.find(s => s.subjectName === subjectName);
                                         const marksInfo = allMarks[termId]?.marks.find((m: any) => m.subjectName === subjectName);
-                                        termMaxTotal += subjectInfo?.maxMarks || 0;
-                                        termObtainedTotal += (marksInfo?.marksObtained !== undefined && marksInfo?.marksObtained !== null) ? marksInfo.marksObtained : 0;
+                                        const max = subjectInfo?.maxMarks || 0;
+                                        const obtained = (marksInfo?.marksObtained !== undefined && marksInfo?.marksObtained !== null) ? marksInfo.marksObtained : 0;
+                                        
+                                        if (max > 0 && (obtained / max) * 100 < 33) {
+                                            subjectPassed = false;
+                                        }
                                     });
+
                                     return (
-                                        <React.Fragment key={`total-${termId}`}>
-                                            <td className="border border-gray-400 p-2">{termMaxTotal}</td>
-                                            <td className="border border-gray-400 p-2">{termObtainedTotal}</td>
-                                        </React.Fragment>
+                                        <tr key={subjectName} className="text-center even:bg-gray-50">
+                                            <td className="border border-gray-400 p-2 text-left font-semibold">{subjectName}</td>
+                                            {examTermIds.map(termId => {
+                                                const subjectInfo = allSubjects[termId]?.find(s => s.subjectName === subjectName);
+                                                const marksInfo = allMarks[termId]?.marks.find((m: any) => m.subjectName === subjectName);
+                                                const max = subjectInfo?.maxMarks || 0;
+                                                const obtained = (marksInfo?.marksObtained !== undefined && marksInfo?.marksObtained !== null) ? marksInfo.marksObtained : marksInfo;
+                                                
+                                                subjectRowMax += max;
+                                                if (obtained) subjectRowObtained += obtained;
+
+                                                return (
+                                                    <React.Fragment key={`${termId}-${subjectName}`}>
+                                                        <td className="border border-gray-400 p-2">{max || '-'}</td>
+                                                        <td className={`border border-gray-400 p-2 font-medium ${max > 0 && obtained !== undefined && (obtained/max * 100 < 33) ? 'text-red-600' : ''}`}>
+                                                            {obtained !== undefined ? obtained : '-'}
+                                                        </td>
+                                                    </React.Fragment>
+                                                )
+                                            })}
+                                            <td className="border border-gray-400 p-2 font-semibold bg-blue-50">{subjectRowMax}</td>
+                                            <td className="border border-gray-400 p-2 font-semibold bg-blue-50">{subjectRowObtained}</td>
+                                            <td className={`border border-gray-400 p-2 font-semibold bg-blue-50 ${subjectPassed ? 'text-green-600' : 'text-red-600'}`}>
+                                                {subjectPassed ? 'P' : 'F'}
+                                            </td>
+                                        </tr>
                                     )
                                 })}
-                                <td className="border border-gray-400 p-2 bg-blue-200">{grandTotal.max}</td>
-                                <td className="border border-gray-400 p-2 bg-blue-200">{grandTotal.obtained}</td>
-                                <td className="border border-gray-400 p-2 bg-blue-200"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
-                    <div className="mt-6 grid grid-cols-3 gap-4 text-center rounded-lg bg-blue-100 p-4">
-                        <div>
-                            <p className="text-sm font-semibold text-blue-900">Percentage</p>
-                            <p className="font-bold text-xl text-blue-800">{grandTotal.percentage}%</p>
+                                <tr className="font-bold bg-blue-100 text-blue-900 text-center">
+                                    <td className="border border-gray-400 p-2 text-left">Total</td>
+                                    {examTermIds.map(termId => {
+                                        let termMaxTotal = 0;
+                                        let termObtainedTotal = 0;
+                                        uniqueSubjects.forEach(subjectName => {
+                                            const subjectInfo = allSubjects[termId]?.find(s => s.subjectName === subjectName);
+                                            const marksInfo = allMarks[termId]?.marks.find((m: any) => m.subjectName === subjectName);
+                                            termMaxTotal += subjectInfo?.maxMarks || 0;
+                                            termObtainedTotal += (marksInfo?.marksObtained !== undefined && marksInfo?.marksObtained !== null) ? marksInfo.marksObtained : 0;
+                                        });
+                                        return (
+                                            <React.Fragment key={`total-${termId}`}>
+                                                <td className="border border-gray-400 p-2">{termMaxTotal}</td>
+                                                <td className="border border-gray-400 p-2">{termObtainedTotal}</td>
+                                            </React.Fragment>
+                                        )
+                                    })}
+                                    <td className="border border-gray-400 p-2 bg-blue-200">{grandTotal.max}</td>
+                                    <td className="border border-gray-400 p-2 bg-blue-200">{grandTotal.obtained}</td>
+                                    <td className="border border-gray-400 p-2 bg-blue-200"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div className="mt-6 grid grid-cols-3 gap-4 text-center rounded-lg bg-blue-100 p-4">
+                            <div>
+                                <p className="text-sm font-semibold text-blue-900">Percentage</p>
+                                <p className="font-bold text-xl text-blue-800">{grandTotal.percentage}%</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-blue-900">Grade</p>
+                                <p className="font-bold text-xl text-blue-800">{grade}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-blue-900">Result</p>
+                                <p className={`font-bold text-xl ${finalResult === 'Pass' ? 'text-green-600' : 'text-red-600'}`}>{finalResult}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm font-semibold text-blue-900">Grade</p>
-                            <p className="font-bold text-xl text-blue-800">{grade}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm font-semibold text-blue-900">Result</p>
-                            <p className={`font-bold text-xl ${finalResult === 'Pass' ? 'text-green-600' : 'text-red-600'}`}>{finalResult}</p>
-                        </div>
-                    </div>
-                    
-                    <div className="mt-12 pt-8 flex justify-between items-end text-sm">
-                        <div>
-                            <p className="border-t-2 border-gray-400 pt-1 px-8">Class Teacher's Signature</p>
-                        </div>
-                        <div>
-                            <p className="border-t-2 border-gray-400 pt-1 px-8">Principal's Signature</p>
+                        
+                        <div className="mt-12 pt-8 flex justify-between items-end text-sm">
+                            <div>
+                                <p className="border-t-2 border-gray-400 pt-1 px-8">Class Teacher's Signature</p>
+                            </div>
+                            <div>
+                                <p className="border-t-2 border-gray-400 pt-1 px-8">Principal's Signature</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -311,7 +313,7 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                  <Button onClick={() => window.print()}>Print</Button>
                  <Button variant="outline" onClick={() => window.close()}>Close</Button>
             </div>
-        </div>
+        </>
     );
 }
 
@@ -330,5 +332,3 @@ export default function ReportCardPrintPage({ params }: { params: { id: string }
     
     return <ReportCardView schoolId={params.id} studentId={studentId} examTermIds={examTermIds} />;
 }
-
-    

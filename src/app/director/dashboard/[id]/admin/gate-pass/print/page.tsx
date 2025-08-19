@@ -56,26 +56,26 @@ export default function PrintGatePassPage({ params }: { params: { id: string } }
     const fallbackChar = passHolderName?.charAt(0) || '?';
 
     return (
-        <div className="bg-gray-100 flex items-center justify-center min-h-screen">
+        <>
              <style type="text/css" media="print">{`
                 @page { size: A6 landscape; margin: 0; }
                 body { -webkit-print-color-adjust: exact; background: white; }
-                .no-print, .print-container { display: none; }
+                .no-print { display: none; }
+                 .gate-pass-container {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100vw;
+                    height: 100vh;
+                }
                 .gate-pass { 
-                    display: block !important;
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    box-shadow: none;
-                    border: none;
-                    border-radius: 0;
                     transform: scale(1);
+                    box-shadow: none;
+                    border: 1px solid black;
                  }
             `}</style>
              
-             <div className="print-container">
+             <div className="gate-pass-container bg-gray-100 flex items-center justify-center min-h-screen">
                  <div className="gate-pass w-[5.8in] h-[4.1in] bg-white shadow-lg border p-4 flex flex-col">
                      <div className="text-center mb-4 border-b-2 border-dashed pb-2">
                         <h1 className="text-xl font-bold uppercase">{school.schoolName}</h1>
@@ -118,6 +118,6 @@ export default function PrintGatePassPage({ params }: { params: { id: string } }
                  <Button onClick={() => window.print()}>Print Pass</Button>
                  <Button variant="outline" onClick={() => window.close()}>Close</Button>
             </div>
-        </div>
+        </>
     )
 }

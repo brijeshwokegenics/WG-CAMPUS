@@ -7,6 +7,8 @@ import { getTimetable, getClassesForSchool } from '@/app/actions/academics';
 import { getSchool } from '@/app/actions/school';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
 
 const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 const periods = Array.from({ length: 8 }, (_, i) => `Period ${i + 1}`);
@@ -70,7 +72,7 @@ function TimetablePrintView({ schoolId, classId, section }: { schoolId: string, 
     }
 
     return (
-        <div className="bg-white text-black font-sans p-8">
+        <>
             <style type="text/css" media="print">
               {`
                 @page { size: A4 landscape; margin: 15mm; }
@@ -83,48 +85,50 @@ function TimetablePrintView({ schoolId, classId, section }: { schoolId: string, 
               `}
             </style>
             
-            <div className="print-container">
-                <div className="text-center mb-6">
-                    <h1 className="text-3xl font-bold uppercase tracking-wider">{school.schoolName}</h1>
-                    <p className="text-lg text-gray-700">{school.address}, {school.city}</p>
-                    <h2 className="text-2xl font-semibold mt-4">CLASS TIMETABLE</h2>
-                </div>
+            <div className="bg-white text-black font-sans p-8">
+                <div className="print-container">
+                    <div className="text-center mb-6">
+                        <h1 className="text-3xl font-bold uppercase tracking-wider">{school.schoolName}</h1>
+                        <p className="text-lg text-gray-700">{school.address}, {school.city}</p>
+                        <h2 className="text-2xl font-semibold mt-4">CLASS TIMETABLE</h2>
+                    </div>
 
-                <div className="flex justify-between items-center mb-4 text-xl">
-                    <p><strong>Class:</strong> {className}</p>
-                    <p><strong>Section:</strong> {section}</p>
-                </div>
+                    <div className="flex justify-between items-center mb-4 text-xl">
+                        <p><strong>Class:</strong> {className}</p>
+                        <p><strong>Section:</strong> {section}</p>
+                    </div>
 
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[100px] font-bold">Day/Period</TableHead>
-                            {periods.map(period => <TableHead key={period} className="font-bold">{period}</TableHead>)}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {daysOfWeek.map(day => (
-                            <TableRow key={day}>
-                                <TableCell className="font-bold capitalize">{day}</TableCell>
-                                {periods.map((_, periodIndex) => (
-                                    <TableCell key={periodIndex}>
-                                        <div>
-                                            <p className="font-semibold text-sm h-4">{timetable[day]?.[periodIndex]?.subject || ''}</p>
-                                            <p className="text-xs text-gray-600 h-3">{timetable[day]?.[periodIndex]?.teacher || ''}</p>
-                                        </div>
-                                    </TableCell>
-                                ))}
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[100px] font-bold">Day/Period</TableHead>
+                                {periods.map(period => <TableHead key={period} className="font-bold">{period}</TableHead>)}
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {daysOfWeek.map(day => (
+                                <TableRow key={day}>
+                                    <TableCell className="font-bold capitalize">{day}</TableCell>
+                                    {periods.map((_, periodIndex) => (
+                                        <TableCell key={periodIndex}>
+                                            <div>
+                                                <p className="font-semibold text-sm h-4">{timetable[day]?.[periodIndex]?.subject || ''}</p>
+                                                <p className="text-xs text-gray-600 h-3">{timetable[day]?.[periodIndex]?.teacher || ''}</p>
+                                            </div>
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
 
             <div className="fixed bottom-4 right-4 no-print">
                  <p className="text-xs text-gray-500">You can close this window after printing.</p>
-                 <button onClick={() => window.close()} className="mt-2 px-4 py-2 bg-gray-200 rounded">Close</button>
+                 <Button onClick={() => window.close()} className="mt-2 px-4 py-2 bg-gray-200 rounded">Close</Button>
             </div>
-        </div>
+        </>
     );
 }
 

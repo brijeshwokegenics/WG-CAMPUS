@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
 import { useWindowSize } from 'use-debounce';
+import { Button } from '@/components/ui/button';
 
 function ProfileDetail({ label, value }: { label: string, value: string | undefined | null }) {
     if (!value) return null;
@@ -57,74 +58,76 @@ function StudentPrintView({ schoolId, studentId }: { schoolId: string, studentId
     }
 
     return (
-        <div className="bg-white text-black p-8 font-sans">
+        <>
              <style type="text/css" media="print">
               {`
-                @page { size: auto;  margin: 20mm; }
-                body { -webkit-print-color-adjust: exact; }
+                @page { size: A4;  margin: 20mm; }
+                body { -webkit-print-color-adjust: exact; color: black; background: white; }
                 .no-print { display: none; }
               `}
             </style>
-
-            <div className="text-center mb-8 border-b pb-4">
-                <h1 className="text-3xl font-bold">Student Profile</h1>
-                {/* You might want to fetch and display School Name here */}
-                <p className="text-lg">WG Campus</p>
-            </div>
-
-            <div className="flex items-start space-x-8 mb-8">
-                <Avatar className="h-32 w-32 border">
-                    <AvatarImage src={student.photoUrl || "https://placehold.co/128x128.png"} alt={student.studentName} />
-                    <AvatarFallback>{student.studentName.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="space-y-2 flex-grow">
-                    <h2 className="text-4xl font-bold">{student.studentName}</h2>
-                    <p className="text-xl text-gray-600">
-                        Class {student.className} - Section {student.section}
-                    </p>
-                     <p className="text-md text-gray-500 pt-2">Admission ID: {studentId}</p>
-                </div>
-            </div>
             
-            {/* Personal Details */}
-            <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-4 border-b pb-2">Personal Details</h3>
-                <div className="grid grid-cols-3 gap-6">
-                    <ProfileDetail label="Date of Birth" value={format(student.dob, 'PPP')} />
-                    <ProfileDetail label="Gender" value={student.gender} />
-                    <ProfileDetail label="Blood Group" value={student.bloodGroup} />
-                    <ProfileDetail label="Admission Date" value={format(student.admissionDate, 'PPP')} />
-                    <ProfileDetail label="Aadhar Number" value={student.aadharNumber} />
+            <div className="bg-white text-black p-8 font-sans">
+                <div className="text-center mb-8 border-b pb-4">
+                    <h1 className="text-3xl font-bold">Student Profile</h1>
+                    {/* You might want to fetch and display School Name here */}
+                    <p className="text-lg">WG Campus</p>
+                </div>
+
+                <div className="flex items-start space-x-8 mb-8">
+                    <Avatar className="h-32 w-32 border">
+                        <AvatarImage src={student.photoUrl || "https://placehold.co/128x128.png"} alt={student.studentName} />
+                        <AvatarFallback>{student.studentName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-2 flex-grow">
+                        <h2 className="text-4xl font-bold">{student.studentName}</h2>
+                        <p className="text-xl text-gray-600">
+                            Class {student.className} - Section {student.section}
+                        </p>
+                        <p className="text-md text-gray-500 pt-2">Admission ID: {studentId}</p>
+                    </div>
+                </div>
+                
+                {/* Personal Details */}
+                <div className="mb-6">
+                    <h3 className="text-xl font-semibold mb-4 border-b pb-2">Personal Details</h3>
+                    <div className="grid grid-cols-3 gap-6">
+                        <ProfileDetail label="Date of Birth" value={format(student.dob, 'PPP')} />
+                        <ProfileDetail label="Gender" value={student.gender} />
+                        <ProfileDetail label="Blood Group" value={student.bloodGroup} />
+                        <ProfileDetail label="Admission Date" value={format(student.admissionDate, 'PPP')} />
+                        <ProfileDetail label="Aadhar Number" value={student.aadharNumber} />
+                    </div>
+                </div>
+
+                {/* Parent/Guardian Details */}
+                <div className="mb-6">
+                    <h3 className="text-xl font-semibold mb-4 border-b pb-2">Parent/Guardian Details</h3>
+                    <div className="grid grid-cols-3 gap-6">
+                        <ProfileDetail label="Father's Name" value={student.fatherName} />
+                        <ProfileDetail label="Mother's Name" value={student.motherName} />
+                        <ProfileDetail label="Parent's Mobile" value={student.parentMobile} />
+                        <ProfileDetail label="Parent's Email" value={student.parentEmail} />
+                    </div>
+                </div>
+                
+                {/* Contact Details */}
+                <div className="mb-6">
+                    <h3 className="text-xl font-semibold mb-4 border-b pb-2">Contact Details</h3>
+                    <div className="grid grid-cols-3 gap-6">
+                        <ProfileDetail label="Address" value={student.address} />
+                        <ProfileDetail label="City" value={student.city} />
+                        <ProfileDetail label="State" value={student.state} />
+                        <ProfileDetail label="Zip Code" value={student.zipcode} />
+                    </div>
                 </div>
             </div>
 
-            {/* Parent/Guardian Details */}
-            <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-4 border-b pb-2">Parent/Guardian Details</h3>
-                <div className="grid grid-cols-3 gap-6">
-                    <ProfileDetail label="Father's Name" value={student.fatherName} />
-                    <ProfileDetail label="Mother's Name" value={student.motherName} />
-                    <ProfileDetail label="Parent's Mobile" value={student.parentMobile} />
-                    <ProfileDetail label="Parent's Email" value={student.parentEmail} />
-                </div>
+            <div className="fixed bottom-4 right-4 no-print">
+                 <p className="text-xs text-gray-500">You can close this window after printing.</p>
+                 <Button onClick={() => window.close()} className="mt-2 px-4 py-2 bg-gray-200 rounded">Close</Button>
             </div>
-            
-            {/* Contact Details */}
-            <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-4 border-b pb-2">Contact Details</h3>
-                 <div className="grid grid-cols-3 gap-6">
-                    <ProfileDetail label="Address" value={student.address} />
-                    <ProfileDetail label="City" value={student.city} />
-                    <ProfileDetail label="State" value={student.state} />
-                    <ProfileDetail label="Zip Code" value={student.zipcode} />
-                </div>
-            </div>
-
-            <div className="mt-16 text-center text-xs text-gray-500 no-print">
-                <p>This is a computer-generated document. You can close this window after printing.</p>
-                 <button onClick={() => window.close()} className="mt-4 px-4 py-2 bg-gray-200 rounded">Close</button>
-            </div>
-        </div>
+        </>
     );
 }
 

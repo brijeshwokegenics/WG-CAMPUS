@@ -43,29 +43,29 @@ function AdmissionCardView({ schoolId, studentId }: { schoolId: string, studentI
     }
 
     return (
-        <div className="bg-gray-100 flex items-center justify-center min-h-screen">
+        <>
              <style type="text/css" media="print">
               {`
                 @page { size: A5 landscape; margin: 0; }
                 body { -webkit-print-color-adjust: exact; background: white; }
-                .no-print, .print-container { display: none; }
+                .no-print { display: none; }
+                .admission-card-container {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100vw;
+                    height: 100vh;
+                }
                 .admission-card { 
-                    display: block !important;
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    box-shadow: none;
-                    border: none;
-                    border-radius: 0;
                     transform: scale(1);
+                    box-shadow: none;
+                    border: 2px solid black;
                  }
               `}
             </style>
             
-            <div className="print-container">
-                <div className="admission-card p-6 border-2 border-black rounded-lg w-[7in] h-[5in] bg-white flex flex-col">
+            <div className="admission-card-container bg-gray-100 flex items-center justify-center min-h-screen">
+                <div className="admission-card p-6 rounded-lg w-[7in] h-[5in] bg-white flex flex-col">
                     <div className="text-center border-b-2 border-black pb-4 mb-6">
                         <h1 className="text-2xl font-bold uppercase tracking-widest">{school.schoolName}</h1>
                         <p className="text-sm text-gray-600">{school.address}, {school.city}</p>
@@ -122,7 +122,7 @@ function AdmissionCardView({ schoolId, studentId }: { schoolId: string, studentI
                  <p className="text-xs text-gray-500">You can close this window after printing.</p>
                  <button onClick={() => window.close()} className="mt-2 px-4 py-2 bg-gray-200 rounded">Close</button>
             </div>
-        </div>
+        </>
     );
 }
 
