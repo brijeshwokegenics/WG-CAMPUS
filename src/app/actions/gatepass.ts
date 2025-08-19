@@ -64,10 +64,10 @@ export async function getRecentGatePasses(schoolId: string) {
     if (!schoolId) return { success: false, error: "School ID is required." };
 
     try {
+        // Remove orderBy from here to avoid needing a composite index
         const q = query(
             collection(db, 'gatePasses'), 
             where('schoolId', '==', schoolId),
-            orderBy('createdAt', 'desc'),
             limit(50)
         );
         const snapshot = await getDocs(q);
@@ -83,10 +83,13 @@ export async function getRecentGatePasses(schoolId: string) {
             createdAt: doc.data().createdAt?.toDate() || new Date(0)
         }));
         
+        // Sort in code instead of in the query
+        passes.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        
         return { success: true, data: passes };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error fetching gate passes:", error);
-        return { success: false, error: "Failed to fetch gate passes." };
+        return { success: false, error: `Failed to fetch gate passes: ${error.message}` };
     }
 }
 
