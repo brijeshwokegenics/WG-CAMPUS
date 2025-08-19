@@ -51,8 +51,8 @@ export function StudentAttendance({ schoolId, classes }: { schoolId: string; cla
     async function fetchStudents() {
       if (selectedClassId && selectedSection) {
         setLoading(true);
-        const studentData = await getStudentsForSchool({ schoolId, classId: selectedClassId, section: selectedSection });
-        setStudents(studentData);
+        const studentResult = await getStudentsForSchool({ schoolId, classId: selectedClassId, section: selectedSection, rowsPerPage: 1000 });
+        setStudents(studentResult.students || []);
         setLoading(false);
       } else {
         setStudents([]);

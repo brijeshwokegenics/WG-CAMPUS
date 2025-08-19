@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -37,14 +38,14 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
         async function fetchStudents() {
             if (fromClassId && fromSection) {
                 setLoadingStudents(true);
-                const studentData = await getStudentsForSchool({ 
+                const result = await getStudentsForSchool({ 
                     schoolId, 
                     classId: fromClassId, 
                     section: fromSection,
                     passedOnly: showPassedOnly,
                     rowsPerPage: 1000, // Fetch all for promotion page
                 });
-                setStudents(studentData as StudentData[]);
+                setStudents(result.students as StudentData[]);
                 setSelectedStudents({});
                 setSelectAll(false);
                 setLoadingStudents(false);
@@ -219,5 +220,3 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
         </form>
     );
 }
-
-    
