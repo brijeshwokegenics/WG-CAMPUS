@@ -42,8 +42,8 @@ export function MarksEntrySheet({ isOpen, setIsOpen, examTerm, schoolId, classes
         async function fetchData() {
             if (selectedClassId && selectedSection) {
                 setLoading(true);
-                const studentData = await getStudentsForSchool({ schoolId, classId: selectedClassId, section: selectedSection });
-                setStudents(studentData);
+                const studentResult = await getStudentsForSchool({ schoolId, classId: selectedClassId, section: selectedSection, rowsPerPage: 1000 });
+                setStudents(studentResult.students || []);
 
                 const scheduleData = await getExamSchedule(schoolId, examTerm.id, selectedClassId);
                 if (scheduleData.success && scheduleData.data) {
@@ -192,7 +192,7 @@ function StudentMarksRow({ student, subjects, schoolId, examTermId, classId, sec
                     <Input 
                         type="number" 
                         className="w-20 text-center"
-                        value={marks[subject.subjectName] || ''}
+                        value={marks[subject.subjectName] === undefined ? '' : marks[subject.subjectName]}
                         onChange={(e) => handleMarksChange(subject.subjectName, e.target.value)}
                         max={subject.maxMarks}
                     />
