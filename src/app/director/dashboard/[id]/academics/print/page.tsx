@@ -41,8 +41,9 @@ export default function PrintCenterPage({ params }: { params: { id: string } }) 
     useEffect(() => {
         async function fetchStudents() {
             if (selectedClassId && selectedSection) {
-                const studentData = await getStudentsForSchool({ schoolId, classId: selectedClassId, section: selectedSection });
-                setStudents(studentData);
+                // Fetch all students for the print center, so we set a high rowsPerPage limit.
+                const studentResult = await getStudentsForSchool({ schoolId, classId: selectedClassId, section: selectedSection, rowsPerPage: 1000 });
+                setStudents(studentResult.students || []);
                 setSelectedStudents({}); // Reset selection when class/section changes
                 setSelectAll(false);
             } else {
