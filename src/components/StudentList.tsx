@@ -20,11 +20,10 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Pencil, Trash2, Eye, Loader2 } from "lucide-react"
-import { deleteStudent, getStudentsForSchool, getStudentCountForSchool } from '@/app/actions/academics';
+import { deleteStudent, getStudentsForSchool } from '@/app/actions/academics';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from './ui/skeleton';
 
 type StudentListProps = {
     schoolId: string;
@@ -43,29 +42,20 @@ export function StudentList({ schoolId, name, admissionId, classId, section }: S
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    const fetchStudents = useCallback(() => {
+    const fetchStudentsAndCount = useCallback(() => {
         setIsLoading(true);
         const fetchPageData = async () => {
-            const studentData = await getStudentsForSchool({ schoolId, searchTerm: name, admissionId, classId, section, page: currentPage, rowsPerPage });
-            setStudents(studentData);
+            const { students, total } = await getStudentsForSchool({ schoolId, searchTerm: name, admissionId, classId, section, page: currentPage, rowsPerPage });
+            setStudents(students);
+            setTotalStudents(total);
             setIsLoading(false);
         };
         fetchPageData();
     }, [schoolId, name, admissionId, classId, section, currentPage, rowsPerPage]);
 
-    const fetchStudentCount = useCallback(() => {
-        const fetchTotal = async () => {
-             const total = await getStudentCountForSchool({ schoolId, searchTerm: name, admissionId, classId, section });
-             setTotalStudents(total);
-        }
-        fetchTotal();
-    }, [schoolId, name, admissionId, classId, section]);
-
-
     useEffect(() => {
-        fetchStudentCount();
-        fetchStudents();
-    }, [fetchStudentCount, fetchStudents]);
+        fetchStudentsAndCount();
+    }, [fetchStudentsAndCount]);
     
     // Reset to first page when filters change
     useEffect(() => {
@@ -76,8 +66,7 @@ export function StudentList({ schoolId, name, admissionId, classId, section }: S
         if (confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
             startDeleteTransition(async () => {
                 await deleteStudent({ studentId, schoolId });
-                fetchStudents(); // Refresh data
-                fetchStudentCount(); // Refresh total count
+                fetchStudentsAndCount(); // Refresh data
             });
         }
     };
