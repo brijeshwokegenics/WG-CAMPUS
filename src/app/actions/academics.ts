@@ -110,7 +110,7 @@ const SubjectScheduleSchema = z.object({
   date: z.date(),
   startTime: z.string().min(1, "Start time is required."),
   endTime: z.string().min(1, "End time is required."),
-  maxMarks: z.number().min(1, "Max marks must be at least 1."),
+  maxMarks: z.coerce.number().min(1, "Max marks must be at least 1."),
 });
 
 const ExamScheduleSchema = z.object({
@@ -500,6 +500,7 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
             parentMobile: s.parentMobile,
             feesPaid: s.feesPaid || false,
             passedFinalExam: s.passedFinalExam || false,
+            hostelRequired: s.hostelRequired || 'No', // Include hostelRequired field
         }));
 
         return { students: studentData, total };
