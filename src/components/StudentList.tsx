@@ -45,9 +45,9 @@ export function StudentList({ schoolId, name, admissionId, classId, section }: S
     const fetchStudentsAndCount = useCallback(() => {
         setIsLoading(true);
         const fetchPageData = async () => {
-            const { students, total } = await getStudentsForSchool({ schoolId, searchTerm: name, admissionId, classId, section, page: currentPage, rowsPerPage });
-            setStudents(students);
-            setTotalStudents(total);
+            const result = await getStudentsForSchool({ schoolId, searchTerm: name, admissionId, classId, section, page: currentPage, rowsPerPage });
+            setStudents(result?.students || []);
+            setTotalStudents(result?.total || 0);
             setIsLoading(false);
         };
         fetchPageData();

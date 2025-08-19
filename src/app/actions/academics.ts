@@ -1,9 +1,10 @@
 
+
 'use server';
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or, documentId, orderBy,getCountFromServer, limit, startAfter, DocumentSnapshot, endBefore } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or, documentId, orderBy,getCountFromServer, limit, startAfter, DocumentSnapshot, endBefore, collectionGroup } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 
@@ -440,6 +441,7 @@ async function getDocsInBatches(ids: string[], collectionName: string) {
         idChunks.push(ids.slice(i, i + 30));
     }
     for (const chunk of idChunks) {
+        if(chunk.length === 0) continue;
         const q = query(collection(db, collectionName), where(documentId(), 'in', chunk));
         const snapshot = await getDocs(q);
         snapshot.forEach(doc => docMap.set(doc.id, doc.data()));
@@ -447,9 +449,9 @@ async function getDocsInBatches(ids: string[], collectionName: string) {
     return docMap;
 }
 
-export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, classId, section, passedOnly, rowsPerPage = 1000 }: { schoolId: string, searchTerm?: string, admissionId?: string, classId?: string, section?: string, passedOnly?: boolean, rowsPerPage?: number }) {
+export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, classId, section, passedOnly, page = 1, rowsPerPage = 1000 }: { schoolId: string, searchTerm?: string, admissionId?: string, classId?: string, section?: string, passedOnly?: boolean, page?: number, rowsPerPage?: number }) {
     if (!schoolId) {
-        return [];
+        return { students: [], total: 0 };
     }
 
     try {
@@ -459,17 +461,17 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
         if (section) queryConstraints.push(where('section', '==', section));
         if (passedOnly) queryConstraints.push(where('passedFinalExam', '==', true));
         
-        let studentsQuery = query(collection(db, 'students'), ...queryConstraints, orderBy('studentName'), limit(rowsPerPage));
-        
-        const studentsSnapshot = await getDocs(studentsQuery);
+        let allStudentsQuery = query(collection(db, 'students'), ...queryConstraints);
+        let studentsSnapshot = await getDocs(allStudentsQuery);
         let allStudents = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+        // Manual filtering for search term as Firestore doesn't support case-insensitive/partial text search well
         if (searchTerm || admissionId) {
             const lowercasedTerm = searchTerm?.toLowerCase() || '';
             allStudents = allStudents.filter(s => {
                 const nameMatch = lowercasedTerm ? (s.studentName as string).toLowerCase().includes(lowercasedTerm) : false;
                 const fatherNameMatch = lowercasedTerm ? (s.fatherName as string).toLowerCase().includes(lowercasedTerm) : false;
-                const admissionIdMatch = admissionId ? s.id === admissionId : false;
+                const admissionIdMatch = admissionId ? s.id.toLowerCase().includes(admissionId.toLowerCase()) : false;
                 
                 if (admissionId) return admissionIdMatch;
                 if (searchTerm) return nameMatch || fatherNameMatch;
@@ -477,14 +479,19 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
             });
         }
         
-        if (allStudents.length === 0) {
-            return [];
+        const total = allStudents.length;
+
+        // Apply pagination
+        const paginatedStudents = allStudents.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+
+        if (paginatedStudents.length === 0) {
+            return { students: [], total: 0 };
         }
 
-        const classIds = [...new Set(allStudents.map(s => s.classId))];
+        const classIds = [...new Set(paginatedStudents.map(s => s.classId))];
         const classMap = await getDocsInBatches(classIds, 'classes');
 
-        const studentData = allStudents.map(s => ({
+        const studentData = paginatedStudents.map(s => ({
             id: s.id,
             studentName: s.studentName,
             className: classMap.get(s.classId)?.name || 'N/A',
@@ -495,11 +502,11 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
             passedFinalExam: s.passedFinalExam || false,
         }));
 
-        return studentData;
+        return { students: studentData, total };
 
     } catch (error) {
         console.error("Error fetching students:", error);
-        return [];
+        return { students: [], total: 0 };
     }
 }
 
@@ -511,19 +518,30 @@ export async function getStudentCountForSchool({ schoolId, searchTerm, admission
 
     try {
         let queryConstraints: QueryConstraint[] = [where('schoolId', '==', schoolId)];
-        if (admissionId) return 1;
         if (classId) queryConstraints.push(where('classId', '==', classId));
         if (section) queryConstraints.push(where('section', '==', section));
         if (passedOnly) queryConstraints.push(where('passedFinalExam', '==', true));
-        if (searchTerm) {
-            const endTerm = searchTerm.slice(0, -1) + String.fromCharCode(searchTerm.charCodeAt(searchTerm.length - 1) + 1);
-            queryConstraints.push(where('studentName', '>=', searchTerm));
-            queryConstraints.push(where('studentName', '<', endTerm));
+        
+        // As Firestore does not support partial text search well, we fetch and count, which is not ideal for large datasets.
+        // For accurate counting with filters, this is a necessary tradeoff without a dedicated search service like Algolia.
+        let allStudentsQuery = query(collection(db, 'students'), ...queryConstraints);
+        let studentsSnapshot = await getDocs(allStudentsQuery);
+        let allStudents = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        if (searchTerm || admissionId) {
+             const lowercasedTerm = searchTerm?.toLowerCase() || '';
+            allStudents = allStudents.filter(s => {
+                const nameMatch = lowercasedTerm ? (s.studentName as string).toLowerCase().includes(lowercasedTerm) : false;
+                const fatherNameMatch = lowercasedTerm ? (s.fatherName as string).toLowerCase().includes(lowercasedTerm) : false;
+                const admissionIdMatch = admissionId ? s.id.toLowerCase().includes(admissionId.toLowerCase()) : false;
+                
+                if (admissionId) return admissionIdMatch;
+                if (searchTerm) return nameMatch || fatherNameMatch;
+                return true;
+            });
         }
         
-        const studentsQuery = query(collection(db, 'students'), ...queryConstraints);
-        const totalSnapshot = await getCountFromServer(studentsQuery);
-        return totalSnapshot.data().count;
+        return allStudents.length;
 
     } catch (error) {
         console.error("Error fetching student count:", error);
@@ -758,10 +776,10 @@ export async function getMonthlyAttendance({ schoolId, classId, section, month }
 
         // Get all students for the class and section first
         const studentResult = await getStudentsForSchool({ schoolId, classId, section });
-        if (studentResult.length === 0) {
+        if (studentResult.students.length === 0) {
             return { success: true, data: { students: [], attendance: [] } };
         }
-        const students = studentResult;
+        const students = studentResult.students;
 
 
         const attendanceRef = collection(db, 'attendance');
