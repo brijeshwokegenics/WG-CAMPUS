@@ -28,7 +28,7 @@ export async function createNotice(prevState: any, formData: FormData) {
     const parsed = NoticeSchema.safeParse(rawData);
     if (!parsed.success) return { success: false, error: "Invalid data.", details: parsed.error.flatten() };
     try {
-        await addDoc(collection(db, 'notices'), parsed.data);
+        await addDoc(collection(db, 'notices'), { ...parsed.data, postedAt: serverTimestamp() });
         revalidatePath(`/director/dashboard/${parsed.data.schoolId}/communication/notices`);
         return { success: true, message: 'Notice posted successfully.' };
     } catch (e) {
