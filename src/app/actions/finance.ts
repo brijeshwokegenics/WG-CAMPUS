@@ -7,6 +7,7 @@ import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, s
 import { revalidatePath } from 'next/cache';
 import { getStudentById } from './academics';
 import { startOfToday, endOfToday, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+import { getStudentTransportAssignment } from './transport';
 
 // ========== FEE HEADS ==========
 
@@ -253,19 +254,51 @@ export async function getStudentFeeDetails(schoolId: string, studentId: string) 
 
         const structureRes = await getFeeStructure(schoolId, student.classId);
         const feeHeadsRes = await getFeeHeads(schoolId);
+        const transportRes = await getStudentTransportAssignment(schoolId, studentId);
 
         const paymentsRef = collection(db, 'feeCollections');
         const q = query(paymentsRef, where('schoolId', '==', schoolId), where('studentId', '==', studentId));
         const paymentSnapshot = await getDocs(q);
 
         // --- 2. Process the fetched data ---
-        const feeStructure = structureRes.success ? structureRes.data : null;
+        let feeStructure = structureRes.success ? structureRes.data : null;
         const allFeeHeads = feeHeadsRes.success ? feeHeadsRes.data : [];
         const paymentHistory = paymentSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
             paymentDate: doc.data().paymentDate.toDate(),
         })).sort((a,b) => a.paymentDate.getTime() - b.paymentDate.getTime()); // Sort oldest first for allocation
+
+        // --- 2.5. Inject transport fee if applicable ---
+        if (transportRes.success && transportRes.data) {
+            const transportFeeData = transportRes.data;
+            if (feeStructure) {
+                // Add transport fee to the existing structure
+                 feeStructure.structure.push({
+                    feeHeadId: 'transport_fee',
+                    feeHeadName: 'Transport Fee',
+                    amount: transportFeeData.fee,
+                });
+            } else {
+                 // Create a structure if none exists, just for the transport fee
+                feeStructure = {
+                    schoolId,
+                    classId: student.classId,
+                    structure: [{
+                        feeHeadId: 'transport_fee',
+                        feeHeadName: 'Transport Fee',
+                        amount: transportFeeData.fee,
+                    }]
+                }
+            }
+             // Add a virtual fee head for transport
+            allFeeHeads.push({
+                id: 'transport_fee',
+                name: 'Transport Fee',
+                type: 'Annual',
+                schoolId: schoolId,
+            });
+        }
 
         // --- 3. Calculate Fee Status with Installment Logic ---
         const feeStatus: any[] = [];
@@ -422,5 +455,4 @@ export async function getFeeCollectionsSummary(schoolId: string) {
         return { success: false, error: "Failed to fetch fee collections summary." };
     }
 }
-
     

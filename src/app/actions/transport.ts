@@ -266,4 +266,44 @@ export async function updateStudentAssignment(schoolId: string, assignmentId: st
     }
 }
 
+
+export async function getStudentTransportAssignment(schoolId: string, studentId: string) {
+    try {
+        const docRef = doc(db, 'studentTransport', `${schoolId}_${studentId}`);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+            return { success: true, data: null };
+        }
+        
+        const assignment = docSnap.data() as z.infer<typeof StudentTransportSchema>;
+        
+        const routeDocRef = doc(db, 'transportRoutes', assignment.routeId);
+        const routeDocSnap = await getDoc(routeDocRef);
+        
+        if (!routeDocSnap.exists()) {
+             return { success: false, error: "Assigned route not found." };
+        }
+        
+        const routeData = routeDocSnap.data() as z.infer<typeof RouteSchema>;
+        const stopData = routeData.stops.find(s => s.name === assignment.stopName);
+
+        if (!stopData) {
+            return { success: false, error: "Assigned stop not found on the route." };
+        }
+
+        return {
+            success: true,
+            data: {
+                fee: stopData.fee,
+                stopName: stopData.name,
+                routeName: routeData.name,
+            }
+        }
+
+    } catch (error) {
+        console.error("Error fetching student transport assignment:", error);
+        return { success: false, error: 'Failed to fetch transport details.' };
+    }
+}
     
