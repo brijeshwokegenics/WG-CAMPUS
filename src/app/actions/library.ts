@@ -295,14 +295,20 @@ async function getDocsByIds(collectionRef: Query, ids: string[], schoolId: strin
 export async function getFullIssueHistory(schoolId: string) {
     const q = query(
         collection(db, 'libraryIssues'),
-        where('schoolId', '==', schoolId),
-        orderBy('issueDate', 'desc')
+        where('schoolId', '==', schoolId)
     );
     const snapshot = await getDocs(q);
     if (snapshot.empty) return [];
 
-    const issues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    let issues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
+    // Sort in code instead of query to avoid composite index
+    issues.sort((a, b) => {
+        const dateA = a.issueDate?.toDate() || 0;
+        const dateB = b.issueDate?.toDate() || 0;
+        return dateB - dateA;
+    });
+
     const bookIds = [...new Set(issues.map(i => i.bookId))];
     const studentIds = [...new Set(issues.filter(i => i.memberType === 'Student').map(i => i.memberId))];
     const staffIds = [...new Set(issues.filter(i => i.memberType === 'Staff').map(i => i.memberId))];
