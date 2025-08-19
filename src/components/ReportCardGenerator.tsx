@@ -28,8 +28,8 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
         async function fetchStudents() {
             if (selectedClassId && selectedSection) {
                 setLoadingStudents(true);
-                const studentData = await getStudentsForSchool({ schoolId, classId: selectedClassId, section: selectedSection });
-                setStudents(studentData);
+                const studentResult = await getStudentsForSchool({ schoolId, classId: selectedClassId, section: selectedSection, rowsPerPage: 1000 });
+                setStudents(studentResult.students || []);
                 setSelectedStudent(null); 
                 setLoadingStudents(false);
             } else {
