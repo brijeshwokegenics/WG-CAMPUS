@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo, useTransition } from 'react';
+import React, { useState, useEffect, useMemo, useTransition, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ export function StudentAllocation({ schoolId, classes }: { schoolId: string, cla
 
     const selectedRoute = useMemo(() => routes.find(r => r.id === selectedRouteId), [routes, selectedRouteId]);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         const [routesRes, assignedRes] = await Promise.all([
             getRoutes(schoolId),
@@ -41,11 +41,11 @@ export function StudentAllocation({ schoolId, classes }: { schoolId: string, cla
         setRoutes(routesRes);
         setAssignedStudents(assignedRes);
         setLoading(false);
-    };
+    }, [schoolId, selectedRouteId]);
 
     useEffect(() => {
         fetchData();
-    }, [schoolId, selectedRouteId]);
+    }, [fetchData]);
     
     const handleUnassign = (assignmentId: string) => {
         if(confirm("Are you sure you want to unassign this student from the route?")){
