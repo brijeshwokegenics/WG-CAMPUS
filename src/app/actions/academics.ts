@@ -942,16 +942,20 @@ export async function updateExamSchedule(prevState: any, formData: FormData) {
         subjects: JSON.parse(formData.get('subjects') as string),
     };
     
-    // Convert date strings to Date objects
-    rawData.subjects.forEach((sub: any) => {
-        sub.date = new Date(sub.date);
-        sub.maxMarks = Number(sub.maxMarks) || 0;
+    // Sanitize and convert data types before validation
+    const sanitizedSubjects = rawData.subjects.map((sub: any) => ({
+        ...sub,
+        date: new Date(sub.date),
+        maxMarks: Number(sub.maxMarks) || 0,
+    }));
+
+    const parsed = ExamScheduleSchema.safeParse({
+        ...rawData,
+        subjects: sanitizedSubjects,
     });
 
-    const parsed = ExamScheduleSchema.safeParse(rawData);
-
     if (!parsed.success) {
-        console.log(parsed.error.flatten());
+        console.log("Validation failed:", parsed.error.flatten());
         return { success: false, error: "Invalid schedule data.", details: parsed.error.flatten() };
     }
     
