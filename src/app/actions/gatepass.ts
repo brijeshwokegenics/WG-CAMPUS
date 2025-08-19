@@ -45,6 +45,7 @@ export async function createGatePass(prevState: any, formData: FormData) {
     };
     const newDocRef = await addDoc(collection(db, 'gatePasses'), dataToSave);
     revalidatePath(`/director/dashboard/${parsed.data.schoolId}/admin/gate-pass`);
+    revalidatePath(`/front-desk/${parsed.data.schoolId}/dashboard`);
     
     const newDocSnap = await getDoc(newDocRef);
     const newPass = {
@@ -98,7 +99,7 @@ export async function updateGatePassStatus(schoolId: string, passId: string, sta
         const docSnap = await getDoc(docRef);
 
         if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) {
-            return { success: false, error: "Permission denied." };
+            return { success: false, error: "Permission denied or pass not found." };
         }
 
         const updateData: any = { status };
@@ -109,10 +110,27 @@ export async function updateGatePassStatus(schoolId: string, passId: string, sta
         await updateDoc(docRef, updateData);
 
         revalidatePath(`/director/dashboard/${schoolId}/admin/gate-pass`);
+        revalidatePath(`/front-desk/${schoolId}/dashboard`);
         return { success: true };
     } catch (error) {
         console.error("Error updating gate pass:", error);
         return { success: false, error: "Failed to update status." };
+    }
+}
+
+export async function deleteGatePass(id: string, schoolId: string) {
+    try {
+        const docRef = doc(db, 'gatePasses', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) {
+            return { success: false, error: 'Permission denied.' };
+        }
+        await deleteDoc(docRef);
+        revalidatePath(`/director/dashboard/${schoolId}/admin/gate-pass`);
+        revalidatePath(`/front-desk/${schoolId}/dashboard`);
+        return { success: true };
+    } catch (e) {
+        return { success: false, error: 'Failed to delete pass.' };
     }
 }
 
@@ -127,7 +145,7 @@ export async function getGatePassById(schoolId: string, passId: string) {
         const docSnap = await getDoc(docRef);
 
         if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) {
-            return { success: false, error: "Gate pass not found." };
+            return { success: false, error: "Gate pass not found or permission denied." };
         }
         
         const passData = docSnap.data();
@@ -203,7 +221,7 @@ export async function updatePassType(prevState: any, formData: FormData) {
         const docRef = doc(db, 'gatePassTypes', id);
         const docSnap = await getDoc(docRef);
         if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) {
-            return { success: false, error: 'Permission denied.' };
+            return { success: false, error: 'Permission denied or pass type not found.' };
         }
         await updateDoc(docRef, parsed.data);
         revalidatePath(`/director/dashboard/${schoolId}/admin/gate-pass`);
@@ -218,11 +236,11 @@ export async function deletePassType(id: string, schoolId: string) {
     try {
         const docRef = doc(db, 'gatePassTypes', id);
         const docSnap = await getDoc(docRef);
-        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return { success: false, error: 'Permission denied.' };
+        if (!docSnap.exists() || docSnap.data().schoolId !== schoolId) return { success: false, error: 'Permission denied or pass type not found.' };
         await deleteDoc(docRef);
         revalidatePath(`/director/dashboard/${schoolId}/admin/gate-pass`);
         return { success: true };
     } catch(e) {
-        return { success: false, error: 'Failed to delete.' };
+        return { success: false, error: 'Failed to delete pass type.' };
     }
 }
