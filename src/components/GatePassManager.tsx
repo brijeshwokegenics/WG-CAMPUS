@@ -198,7 +198,7 @@ function IssuePassDialog({ isOpen, setIsOpen, schoolId, onSuccess }: {isOpen: bo
             let results: Member[] = [];
             if (memberType === 'Student') {
                 const studentRes = await getStudentsForSchool({ schoolId, searchTerm: term });
-                results = (studentRes || []).map((s: any) => ({ id: s.id, name: s.studentName, type: 'Student', details: `${s.className} - ${s.section}` }));
+                results = (studentRes.students || []).map((s: any) => ({ id: s.id, name: s.studentName, type: 'Student', details: `${s.className} - ${s.section}` }));
             } else if (memberType === 'Staff') {
                 const staffRes = await getUsersForSchool(schoolId, term);
                  results = (staffRes.data || []).map((s: any) => ({ id: s.id, name: s.name, type: 'Staff', details: s.role }));
@@ -437,7 +437,7 @@ const PassTypeFormSchema = z.object({
 });
 type PassTypeFormValues = z.infer<typeof PassTypeFormSchema>;
 
-function PassTypeForm({ isOpen, setIsOpen, schoolId, editingType, onSuccess }: { isOpen: boolean; setIsOpen: (open: boolean) => void; schoolId: string, editingType: PassType | null, onSuccess: () => void }) {
+function PassTypeForm({ isOpen, setIsFormOpen, schoolId, editingType, onSuccess }: { isOpen: boolean; setIsFormOpen: (open: boolean) => void; schoolId: string, editingType: PassType | null, onSuccess: () => void }) {
     const action = editingType ? actions.updatePassType : actions.createPassType;
     const [state, formAction] = useFormState(action, { success: false, error: null });
 
