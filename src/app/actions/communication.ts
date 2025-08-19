@@ -221,8 +221,7 @@ export async function getSentMessages(schoolId: string) {
     try {
         const q = query(
             collection(db, 'messages'),
-            where('schoolId', '==', schoolId),
-            orderBy('sentAt', 'desc')
+            where('schoolId', '==', schoolId)
         );
         const snapshot = await getDocs(q);
         const messages = snapshot.docs.map(doc => ({
@@ -230,6 +229,8 @@ export async function getSentMessages(schoolId: string) {
             ...doc.data(),
             sentAt: doc.data().sentAt.toDate(),
         }));
+        // Sort in code to avoid needing a composite index
+        messages.sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime());
         return { success: true, data: messages };
     } catch (e) {
         console.error('Error fetching messages:', e);
