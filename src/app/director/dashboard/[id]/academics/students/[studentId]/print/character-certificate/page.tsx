@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { getSchool } from '@/app/actions/school';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 function CharacterCertificateView({ schoolId, studentId }: { schoolId: string, studentId: string }) {
     const [student, setStudent] = useState<any>(null);
@@ -36,7 +37,7 @@ function CharacterCertificateView({ schoolId, studentId }: { schoolId: string, s
     }, [loading, student, school]);
 
     if (loading) {
-        return <div className="p-8 text-center">Loading Certificate...</div>;
+        return <div className="p-8 text-center flex items-center justify-center min-h-screen"><Loader2 className="h-6 w-6 animate-spin"/> Loading...</div>;
     }
 
     if (!student || !school) {
@@ -44,16 +45,15 @@ function CharacterCertificateView({ schoolId, studentId }: { schoolId: string, s
     }
 
     return (
-        <>
+        <div className="bg-gray-100 p-8">
              <style type="text/css" media="print">
               {`
                 @page { size: A4; margin: 25mm; }
                 body { -webkit-print-color-adjust: exact; background: white; color: black; }
-                .no-print { display: none; }
               `}
             </style>
             
-            <div className="bg-white text-black font-serif p-12">
+            <div className="print-container bg-white text-black font-serif shadow-lg">
                 <div className="p-8 border-2 border-black">
                     <div className="text-center mb-12">
                         <h1 className="text-3xl font-bold uppercase tracking-widest">{school.schoolName}</h1>
@@ -82,9 +82,9 @@ function CharacterCertificateView({ schoolId, studentId }: { schoolId: string, s
                 </div>
             </div>
 
-            <div className="fixed bottom-4 right-4 no-print">
-                 <p className="text-xs text-gray-500">You can close this window after printing.</p>
-                 <Button onClick={() => window.close()} className="mt-2 px-4 py-2 bg-gray-200 rounded">Close</Button>
+            <div className="fixed bottom-4 right-4 space-x-2">
+                 <Button onClick={() => window.print()}>Print</Button>
+                 <Button variant="outline" onClick={() => window.close()}>Close</Button>
             </div>
         </>
     );

@@ -6,6 +6,8 @@ import { getStudentById } from "@/app/actions/academics";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { notFound } from "next/navigation";
 import { getSchool } from '@/app/actions/school';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 function AdmissionCardView({ schoolId, studentId }: { schoolId: string, studentId: string }) {
     const [student, setStudent] = useState<any>(null);
@@ -35,7 +37,7 @@ function AdmissionCardView({ schoolId, studentId }: { schoolId: string, studentI
     }, [loading, student, school]);
 
     if (loading) {
-        return <div className="p-8 text-center">Loading Admission Card...</div>;
+        return <div className="p-8 text-center flex items-center justify-center min-h-screen"><Loader2 className="h-6 w-6 animate-spin"/> Loading...</div>;
     }
 
     if (!student || !school) {
@@ -43,29 +45,16 @@ function AdmissionCardView({ schoolId, studentId }: { schoolId: string, studentI
     }
 
     return (
-        <>
+        <div className="bg-gray-100 flex items-center justify-center min-h-screen p-4">
              <style type="text/css" media="print">
               {`
                 @page { size: A5 landscape; margin: 0; }
-                body { -webkit-print-color-adjust: exact; background: white; }
-                .no-print { display: none; }
-                .admission-card-container {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    width: 100vw;
-                    height: 100vh;
-                }
-                .admission-card { 
-                    transform: scale(1);
-                    box-shadow: none;
-                    border: 2px solid black;
-                 }
+                body { -webkit-print-color-adjust: exact; }
               `}
             </style>
             
-            <div className="admission-card-container bg-gray-100 flex items-center justify-center min-h-screen">
-                <div className="admission-card p-6 rounded-lg w-[7in] h-[5in] bg-white flex flex-col">
+            <div className="print-container">
+                <div className="admission-card p-6 rounded-lg w-[7in] h-[5in] bg-white flex flex-col border-2 border-black">
                     <div className="text-center border-b-2 border-black pb-4 mb-6">
                         <h1 className="text-2xl font-bold uppercase tracking-widest">{school.schoolName}</h1>
                         <p className="text-sm text-gray-600">{school.address}, {school.city}</p>
@@ -118,11 +107,11 @@ function AdmissionCardView({ schoolId, studentId }: { schoolId: string, studentI
                 </div>
             </div>
 
-            <div className="fixed bottom-4 right-4 no-print">
-                 <p className="text-xs text-gray-500">You can close this window after printing.</p>
-                 <button onClick={() => window.close()} className="mt-2 px-4 py-2 bg-gray-200 rounded">Close</button>
+            <div className="fixed bottom-4 right-4 space-x-2">
+                 <Button onClick={() => window.print()}>Print</Button>
+                 <Button variant="outline" onClick={() => window.close()}>Close</Button>
             </div>
-        </>
+        </div>
     );
 }
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -50,17 +51,15 @@ function ReceiptView({ receiptId, schoolId }: { receiptId: string, schoolId: str
     const amountInWords = numberToWords.toWords(receipt.totalAmount);
 
     return (
-        <div className="bg-white min-h-screen p-4 sm:p-8 flex items-center justify-center font-sans text-black">
+        <div className="bg-gray-100 min-h-screen p-4 sm:p-8 flex items-center justify-center">
             <style type="text/css" media="print">
               {`
                 @page { size: A5; margin: 0; }
                 body { -webkit-print-color-adjust: exact; }
-                .no-print { display: none; }
-                .receipt-container { margin: 0; box-shadow: none; border-radius: 0; }
               `}
             </style>
             
-            <div className="receipt-container w-full max-w-lg bg-white shadow-lg border-2 border-black">
+            <div className="print-container w-full max-w-lg bg-white shadow-lg border-2 border-black">
                 <div className="p-6">
                     <div className="text-center mb-6 border-b-2 border-dashed border-black pb-4">
                         <h1 className="text-2xl font-bold uppercase">{school.schoolName}</h1>
@@ -119,7 +118,7 @@ function ReceiptView({ receiptId, schoolId }: { receiptId: string, schoolId: str
                 </div>
             </div>
 
-             <div className="fixed bottom-4 right-4 no-print space-x-2">
+             <div className="fixed bottom-4 right-4 space-x-2">
                  <Button onClick={() => window.print()}>Print Receipt</Button>
                  <Button variant="outline" onClick={() => window.close()}>Close</Button>
             </div>

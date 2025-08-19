@@ -74,17 +74,11 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
               {`
                 @page { size: A4; margin: 0; }
                 body { -webkit-print-color-adjust: exact; }
-                .no-print { display: none; }
-                .payslip-container {
-                    margin: 0;
-                    box-shadow: none;
-                    border-radius: 0;
-                 }
               `}
             </style>
             
             <div className="bg-white min-h-screen p-4 sm:p-8 flex items-center justify-center font-sans">
-                <div className="payslip-container w-full max-w-4xl bg-white shadow-lg border">
+                <div className="print-container w-full max-w-4xl bg-white shadow-lg border">
                     <div className="p-8">
                         <div className="text-center mb-8 border-b-2 pb-4">
                             <h1 className="text-3xl font-bold uppercase">{school.schoolName}</h1>
@@ -171,11 +165,10 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
                         </div>
                     </div>
                 </div>
-            </div>
-
-             <div className="fixed bottom-4 right-4 no-print space-x-2">
-                 <Button onClick={() => window.print()}>Print Payslip</Button>
-                 <Button variant="outline" onClick={() => window.close()}>Close</Button>
+                 <div className="fixed bottom-4 right-4 space-x-2">
+                     <Button onClick={() => window.print()}>Print Payslip</Button>
+                     <Button variant="outline" onClick={() => window.close()}>Close</Button>
+                </div>
             </div>
         </>
     );

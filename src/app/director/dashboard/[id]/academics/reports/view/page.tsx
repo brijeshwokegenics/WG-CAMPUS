@@ -154,25 +154,13 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
          <>
             <style type="text/css" media="print">
               {`
-                @page { size: A4; margin: 0; }
+                @page { size: A4; margin: 20mm; }
                 body { -webkit-print-color-adjust: exact; }
-                .no-print { display: none; }
-                .report-card-container {
-                    margin: 0;
-                    box-shadow: none;
-                    border: none;
-                    border-radius: 0;
-                    min-height: 100vh;
-                 }
-                table { page-break-inside: auto; }
-                tr { page-break-inside: avoid; page-break-after: auto; }
-                thead { display: table-header-group; }
-                tfoot { display: table-footer-group; }
               `}
             </style>
             
             <div className="bg-gray-100 min-h-screen p-4 sm:p-8 flex items-center justify-center">
-                <div className="report-card-container w-full max-w-4xl bg-white shadow-2xl rounded-lg font-sans">
+                <div className="print-container w-full max-w-4xl bg-white shadow-2xl rounded-lg font-sans">
                     <div className="p-8 border-4 border-blue-900 rounded-lg min-h-[29.7cm]">
                         <div className="text-center mb-6 border-b-4 border-double border-blue-900 pb-4">
                             <h1 className="text-4xl font-bold uppercase text-blue-900 tracking-wider">{school.schoolName}</h1>
@@ -307,11 +295,11 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                         </div>
                     </div>
                 </div>
-            </div>
 
-             <div className="fixed bottom-4 right-4 no-print space-x-2">
-                 <Button onClick={() => window.print()}>Print</Button>
-                 <Button variant="outline" onClick={() => window.close()}>Close</Button>
+                <div className="fixed bottom-4 right-4 space-x-2">
+                    <Button onClick={() => window.print()}>Print</Button>
+                    <Button variant="outline" onClick={() => window.close()}>Close</Button>
+                </div>
             </div>
         </>
     );

@@ -4,10 +4,8 @@
 import React, { useEffect } from 'react';
 import { getStudentById } from "@/app/actions/academics";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
-import { useWindowSize } from 'use-debounce';
 import { Button } from '@/components/ui/button';
 
 function ProfileDetail({ label, value }: { label: string, value: string | undefined | null }) {
@@ -58,16 +56,15 @@ function StudentPrintView({ schoolId, studentId }: { schoolId: string, studentId
     }
 
     return (
-        <>
+        <div className="bg-gray-100 p-8">
              <style type="text/css" media="print">
               {`
                 @page { size: A4;  margin: 20mm; }
                 body { -webkit-print-color-adjust: exact; color: black; background: white; }
-                .no-print { display: none; }
               `}
             </style>
             
-            <div className="bg-white text-black p-8 font-sans">
+            <div className="print-container bg-white text-black p-8 font-sans shadow-lg">
                 <div className="text-center mb-8 border-b pb-4">
                     <h1 className="text-3xl font-bold">Student Profile</h1>
                     {/* You might want to fetch and display School Name here */}
@@ -123,11 +120,11 @@ function StudentPrintView({ schoolId, studentId }: { schoolId: string, studentId
                 </div>
             </div>
 
-            <div className="fixed bottom-4 right-4 no-print">
-                 <p className="text-xs text-gray-500">You can close this window after printing.</p>
-                 <Button onClick={() => window.close()} className="mt-2 px-4 py-2 bg-gray-200 rounded">Close</Button>
+            <div className="fixed bottom-4 right-4 space-x-2">
+                 <Button onClick={() => window.print()}>Print</Button>
+                 <Button variant="outline" onClick={() => window.close()}>Close</Button>
             </div>
-        </>
+        </div>
     );
 }
 

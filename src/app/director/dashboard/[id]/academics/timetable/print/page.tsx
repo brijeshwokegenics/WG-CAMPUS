@@ -72,53 +72,26 @@ function TimetablePrintView({ schoolId, classId, section }: { schoolId: string, 
     }
 
     return (
-        <div className="bg-white text-black font-sans">
+        <div className="bg-gray-100 font-sans p-4">
             <style type="text/css" media="print">{`
                 @page { 
                     size: A4 landscape; 
                     margin: 15mm;
                 }
                 body { 
-                    -webkit-print-color-adjust: exact; 
-                    background: white !important; 
-                    color: black !important;
-                }
-                .no-print { display: none; }
-                .print-container { 
-                    border: none; 
-                    padding: 0;
-                    margin: 0;
-                }
-                table { 
-                    border-collapse: collapse; 
-                    width: 100%; 
-                    font-size: 10px; /* Smaller font for better fit */
-                }
-                th, td { 
-                    border: 1px solid black; 
-                    padding: 4px; /* Reduced padding */
-                    text-align: center; 
+                    -webkit-print-color-adjust: exact !important; 
+                    print-color-adjust: exact !important;
                 }
                 th { background-color: #f2f2f2 !important; }
-                .screen-view { display: none; }
             `}</style>
             
-            {/* On-screen view for centering */}
-            <div className="screen-view p-8 flex justify-center items-center min-h-screen bg-gray-100">
-                <div className="print-container w-full max-w-5xl shadow-lg p-8 bg-white">
-                    {/* Content duplicated for screen view */}
-                    <TimetableContent school={school} className={className} section={section} timetable={timetable} />
-                </div>
-            </div>
-
-            {/* Hidden for screen, visible for print */}
-            <div className="print-container hidden print:block">
+            <div className="print-container bg-white p-8">
                  <TimetableContent school={school} className={className} section={section} timetable={timetable} />
             </div>
 
-            <div className="fixed bottom-4 right-4 no-print">
-                 <p className="text-xs text-gray-500">You can close this window after printing.</p>
-                 <Button onClick={() => window.close()} className="mt-2 px-4 py-2 bg-gray-200 rounded">Close</Button>
+            <div className="fixed bottom-4 right-4 space-x-2">
+                 <Button onClick={() => window.print()}>Print Timetable</Button>
+                 <Button variant="outline" onClick={() => window.close()}>Close</Button>
             </div>
         </div>
     );
@@ -141,16 +114,16 @@ const TimetableContent = ({ school, className, section, timetable }: any) => (
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead className="w-[100px] font-bold">Day/Period</TableHead>
-                    {periods.map(period => <TableHead key={period} className="font-bold">{period}</TableHead>)}
+                    <TableHead className="w-[100px] font-bold border border-gray-400 text-center">Day/Period</TableHead>
+                    {periods.map(period => <TableHead key={period} className="font-bold border border-gray-400 text-center">{period}</TableHead>)}
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {daysOfWeek.map(day => (
                     <TableRow key={day}>
-                        <TableCell className="font-bold capitalize">{day}</TableCell>
+                        <TableCell className="font-bold capitalize border border-gray-400 text-center">{day}</TableCell>
                         {periods.map((_, periodIndex) => (
-                            <TableCell key={periodIndex}>
+                            <TableCell key={periodIndex} className="border border-gray-400 text-center">
                                 <div>
                                     <p className="font-semibold h-4">{timetable[day]?.[periodIndex]?.subject || ''}</p>
                                     <p className="text-xs text-gray-600 h-3">{timetable[day]?.[periodIndex]?.teacher || ''}</p>
