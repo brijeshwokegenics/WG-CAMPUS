@@ -17,6 +17,7 @@ const RoomSchema = z.object({
   roomNumber: z.string().min(1, 'Room number is required.'),
   roomType: z.string().min(3, 'Room type is required (e.g., 2-Seater AC).'),
   capacity: z.coerce.number().min(1, 'Capacity must be at least 1.'),
+  fee: z.coerce.number().min(0).optional(),
 });
 type FormValues = z.infer<typeof RoomSchema>;
 
@@ -30,7 +31,7 @@ export function RoomDialog({ isOpen, setIsOpen, schoolId, hostel, editingRoom, o
 
     useEffect(() => {
         if (isOpen) {
-            reset(editingRoom || { roomNumber: '', roomType: '', capacity: 2 });
+            reset(editingRoom || { roomNumber: '', roomType: '', capacity: 2, fee: 0 });
         }
     }, [isOpen, editingRoom, reset]);
 
@@ -67,10 +68,17 @@ export function RoomDialog({ isOpen, setIsOpen, schoolId, hostel, editingRoom, o
                             {errors.capacity && <p className="text-sm text-destructive">{errors.capacity.message}</p>}
                         </div>
                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="roomType">Room Type</Label>
-                        <Input id="roomType" {...register('roomType')} placeholder="e.g., 2-Seater AC, 4-Seater Non-AC" />
-                        {errors.roomType && <p className="text-sm text-destructive">{errors.roomType.message}</p>}
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="roomType">Room Type</Label>
+                            <Input id="roomType" {...register('roomType')} placeholder="e.g., 2-Seater AC" />
+                            {errors.roomType && <p className="text-sm text-destructive">{errors.roomType.message}</p>}
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="fee">Fee (per year)</Label>
+                            <Input id="fee" type="number" {...register('fee')} placeholder="e.g., 60000" />
+                            {errors.fee && <p className="text-sm text-destructive">{errors.fee.message}</p>}
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>

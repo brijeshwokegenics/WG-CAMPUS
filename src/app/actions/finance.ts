@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache';
 import { getStudentById } from './academics';
 import { startOfToday, endOfToday, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { getStudentTransportAssignment } from './transport';
+import { getStudentHostelAssignment } from './hostel';
 
 // ========== FEE HEADS ==========
 
@@ -255,6 +256,7 @@ export async function getStudentFeeDetails(schoolId: string, studentId: string) 
         const structureRes = await getFeeStructure(schoolId, student.classId);
         const feeHeadsRes = await getFeeHeads(schoolId);
         const transportRes = await getStudentTransportAssignment(schoolId, studentId);
+        const hostelRes = await getStudentHostelAssignment(schoolId, studentId);
 
         const paymentsRef = collection(db, 'feeCollections');
         const q = query(paymentsRef, where('schoolId', '==', schoolId), where('studentId', '==', studentId));
@@ -269,33 +271,39 @@ export async function getStudentFeeDetails(schoolId: string, studentId: string) 
             paymentDate: doc.data().paymentDate.toDate(),
         })).sort((a,b) => a.paymentDate.getTime() - b.paymentDate.getTime()); // Sort oldest first for allocation
 
-        // --- 2.5. Inject transport fee if applicable ---
+        // --- 2.5. Inject transport & hostel fees if applicable ---
+        if (!feeStructure) {
+             feeStructure = {
+                schoolId,
+                classId: student.classId,
+                structure: []
+             }
+        }
+
         if (transportRes.success && transportRes.data) {
-            const transportFeeData = transportRes.data;
-            if (feeStructure) {
-                // Add transport fee to the existing structure
-                 feeStructure.structure.push({
-                    feeHeadId: 'transport_fee',
-                    feeHeadName: 'Transport Fee',
-                    amount: transportFeeData.fee,
-                });
-            } else {
-                 // Create a structure if none exists, just for the transport fee
-                feeStructure = {
-                    schoolId,
-                    classId: student.classId,
-                    structure: [{
-                        feeHeadId: 'transport_fee',
-                        feeHeadName: 'Transport Fee',
-                        amount: transportFeeData.fee,
-                    }]
-                }
-            }
-             // Add a virtual fee head for transport
+            feeStructure.structure.push({
+                feeHeadId: 'transport_fee',
+                feeHeadName: 'Transport Fee',
+                amount: transportRes.data.fee,
+            });
             allFeeHeads.push({
                 id: 'transport_fee',
                 name: 'Transport Fee',
-                type: 'Annual',
+                type: 'Annual', // Transport fee is usually annual or monthly, this can be configured
+                schoolId: schoolId,
+            });
+        }
+        
+        if (hostelRes.success && hostelRes.data && hostelRes.data.fee > 0) {
+            feeStructure.structure.push({
+                feeHeadId: 'hostel_fee',
+                feeHeadName: 'Hostel Fee',
+                amount: hostelRes.data.fee,
+            });
+            allFeeHeads.push({
+                id: 'hostel_fee',
+                name: 'Hostel Fee',
+                type: 'Annual', // Assume annual for now
                 schoolId: schoolId,
             });
         }
@@ -455,4 +463,3 @@ export async function getFeeCollectionsSummary(schoolId: string) {
         return { success: false, error: "Failed to fetch fee collections summary." };
     }
 }
-    

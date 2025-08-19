@@ -85,6 +85,7 @@ const RoomSchema = z.object({
   roomType: z.string().min(3, 'Room type is required (e.g., 2-Seater AC).'),
   capacity: z.coerce.number().min(1, 'Capacity must be at least 1.'),
   currentOccupancy: z.coerce.number().min(0).default(0),
+  fee: z.coerce.number().min(0).optional(),
   schoolId: z.string(),
 });
 const UpdateRoomSchema = RoomSchema.omit({ schoolId: true, hostelId: true });
@@ -295,4 +296,29 @@ export async function unassignStudentFromRoom(schoolId: string, assignmentId: st
     }
 }
 
+export async function getStudentHostelAssignment(schoolId: string, studentId: string) {
+    if (!schoolId || !studentId) {
+        return { success: false, data: null, error: 'School and Student ID are required.' };
+    }
     
+    try {
+        const q = query(collection(db, 'hostelAssignments'), where('schoolId', '==', schoolId), where('studentId', '==', studentId));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            return { success: true, data: null };
+        }
+
+        const assignment = snapshot.docs[0].data();
+        const roomDoc = await getDoc(doc(db, 'hostelRooms', assignment.roomId));
+        if (!roomDoc.exists()) {
+             return { success: false, data: null, error: 'Assigned room not found.' };
+        }
+        
+        return { success: true, data: { fee: roomDoc.data().fee || 0 }};
+
+    } catch (error) {
+        console.error("Error fetching student hostel assignment:", error);
+        return { success: false, data: null, error: 'Failed to fetch hostel details.' };
+    }
+}
