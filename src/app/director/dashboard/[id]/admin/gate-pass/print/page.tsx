@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, notFound } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { getGatePassById } from '@/app/actions/gatepass';
 import { getSchool } from '@/app/actions/school';
 import { Loader2 } from 'lucide-react';
@@ -10,19 +10,19 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-
-export default function PrintGatePassPage({ params }: { params: { id: string } }) {
-    const schoolId = params.id;
-    const searchParams = useSearchParams();
-    const passId = searchParams.get('id');
-    
+function PrintGatePassView({ schoolId, passId }: { schoolId: string, passId: string | null }) {
     const [pass, setPass] = useState<any>(null);
     const [school, setSchool] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchData() {
-            if (!passId) return setLoading(false);
+            if (!passId) {
+                setLoading(false);
+                return;
+            };
+            
+            setLoading(true);
             const passRes = await getGatePassById(schoolId, passId);
             if (passRes.success) {
                 setPass(passRes.data);
@@ -47,7 +47,11 @@ export default function PrintGatePassPage({ params }: { params: { id: string } }
     }
     
     if (!passId || !pass || !school) {
-        return notFound();
+        return (
+             <div className="flex items-center justify-center min-h-screen">
+                <p className="text-red-500">Error: Pass ID is required or the pass was not found.</p>
+            </div>
+        );
     }
     
     const passHolderName = pass.passHolderName;
@@ -101,10 +105,19 @@ export default function PrintGatePassPage({ params }: { params: { id: string } }
                  </div>
              </div>
 
-             <div className="fixed bottom-4 right-4 space-x-2">
+             <div className="fixed bottom-4 right-4 space-x-2 print:hidden">
                  <Button onClick={() => window.print()}>Print Pass</Button>
                  <Button variant="outline" onClick={() => window.close()}>Close</Button>
             </div>
-        </>
+        </div>
     )
+}
+
+
+// This is the main server component that wraps the client component
+export default function PrintGatePassPage({ params, searchParams }: { params: { id: string }, searchParams: { id?: string } }) {
+    const schoolId = params.id;
+    const passId = searchParams.id || null;
+
+    return <PrintGatePassView schoolId={schoolId} passId={passId} />;
 }
