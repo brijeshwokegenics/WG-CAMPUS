@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, UserPlus, Trash2, Search, Edit } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogTrigger, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '../ui/input';
 import { getStudentsForSchool } from '@/app/actions/academics';
 import { getRoutes, getAssignedStudents, assignStudentsToRoute, unassignStudent } from '@/app/actions/transport';
@@ -147,7 +147,7 @@ function AssignStudentDialog({ schoolId, route, classes, onSuccess }: { schoolId
         }
         setLoading(true);
         const res = await getStudentsForSchool({ schoolId, classId, section, rowsPerPage: 1000 });
-        setStudents(res);
+        setStudents(res.students);
         setLoading(false);
     }
     
