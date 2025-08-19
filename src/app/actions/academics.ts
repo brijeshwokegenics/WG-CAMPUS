@@ -447,28 +447,23 @@ async function getDocsInBatches(ids: string[], collectionName: string) {
     return docMap;
 }
 
-export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, classId, section, passedOnly, page = 1, rowsPerPage = 10 }: { schoolId: string, searchTerm?: string, admissionId?: string, classId?: string, section?: string, passedOnly?: boolean, page?: number, rowsPerPage?: number }) {
+export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, classId, section, passedOnly, rowsPerPage = 1000 }: { schoolId: string, searchTerm?: string, admissionId?: string, classId?: string, section?: string, passedOnly?: boolean, rowsPerPage?: number }) {
     if (!schoolId) {
         return [];
     }
 
     try {
-        // Since Firestore doesn't support case-insensitive or partial text search natively,
-        // and we want to search multiple fields, we'll fetch a broader set and filter in code.
-        // For very large datasets, a dedicated search service like Algolia or Typesense is recommended.
-        
         let queryConstraints: QueryConstraint[] = [where('schoolId', '==', schoolId)];
 
         if (classId) queryConstraints.push(where('classId', '==', classId));
         if (section) queryConstraints.push(where('section', '==', section));
         if (passedOnly) queryConstraints.push(where('passedFinalExam', '==', true));
         
-        const studentsQuery = query(collection(db, 'students'), ...queryConstraints, orderBy('studentName'));
+        let studentsQuery = query(collection(db, 'students'), ...queryConstraints, orderBy('studentName'), limit(rowsPerPage));
         
         const studentsSnapshot = await getDocs(studentsQuery);
         let allStudents = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // Manual filtering for search term and admissionId
         if (searchTerm || admissionId) {
             const lowercasedTerm = searchTerm?.toLowerCase() || '';
             allStudents = allStudents.filter(s => {
@@ -476,23 +471,20 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
                 const fatherNameMatch = lowercasedTerm ? (s.fatherName as string).toLowerCase().includes(lowercasedTerm) : false;
                 const admissionIdMatch = admissionId ? s.id === admissionId : false;
                 
-                if (admissionId) return admissionIdMatch; // If admission ID is specified, it's the only filter
-                return nameMatch || fatherNameMatch;
+                if (admissionId) return admissionIdMatch;
+                if (searchTerm) return nameMatch || fatherNameMatch;
+                return true;
             });
         }
         
-        // Apply pagination after filtering
-        const totalStudents = allStudents.length;
-        const paginatedStudents = allStudents.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-
-        if (paginatedStudents.length === 0) {
-            return { students: [], total: totalStudents };
+        if (allStudents.length === 0) {
+            return [];
         }
 
-        const classIds = [...new Set(paginatedStudents.map(s => s.classId))];
+        const classIds = [...new Set(allStudents.map(s => s.classId))];
         const classMap = await getDocsInBatches(classIds, 'classes');
 
-        const studentData = paginatedStudents.map(s => ({
+        const studentData = allStudents.map(s => ({
             id: s.id,
             studentName: s.studentName,
             className: classMap.get(s.classId)?.name || 'N/A',
@@ -503,11 +495,11 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
             passedFinalExam: s.passedFinalExam || false,
         }));
 
-        return { students: studentData, total: totalStudents };
+        return studentData;
 
     } catch (error) {
         console.error("Error fetching students:", error);
-        return { students: [], total: 0 };
+        return [];
     }
 }
 
@@ -766,10 +758,10 @@ export async function getMonthlyAttendance({ schoolId, classId, section, month }
 
         // Get all students for the class and section first
         const studentResult = await getStudentsForSchool({ schoolId, classId, section });
-        if (!studentResult.students || studentResult.students.length === 0) {
+        if (studentResult.length === 0) {
             return { success: true, data: { students: [], attendance: [] } };
         }
-        const students = studentResult.students;
+        const students = studentResult;
 
 
         const attendanceRef = collection(db, 'attendance');
@@ -1212,3 +1204,5 @@ export async function deleteHomework({ id, schoolId }: { id: string; schoolId: s
         return { success: false, error: 'Failed to delete homework.' };
     }
 }
+
+    

@@ -44,7 +44,7 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
                     passedOnly: showPassedOnly,
                     rowsPerPage: 1000, // Fetch all for promotion page
                 });
-                setStudents(studentData);
+                setStudents(studentData as StudentData[]);
                 setSelectedStudents({});
                 setSelectAll(false);
                 setLoadingStudents(false);
@@ -219,3 +219,5 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
         </form>
     );
 }
+
+    
