@@ -72,8 +72,8 @@ export function FeeManager({ schoolId }: { schoolId: string }) {
 
     const handleSearch = () => {
         startSearchTransition(async () => {
-            const studentData = await getStudentsForSchool({ schoolId, searchTerm: name, admissionId, classId });
-            setSearchedStudents(studentData);
+            const studentResult = await getStudentsForSchool({ schoolId, searchTerm: name, admissionId, classId });
+            setSearchedStudents(studentResult.students || []);
             setSelectedStudent(null);
             setDetails(null);
         });
@@ -400,5 +400,3 @@ function PaymentHistory({ history, schoolId }: { history: any[], schoolId: strin
         </Card>
     )
 }
-
-    
