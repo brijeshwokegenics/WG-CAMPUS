@@ -52,15 +52,8 @@ function ReceiptView({ receiptId, schoolId }: { receiptId: string, schoolId: str
 
     return (
         <div className="bg-gray-100 min-h-screen p-4 sm:p-8 flex items-center justify-center">
-            <style type="text/css" media="print">
-              {`
-                @page { size: A5; margin: 0; }
-                body { -webkit-print-color-adjust: exact; }
-              `}
-            </style>
-            
-            <div className="print-container w-full max-w-lg bg-white shadow-lg border-2 border-black">
-                <div className="p-6">
+            <div className="print-container w-full max-w-lg bg-white shadow-lg">
+                <div className="p-6 border-2 border-black h-[210mm] w-[148mm] mx-auto flex flex-col">
                     <div className="text-center mb-6 border-b-2 border-dashed border-black pb-4">
                         <h1 className="text-2xl font-bold uppercase">{school.schoolName}</h1>
                         <p className="text-xs text-gray-600 mt-1">{school.address}, {school.city}, {school.state} - {school.zipcode}</p>
@@ -70,11 +63,10 @@ function ReceiptView({ receiptId, schoolId }: { receiptId: string, schoolId: str
                     <div className="mb-4 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                         <p><strong>Receipt No:</strong> <span className='font-mono'>{receipt.receiptNumber}</span></p>
                         <p><strong>Date:</strong> {format(receipt.paymentDate, 'dd-MMM-yyyy')}</p>
-                        <p><strong>Student Name:</strong> <span className='font-semibold'>{receipt.student.studentName}</span></p>
+                        <p className="col-span-2"><strong>Student Name:</strong> <span className='font-semibold'>{receipt.student.studentName}</span></p>
                         <p><strong>Admission ID:</strong> {receipt.studentId}</p>
                         <p><strong>Class:</strong> {receipt.student.className} - {receipt.student.section}</p>
-                        <p><strong>Father's Name:</strong> {receipt.student.fatherName}</p>
-                        <p><strong>Mother's Name:</strong> {receipt.student.motherName}</p>
+                        <p className="col-span-2"><strong>Father's Name:</strong> {receipt.student.fatherName}</p>
                     </div>
 
                     <table className="w-full text-sm border-y-2 border-dashed border-black my-4">
@@ -82,7 +74,7 @@ function ReceiptView({ receiptId, schoolId }: { receiptId: string, schoolId: str
                             <tr className='border-b-2 border-dashed border-black'>
                                 <th className="p-2 text-left w-12">Sr.</th>
                                 <th className="p-2 text-left">Particulars</th>
-                                <th className="p-2 text-right">Amount</th>
+                                <th className="p-2 text-right">Amount (INR)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -90,7 +82,7 @@ function ReceiptView({ receiptId, schoolId }: { receiptId: string, schoolId: str
                                 <tr key={index}>
                                     <td className="p-2">{index + 1}</td>
                                     <td className="p-2">{item.feeHeadName}</td>
-                                    <td className="p-2 text-right">{item.amount.toLocaleString('en-IN')}</td>
+                                    <td className="p-2 text-right font-mono">{item.amount.toLocaleString('en-IN')}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -112,7 +104,7 @@ function ReceiptView({ receiptId, schoolId }: { receiptId: string, schoolId: str
                         <p className='text-sm mt-1'><strong>Payment Mode:</strong> {receipt.paymentMode}</p>
                     </div>
 
-                    <div className="text-center text-xs text-gray-500 mt-8">
+                    <div className="text-center text-xs text-gray-500 mt-auto pt-8">
                         This is a computer-generated receipt and does not require a signature.
                     </div>
                 </div>
