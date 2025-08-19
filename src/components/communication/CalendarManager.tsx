@@ -35,6 +35,29 @@ const EventSchema = z.object({
 }).refine(data => data.end >= data.start, { message: "End date must be on or after start date.", path: ["end"] });
 type FormValues = z.infer<typeof EventSchema>;
 
+const eventColors: Record<string, string> = {
+    Holiday: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200',
+    Event: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200',
+    Exam: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200',
+    Other: 'bg-gray-100 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200',
+};
+
+// Moved DayContent outside of CalendarManager to prevent re-creation on every render.
+const DayContent = (props: any & { events: Event[] }) => {
+    const dayEvents = props.events.filter(e => props.date >= e.start && props.date <= e.end);
+    return (
+        <div className="relative h-full w-full">
+            <time>{props.date.getDate()}</time>
+            <div className="absolute bottom-1 w-full flex justify-center gap-0.5">
+                {dayEvents.slice(0, 3).map(e => (
+                    <Dot key={e.id} className={cn("h-4 w-4", eventColors[e.type])} />
+                ))}
+            </div>
+        </div>
+    );
+};
+
+
 export function CalendarManager({ schoolId, initialEvents }: { schoolId: string, initialEvents: Event[] }) {
     const [month, setMonth] = useState(new Date());
     const [events, setEvents] = useState(initialEvents);
@@ -64,27 +87,6 @@ export function CalendarManager({ schoolId, initialEvents }: { schoolId: string,
 
     const eventMatchers: Matcher[] = events.map(event => ({ from: event.start, to: event.end }));
 
-    const eventColors: Record<string, string> = {
-        Holiday: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200',
-        Event: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200',
-        Exam: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200',
-        Other: 'bg-gray-100 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200',
-    };
-
-    const DayContent = (props: any) => {
-        const dayEvents = events.filter(e => props.date >= e.start && props.date <= e.end);
-        return (
-            <div className="relative h-full w-full">
-                <time>{props.date.getDate()}</time>
-                <div className="absolute bottom-1 w-full flex justify-center gap-0.5">
-                    {dayEvents.slice(0, 3).map(e => (
-                        <Dot key={e.id} className={cn("h-4 w-4", eventColors[e.type])} />
-                    ))}
-                </div>
-            </div>
-        );
-    };
-
     return (
         <Card>
             <CardHeader>
@@ -100,7 +102,9 @@ export function CalendarManager({ schoolId, initialEvents }: { schoolId: string,
                         onMonthChange={setMonth}
                         modifiers={{ events: eventMatchers }}
                         modifiersClassNames={{ events: 'bg-primary/10' }}
-                        components={{ DayContent }}
+                        components={{
+                            DayContent: (props) => <DayContent {...props} events={events} />
+                        }}
                         className="w-full"
                     />
                 </div>
