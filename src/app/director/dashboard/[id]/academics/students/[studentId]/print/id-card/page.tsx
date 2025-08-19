@@ -43,21 +43,90 @@ function IDCardView({ schoolId, studentId }: { schoolId: string, studentId: stri
     }
 
     return (
-        <div className="bg-white text-black font-sans flex items-center justify-center min-h-screen">
+        <div className="print-area bg-white text-black font-sans">
              <style type="text/css" media="print">
               {`
-                @page { size: 85.6mm 53.98mm; margin: 0; }
-                body { -webkit-print-color-adjust: exact; background: white; }
-                .no-print { display: none; }
+                @page { 
+                    size: 85.6mm 53.98mm; 
+                    margin: 0; 
+                }
+                body { 
+                    -webkit-print-color-adjust: exact; 
+                    background: white; 
+                    margin: 0;
+                    padding: 0;
+                }
+                .no-print, .print-screen-container { 
+                    display: none; 
+                }
                 .id-card {
-                    transform: scale(1);
-                    border: 1px solid #ccc;
+                    display: block !important;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
                     box-shadow: none;
+                    border: none;
+                    border-radius: 0;
+                    transform: scale(1);
                 }
               `}
             </style>
             
-            <div className="id-card w-[325px] h-[204px] border rounded-xl shadow-lg flex flex-col p-3 bg-slate-50 relative overflow-hidden">
+            {/* Wrapper for on-screen display, hidden for print */}
+            <div className="print-screen-container flex items-center justify-center min-h-screen">
+                <div className="id-card w-[325px] h-[204px] border rounded-xl shadow-lg flex flex-col p-3 bg-slate-50 relative overflow-hidden">
+                    {/* Header */}
+                    <div className='flex items-center gap-2 border-b pb-2'>
+                         <Avatar className="h-10 w-10 border-2 border-primary">
+                            <AvatarImage src="/school-logo.png" alt="School Logo" />
+                            <AvatarFallback>SL</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <h1 className="text-[11px] font-bold text-primary uppercase tracking-wider">{school.schoolName}</h1>
+                            <p className='text-[8px] text-gray-500 -mt-0.5'>{school.address}, {school.city}</p>
+                        </div>
+                    </div>
+
+                    {/* Body */}
+                    <div className='flex gap-3 pt-3'>
+                        <div className='flex-shrink-0'>
+                            <Avatar className="h-24 w-20 border-2 border-primary rounded-md">
+                                <AvatarImage src={student.photoUrl || "https://placehold.co/80x96.png"} alt={student.studentName} />
+                                <AvatarFallback>{student.studentName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                        </div>
+                        <div className='text-[10px] space-y-1.5'>
+                            <p className='font-bold text-lg text-slate-800 -mb-1'>{student.studentName}</p>
+                            <div className='flex'>
+                                <p className='w-16 font-semibold'>Class:</p>
+                                <p>{student.className} - {student.section}</p>
+                            </div>
+                             <div className='flex'>
+                                <p className='w-16 font-semibold'>Admission ID:</p>
+                                <p className='font-mono'>{studentId}</p>
+                            </div>
+                            <div className='flex'>
+                                <p className='w-16 font-semibold'>Mobile:</p>
+                                <p>{student.parentMobile}</p>
+                            </div>
+                             <div className='flex'>
+                                <p className='w-16 font-semibold'>Address:</p>
+                                <p className='truncate'>{student.address}, {student.city}</p>
+                            </div>
+                        </div>
+                    </div>
+                     {/* Footer */}
+                    <div className='mt-auto text-center'>
+                        <p className='text-[9px] font-semibold text-slate-600'>Principal's Signature</p>
+                        <p className='text-[8px] text-slate-500'>ID Card valid for the academic year</p>
+                    </div>
+                </div>
+            </div>
+             
+             {/* Actual printable element, shown only for print */}
+            <div className="id-card hidden w-[325px] h-[204px] border rounded-xl shadow-lg flex-col p-3 bg-slate-50 relative overflow-hidden">
                 {/* Header */}
                 <div className='flex items-center gap-2 border-b pb-2'>
                      <Avatar className="h-10 w-10 border-2 border-primary">
