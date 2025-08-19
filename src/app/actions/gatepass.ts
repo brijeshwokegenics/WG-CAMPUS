@@ -226,5 +226,3 @@ export async function deletePassType(id: string, schoolId: string) {
         return { success: false, error: 'Failed to delete.' };
     }
 }
-
-    
