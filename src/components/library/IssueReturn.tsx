@@ -42,7 +42,7 @@ export function IssueReturn({ schoolId }: { schoolId: string }) {
                 getUsersForSchool(schoolId, term)
             ]);
 
-            const students: Member[] = (studentRes || []).map((s: any) => ({
+            const students: Member[] = (studentRes.students || []).map((s: any) => ({
                 id: s.id,
                 name: s.studentName,
                 type: 'Student',
