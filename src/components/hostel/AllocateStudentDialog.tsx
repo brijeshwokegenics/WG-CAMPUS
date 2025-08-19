@@ -28,7 +28,7 @@ export function AllocateStudentDialog({ isOpen, setIsOpen, schoolId, hostel, roo
         }
         startSearchTransition(async () => {
             const result = await getStudentsForSchool({ schoolId, searchTerm: term, rowsPerPage: 10 });
-            setStudents(result);
+            setStudents(result.students || []);
         });
     }, 500);
 
