@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Pencil, Trash2, Eye, Loader2 } from "lucide-react"
-import { deleteStudent, getStudentsForSchool } from '@/app/actions/academics';
+import { deleteStudent, getStudentsForSchool, getStudentCountForSchool } from '@/app/actions/academics';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -38,28 +38,34 @@ export function StudentList({ schoolId, name, admissionId, classId, section }: S
     const [students, setStudents] = useState<any[]>([]);
     const [totalStudents, setTotalStudents] = useState(0);
     const [isDeleting, startDeleteTransition] = useTransition();
-    const [isLoading, startLoadingTransition] = useTransition();
+    const [isLoading, setIsLoading] = useState(true);
 
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const fetchStudents = useCallback(() => {
-        startLoadingTransition(async () => {
-            const result = await getStudentsForSchool({ schoolId, searchTerm: name, admissionId, classId, section, page: currentPage, rowsPerPage });
-            if(result.success) {
-                setStudents(result.students);
-                setTotalStudents(result.total);
-            } else {
-                setStudents([]);
-                setTotalStudents(0);
-            }
-        });
+        setIsLoading(true);
+        const fetchPageData = async () => {
+            const studentData = await getStudentsForSchool({ schoolId, searchTerm: name, admissionId, classId, section, page: currentPage, rowsPerPage });
+            setStudents(studentData);
+            setIsLoading(false);
+        };
+        fetchPageData();
     }, [schoolId, name, admissionId, classId, section, currentPage, rowsPerPage]);
+
+    const fetchStudentCount = useCallback(() => {
+        const fetchTotal = async () => {
+             const total = await getStudentCountForSchool({ schoolId, searchTerm: name, admissionId, classId, section });
+             setTotalStudents(total);
+        }
+        fetchTotal();
+    }, [schoolId, name, admissionId, classId, section]);
 
 
     useEffect(() => {
+        fetchStudentCount();
         fetchStudents();
-    }, [fetchStudents]);
+    }, [fetchStudentCount, fetchStudents]);
     
     // Reset to first page when filters change
     useEffect(() => {
@@ -71,6 +77,7 @@ export function StudentList({ schoolId, name, admissionId, classId, section }: S
             startDeleteTransition(async () => {
                 await deleteStudent({ studentId, schoolId });
                 fetchStudents(); // Refresh data
+                fetchStudentCount(); // Refresh total count
             });
         }
     };
@@ -158,7 +165,7 @@ export function StudentList({ schoolId, name, admissionId, classId, section }: S
         </div>
         <div className="flex items-center justify-between space-x-2 py-4">
             <div className="text-sm text-muted-foreground">
-                Showing {Math.min((currentPage - 1) * rowsPerPage + 1, totalStudents)} to {Math.min(currentPage * rowsPerPage, totalStudents)} of {totalStudents} students
+                Showing {totalStudents > 0 ? Math.min((currentPage - 1) * rowsPerPage + 1, totalStudents) : 0} to {Math.min(currentPage * rowsPerPage, totalStudents)} of {totalStudents} students
             </div>
              <div className="flex items-center space-x-2">
                 <span className="text-sm text-muted-foreground">Rows per page:</span>
@@ -196,7 +203,7 @@ export function StudentList({ schoolId, name, admissionId, classId, section }: S
                     variant="outline"
                     size="sm"
                     onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage >= totalPages}
                 >
                     Next
                 </Button>

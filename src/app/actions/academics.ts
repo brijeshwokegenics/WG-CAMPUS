@@ -449,7 +449,7 @@ async function getDocsInBatches(ids: string[], collectionName: string) {
 
 export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, classId, section, passedOnly, page = 1, rowsPerPage = 10 }: { schoolId: string, searchTerm?: string, admissionId?: string, classId?: string, section?: string, passedOnly?: boolean, page?: number, rowsPerPage?: number }) {
     if (!schoolId) {
-        return { success: false, error: "School ID is required.", students: [], total: 0 };
+        return [];
     }
 
     try {
@@ -461,14 +461,14 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
                 const studentData = studentDoc.data();
                 const classDoc = await getDoc(doc(db, 'classes', studentData.classId));
                 const className = classDoc.exists() ? classDoc.data().name : 'N/A';
-                return { success: true, students: [{
+                return [{
                     id: studentDoc.id, studentName: studentData.studentName,
                     className: className, section: studentData.section,
                     fatherName: studentData.fatherName, parentMobile: studentData.parentMobile,
                     feesPaid: studentData.feesPaid || false, passedFinalExam: studentData.passedFinalExam || false,
-                }], total: 1};
+                }];
             }
-             return { success: true, students: [], total: 0 };
+             return [];
         }
         
         if (classId) queryConstraints.push(where('classId', '==', classId));
@@ -481,9 +481,6 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
         }
         
         const studentsQuery = query(collection(db, 'students'), ...queryConstraints);
-        const totalSnapshot = await getCountFromServer(studentsQuery);
-        const total = totalSnapshot.data().count;
-
         let paginatedQuery = query(studentsQuery, orderBy('studentName'), limit(rowsPerPage));
         
         if(page > 1) {
@@ -496,7 +493,7 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
         }
 
         const studentsSnapshot = await getDocs(paginatedQuery);
-        if (studentsSnapshot.empty) return { success: true, students: [], total: 0 };
+        if (studentsSnapshot.empty) return [];
 
         const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -514,11 +511,39 @@ export async function getStudentsForSchool({ schoolId, searchTerm, admissionId, 
             passedFinalExam: s.passedFinalExam || false,
         }));
 
-        return { success: true, students: studentData, total };
+        return studentData;
 
     } catch (error) {
         console.error("Error fetching students:", error);
-        return { success: false, error: "Failed to fetch students.", students: [], total: 0 };
+        return [];
+    }
+}
+
+
+export async function getStudentCountForSchool({ schoolId, searchTerm, admissionId, classId, section, passedOnly }: { schoolId: string, searchTerm?: string, admissionId?: string, classId?: string, section?: string, passedOnly?: boolean }) {
+     if (!schoolId) {
+        return 0;
+    }
+
+    try {
+        let queryConstraints: QueryConstraint[] = [where('schoolId', '==', schoolId)];
+        if (admissionId) return 1;
+        if (classId) queryConstraints.push(where('classId', '==', classId));
+        if (section) queryConstraints.push(where('section', '==', section));
+        if (passedOnly) queryConstraints.push(where('passedFinalExam', '==', true));
+        if (searchTerm) {
+            const endTerm = searchTerm.slice(0, -1) + String.fromCharCode(searchTerm.charCodeAt(searchTerm.length - 1) + 1);
+            queryConstraints.push(where('studentName', '>=', searchTerm));
+            queryConstraints.push(where('studentName', '<', endTerm));
+        }
+        
+        const studentsQuery = query(collection(db, 'students'), ...queryConstraints);
+        const totalSnapshot = await getCountFromServer(studentsQuery);
+        return totalSnapshot.data().count;
+
+    } catch (error) {
+        console.error("Error fetching student count:", error);
+        return 0;
     }
 }
 
@@ -749,10 +774,10 @@ export async function getMonthlyAttendance({ schoolId, classId, section, month }
 
         // Get all students for the class and section first
         const studentResult = await getStudentsForSchool({ schoolId, classId, section });
-        if (!studentResult.success || studentResult.students.length === 0) {
+        if (!studentResult || studentResult.length === 0) {
             return { success: true, data: { students: [], attendance: [] } };
         }
-        const students = studentResult.students;
+        const students = studentResult;
 
 
         const attendanceRef = collection(db, 'attendance');

@@ -32,7 +32,7 @@ export default function DirectorDashboardLayout({
         isCollapsed={isSidebarCollapsed}
         toggleSidebar={toggleSidebar}
       />
-       <div className={`flex flex-col flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
+       <div className={`flex flex-col flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-4'}`}>
         <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
             {/* Mobile Sidebar Toggle */}
             <div className="md:hidden">

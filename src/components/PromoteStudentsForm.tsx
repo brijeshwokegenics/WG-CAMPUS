@@ -42,6 +42,7 @@ export function PromoteStudentsForm({ schoolId, classes }: { schoolId: string, c
                     classId: fromClassId, 
                     section: fromSection,
                     passedOnly: showPassedOnly,
+                    rowsPerPage: 1000, // Fetch all for promotion page
                 });
                 setStudents(studentData);
                 setSelectedStudents({});

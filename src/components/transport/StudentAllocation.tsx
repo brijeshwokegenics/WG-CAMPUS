@@ -146,7 +146,7 @@ function AssignStudentDialog({ schoolId, route, classes, onSuccess }: { schoolId
             return;
         }
         setLoading(true);
-        const res = await getStudentsForSchool({ schoolId, classId, section });
+        const res = await getStudentsForSchool({ schoolId, classId, section, rowsPerPage: 1000 });
         setStudents(res);
         setLoading(false);
     }
