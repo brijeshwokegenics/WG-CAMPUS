@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -15,6 +16,7 @@ import { Input } from './ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2 } from 'lucide-react';
 import { getStudentsForSchool, getExamSchedule, saveMarks, getMarksForStudent } from '@/app/actions/academics';
+import { Textarea } from './ui/textarea';
 
 type ClassData = { id: string; name: string; sections: string[]; };
 type ExamTerm = { id: string; name: string; session: string; };
@@ -123,6 +125,7 @@ export function MarksEntrySheet({ isOpen, setIsOpen, examTerm, schoolId, classes
 function StudentMarksRow({ student, subjects, schoolId, examTermId, classId, section }: { student: Student, subjects: Subject[], schoolId: string, examTermId: string, classId: string, section: string }) {
     
     const [marks, setMarks] = useState<Record<string, number | undefined>>({});
+    const [coScholastic, setCoScholastic] = useState<any>({});
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     
@@ -131,11 +134,19 @@ function StudentMarksRow({ student, subjects, schoolId, examTermId, classId, sec
             setLoading(true);
             const result = await getMarksForStudent(schoolId, examTermId, student.id);
             if (result.success && result.data) {
+                const fetchedData = result.data;
                 const initialMarks: Record<string, number | undefined> = {};
-                result.data.marks.forEach((m: any) => {
+                fetchedData.marks.forEach((m: any) => {
                     initialMarks[m.subjectName] = m.marksObtained;
                 });
                 setMarks(initialMarks);
+                setCoScholastic({
+                    workEducationGrade: fetchedData.workEducationGrade || '',
+                    artEducationGrade: fetchedData.artEducationGrade || '',
+                    healthEducationGrade: fetchedData.healthEducationGrade || '',
+                    disciplineGrade: fetchedData.disciplineGrade || '',
+                    remarks: fetchedData.remarks || '',
+                });
             } else {
                 // Initialize with empty marks if none are found
                 const initialMarks: Record<string, number | undefined> = {};
@@ -143,6 +154,7 @@ function StudentMarksRow({ student, subjects, schoolId, examTermId, classId, sec
                     initialMarks[s.subjectName] = undefined;
                 });
                 setMarks(initialMarks);
+                setCoScholastic({});
             }
             setLoading(false);
         }
@@ -163,6 +175,12 @@ function StudentMarksRow({ student, subjects, schoolId, examTermId, classId, sec
         formData.append('section', section);
         formData.append('studentId', student.id);
         formData.append('marks', JSON.stringify(marksPayload));
+        formData.append('workEducationGrade', coScholastic.workEducationGrade || '');
+        formData.append('artEducationGrade', coScholastic.artEducationGrade || '');
+        formData.append('healthEducationGrade', coScholastic.healthEducationGrade || '');
+        formData.append('disciplineGrade', coScholastic.disciplineGrade || '');
+        formData.append('remarks', coScholastic.remarks || '');
+
 
         await saveMarks(null, formData);
         setIsSaving(false);
@@ -172,7 +190,7 @@ function StudentMarksRow({ student, subjects, schoolId, examTermId, classId, sec
         const newMarks = { ...marks };
         const numValue = Number(value);
         const subject = subjects.find(s => s.subjectName === subjectName);
-        if (!isNaN(numValue) && subject && numValue <= subject.maxMarks) {
+        if (!isNaN(numValue) && subject && numValue >= 0 && numValue <= subject.maxMarks) {
             newMarks[subjectName] = numValue;
         } else if (value === '') {
              newMarks[subjectName] = undefined;
@@ -180,13 +198,48 @@ function StudentMarksRow({ student, subjects, schoolId, examTermId, classId, sec
         setMarks(newMarks);
     };
 
+    const handleCoScholasticChange = (field: string, value: string) => {
+        setCoScholastic((prev: any) => ({...prev, [field]: value}));
+    }
+
     if (loading) {
         return <TableRow><TableCell colSpan={subjects.length + 2}><Loader2 className="h-4 w-4 animate-spin"/></TableCell></TableRow>;
     }
+    
+    const gradeOptions = ['A', 'B', 'C'].map(g => ({ label: g, value: g }));
 
     return (
-        <TableRow>
-            <TableCell className="font-medium">{student.studentName}</TableCell>
+       <TableRow>
+            <TableCell className="font-medium min-w-[200px]">
+                <p>{student.studentName}</p>
+                <div className="mt-2 space-y-2 p-2 border bg-muted/50 rounded-md">
+                    <Label className="text-xs font-semibold">Co-Scholastic & Remarks</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Select value={coScholastic.workEducationGrade} onValueChange={(v) => handleCoScholasticChange('workEducationGrade', v)}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Work Edu..." /></SelectTrigger>
+                            <SelectContent>{gradeOptions.map(o=><SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+                        </Select>
+                         <Select value={coScholastic.artEducationGrade} onValueChange={(v) => handleCoScholasticChange('artEducationGrade', v)}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Art Edu..." /></SelectTrigger>
+                            <SelectContent>{gradeOptions.map(o=><SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+                        </Select>
+                         <Select value={coScholastic.healthEducationGrade} onValueChange={(v) => handleCoScholasticChange('healthEducationGrade', v)}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Health Edu..." /></SelectTrigger>
+                            <SelectContent>{gradeOptions.map(o=><SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+                        </Select>
+                         <Select value={coScholastic.disciplineGrade} onValueChange={(v) => handleCoScholasticChange('disciplineGrade', v)}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Discipline..." /></SelectTrigger>
+                            <SelectContent>{gradeOptions.map(o=><SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+                        </Select>
+                    </div>
+                     <Textarea 
+                        placeholder="Class teacher's remarks..." 
+                        className="text-xs h-16" 
+                        value={coScholastic.remarks}
+                        onChange={(e) => handleCoScholasticChange('remarks', e.target.value)}
+                    />
+                </div>
+            </TableCell>
             {subjects.map(subject => (
                 <TableCell key={subject.subjectName}>
                     <Input 

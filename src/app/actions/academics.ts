@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, getDoc, QueryConstraint, setDoc, and, or, documentId, orderBy,getCountFromServer, limit, startAfter, DocumentSnapshot, endBefore, collectionGroup } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
-import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 
 const ClassSchema = z.object({
   name: z.string().min(1, 'Class name cannot be empty.'),
@@ -120,10 +120,7 @@ const ExamScheduleSchema = z.object({
     subjects: z.array(SubjectScheduleSchema),
 });
 
-const StudentMarksSchema = z.object({
-    subjectName: z.string(),
-    marksObtained: z.number().optional(),
-});
+const CoScholasticGradeSchema = z.enum(['A', 'B', 'C', '']).optional();
 
 const MarksEntrySchema = z.object({
     schoolId: z.string(),
@@ -131,8 +128,18 @@ const MarksEntrySchema = z.object({
     classId: z.string(),
     section: z.string(),
     studentId: z.string(),
-    marks: z.array(StudentMarksSchema),
+    marks: z.array(z.object({
+        subjectName: z.string(),
+        marksObtained: z.number().optional(),
+    })),
+    // Co-Scholastic and Remarks
+    workEducationGrade: CoScholasticGradeSchema,
+    artEducationGrade: CoScholasticGradeSchema,
+    healthEducationGrade: CoScholasticGradeSchema,
+    disciplineGrade: CoScholasticGradeSchema,
+    remarks: z.string().optional(),
 });
+
 
 const StudyMaterialSchema = z.object({
   schoolId: z.string().min(1),
@@ -772,8 +779,8 @@ export async function getMonthlyAttendance({ schoolId, classId, section, month }
 
     try {
         const [year, monthIndex] = month.split('-').map(Number);
-        const startDate = startOfMonth(new Date(year, monthIndex - 1));
-        const endDate = endOfMonth(new Date(year, monthIndex - 1));
+        const startDate = new Date(year, monthIndex - 1, 1);
+        const endDate = new Date(year, monthIndex, 0);
 
         // Get all students for the class and section first
         const studentResult = await getStudentsForSchool({ schoolId, classId, section });
@@ -1002,6 +1009,11 @@ export async function saveMarks(prevState: any, formData: FormData) {
         section: formData.get('section'),
         studentId: formData.get('studentId'),
         marks: JSON.parse(formData.get('marks') as string),
+        workEducationGrade: formData.get('workEducationGrade'),
+        artEducationGrade: formData.get('artEducationGrade'),
+        healthEducationGrade: formData.get('healthEducationGrade'),
+        disciplineGrade: formData.get('disciplineGrade'),
+        remarks: formData.get('remarks'),
     };
 
     rawData.marks.forEach((m: any) => {

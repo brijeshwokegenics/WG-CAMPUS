@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -102,6 +103,25 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
         });
         return Array.from(subjectSet).sort();
     }, [allSubjects, examTermIds]);
+
+    const finalCoScholasticAndRemarks = useMemo(() => {
+        // Use data from the last exam term in the list
+        const lastTermId = examTermIds[examTermIds.length - 1];
+        if (lastTermId && allMarks[lastTermId]) {
+            const lastTermMarks = allMarks[lastTermId];
+            return {
+                workEducationGrade: lastTermMarks.workEducationGrade || '',
+                artEducationGrade: lastTermMarks.artEducationGrade || '',
+                healthEducationGrade: lastTermMarks.healthEducationGrade || '',
+                disciplineGrade: lastTermMarks.disciplineGrade || '',
+                remarks: lastTermMarks.remarks || '',
+            };
+        }
+        return {
+            workEducationGrade: '', artEducationGrade: '', healthEducationGrade: '',
+            disciplineGrade: '', remarks: ''
+        };
+    }, [allMarks, examTermIds]);
 
     const { grandTotal, finalResult, grade, isFail } = useMemo(() => {
         let totalMaxMarks = 0;
@@ -287,9 +307,9 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                                         <tr><th className="p-1">Activity</th><th className="p-1">Grade</th></tr>
                                     </thead>
                                     <tbody>
-                                        <tr className="text-center"><td className="p-1 text-left">Work Education</td><td></td></tr>
-                                        <tr className="text-center"><td className="p-1 text-left">Art Education</td><td></td></tr>
-                                        <tr className="text-center"><td className="p-1 text-left">Health & Physical Education</td><td></td></tr>
+                                        <tr className="text-center"><td className="p-1 text-left">Work Education</td><td>{finalCoScholasticAndRemarks.workEducationGrade}</td></tr>
+                                        <tr className="text-center"><td className="p-1 text-left">Art Education</td><td>{finalCoScholasticAndRemarks.artEducationGrade}</td></tr>
+                                        <tr className="text-center"><td className="p-1 text-left">Health & Physical Education</td><td>{finalCoScholasticAndRemarks.healthEducationGrade}</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -300,7 +320,7 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                                         <tr><th className="p-1">Trait</th><th className="p-1">Grade</th></tr>
                                     </thead>
                                     <tbody>
-                                        <tr className="text-center"><td className="p-1 text-left">Discipline</td><td></td></tr>
+                                        <tr className="text-center"><td className="p-1 text-left">Discipline</td><td>{finalCoScholasticAndRemarks.disciplineGrade}</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -311,7 +331,7 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                                 <tbody>
                                     <tr className="border-none">
                                         <td className="border-none p-1 w-40"><strong>Class Teacher's Remarks:</strong></td>
-                                        <td className="border-none p-1 border-b border-dotted border-black w-full"></td>
+                                        <td className="border-none p-1 border-b border-dotted border-black w-full">{finalCoScholasticAndRemarks.remarks}</td>
                                     </tr>
                                     <tr className="border-none">
                                         <td className="border-none p-1"><strong>Result:</strong> <span className="font-bold">{finalResult}</span></td>
