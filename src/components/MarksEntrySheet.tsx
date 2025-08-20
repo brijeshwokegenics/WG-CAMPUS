@@ -17,6 +17,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Loader2 } from 'lucide-react';
 import { getStudentsForSchool, getExamSchedule, saveMarks, getMarksForStudent } from '@/app/actions/academics';
 import { Textarea } from './ui/textarea';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+
 
 type ClassData = { id: string; name: string; sections: string[]; };
 type ExamTerm = { id: string; name: string; session: string; };
@@ -61,14 +63,14 @@ export function MarksEntrySheet({ isOpen, setIsOpen, examTerm, schoolId, classes
     
     return (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetContent className="sm:max-w-full w-full md:w-3/4 lg:w-2/3">
-                <SheetHeader>
+            <SheetContent className="sm:max-w-full w-full p-0">
+                <SheetHeader className="p-6 border-b">
                     <SheetTitle>Enter Marks for {examTerm.name}</SheetTitle>
                     <SheetDescription>
                         Select a class and section to begin entering marks for students.
                     </SheetDescription>
                 </SheetHeader>
-                <div className="space-y-4 py-4">
+                <div className="p-6 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>Select Class</Label>
@@ -85,17 +87,23 @@ export function MarksEntrySheet({ isOpen, setIsOpen, examTerm, schoolId, classes
                             </Select>
                         </div>
                     </div>
+                </div>
+                 <div className="overflow-x-auto h-[calc(100vh-200px)]">
                      {loading ? (
                         <div className="text-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
                     ) : (selectedClassId && selectedSection) && (
                          subjects.length > 0 ? (
-                            <div className="overflow-x-auto">
                                 <Table>
-                                    <TableHeader>
+                                    <TableHeader className="sticky top-0 bg-background z-10">
                                         <TableRow>
-                                            <TableHead>Student Name</TableHead>
-                                            {subjects.map(s => <TableHead key={s.subjectName} className="text-center">{s.subjectName} ({s.maxMarks})</TableHead>)}
-                                            <TableHead className="text-right">Actions</TableHead>
+                                            <TableHead className="min-w-[200px]">Student Name</TableHead>
+                                            {subjects.map(s => <TableHead key={s.subjectName} className="text-center min-w-[120px]">{s.subjectName} ({s.maxMarks})</TableHead>)}
+                                            <TableHead className="min-w-[120px] text-center">Work Ed.</TableHead>
+                                            <TableHead className="min-w-[120px] text-center">Art Ed.</TableHead>
+                                            <TableHead className="min-w-[120px] text-center">Health Ed.</TableHead>
+                                            <TableHead className="min-w-[120px] text-center">Discipline</TableHead>
+                                            <TableHead className="min-w-[250px]">Remarks</TableHead>
+                                            <TableHead className="text-right min-w-[100px]">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -112,10 +120,9 @@ export function MarksEntrySheet({ isOpen, setIsOpen, examTerm, schoolId, classes
                                         ))}
                                     </TableBody>
                                 </Table>
-                            </div>
                         ) : <p className="text-center text-muted-foreground p-8">No exam schedule found for this class. Please create a schedule first.</p>
                     )}
-                </div>
+                 </div>
             </SheetContent>
         </Sheet>
     );
@@ -203,55 +210,52 @@ function StudentMarksRow({ student, subjects, schoolId, examTermId, classId, sec
     }
 
     if (loading) {
-        return <TableRow><TableCell colSpan={subjects.length + 2}><Loader2 className="h-4 w-4 animate-spin"/></TableCell></TableRow>;
+        return <TableRow><TableCell colSpan={subjects.length + 7}><Loader2 className="h-4 w-4 animate-spin"/></TableCell></TableRow>;
     }
     
     const gradeOptions = ['A', 'B', 'C'].map(g => ({ label: g, value: g }));
 
+    const GradeSelect = ({ field, placeholder }: { field: string, placeholder: string }) => (
+         <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Select value={(coScholastic as any)[field]} onValueChange={(v) => handleCoScholasticChange(field, v)}>
+                        <SelectTrigger className="h-9 text-xs"><SelectValue placeholder={placeholder} /></SelectTrigger>
+                        <SelectContent>{gradeOptions.map(o=><SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+                    </Select>
+                 </TooltipTrigger>
+                 <TooltipContent><p>{placeholder}</p></TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+
     return (
        <TableRow>
-            <TableCell className="font-medium min-w-[200px]">
-                <p>{student.studentName}</p>
-                <div className="mt-2 space-y-2 p-2 border bg-muted/50 rounded-md">
-                    <Label className="text-xs font-semibold">Co-Scholastic & Remarks</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                        <Select value={coScholastic.workEducationGrade} onValueChange={(v) => handleCoScholasticChange('workEducationGrade', v)}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Work Edu..." /></SelectTrigger>
-                            <SelectContent>{gradeOptions.map(o=><SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-                        </Select>
-                         <Select value={coScholastic.artEducationGrade} onValueChange={(v) => handleCoScholasticChange('artEducationGrade', v)}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Art Edu..." /></SelectTrigger>
-                            <SelectContent>{gradeOptions.map(o=><SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-                        </Select>
-                         <Select value={coScholastic.healthEducationGrade} onValueChange={(v) => handleCoScholasticChange('healthEducationGrade', v)}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Health Edu..." /></SelectTrigger>
-                            <SelectContent>{gradeOptions.map(o=><SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-                        </Select>
-                         <Select value={coScholastic.disciplineGrade} onValueChange={(v) => handleCoScholasticChange('disciplineGrade', v)}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Discipline..." /></SelectTrigger>
-                            <SelectContent>{gradeOptions.map(o=><SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-                        </Select>
-                    </div>
-                     <Textarea 
-                        placeholder="Class teacher's remarks..." 
-                        className="text-xs h-16" 
-                        value={coScholastic.remarks}
-                        onChange={(e) => handleCoScholasticChange('remarks', e.target.value)}
-                    />
-                </div>
-            </TableCell>
+            <TableCell className="font-medium sticky left-0 bg-background">{student.studentName}</TableCell>
             {subjects.map(subject => (
                 <TableCell key={subject.subjectName}>
                     <Input 
                         type="number" 
-                        className="w-20 text-center"
+                        className="w-24 text-center"
                         value={marks[subject.subjectName] === undefined ? '' : marks[subject.subjectName]}
                         onChange={(e) => handleMarksChange(subject.subjectName, e.target.value)}
                         max={subject.maxMarks}
                     />
                 </TableCell>
             ))}
-            <TableCell className="text-right">
+             <TableCell><GradeSelect field="workEducationGrade" placeholder="Work Education"/></TableCell>
+             <TableCell><GradeSelect field="artEducationGrade" placeholder="Art Education"/></TableCell>
+             <TableCell><GradeSelect field="healthEducationGrade" placeholder="Health Education"/></TableCell>
+             <TableCell><GradeSelect field="disciplineGrade" placeholder="Discipline"/></TableCell>
+             <TableCell>
+                <Textarea 
+                    placeholder="Remarks..." 
+                    className="text-xs h-16 w-full" 
+                    value={coScholastic.remarks}
+                    onChange={(e) => handleCoScholasticChange('remarks', e.target.value)}
+                />
+            </TableCell>
+            <TableCell className="text-right sticky right-0 bg-background">
                 <Button size="sm" onClick={handleSave} disabled={isSaving}>
                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Save'}
                 </Button>
