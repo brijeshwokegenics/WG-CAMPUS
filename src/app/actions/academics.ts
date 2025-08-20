@@ -189,11 +189,26 @@ export async function getDashboardSummary(schoolId: string) {
         const staffQuery = query(collection(db, 'users'), where('schoolId', '==', schoolId));
         const classesQuery = query(collection(db, 'classes'), where('schoolId', '==', schoolId));
         
-        const [studentsSnapshot, staffSnapshot, classesSnapshot] = await Promise.all([
+        const [studentsSnapshot, staffSnapshot, classesSnapshot, allStudentsSnapshot] = await Promise.all([
             getCountFromServer(studentsQuery),
             getCountFromServer(staffQuery),
-            getCountFromServer(classesQuery)
+            getCountFromServer(classesQuery),
+            getDocs(studentsQuery)
         ]);
+
+        const registrationBySession: Record<string, number> = {};
+        allStudentsSnapshot.forEach(doc => {
+            const student = doc.data();
+            if (student.admissionDate) {
+                const year = student.admissionDate.toDate().getFullYear();
+                const session = `${year}-${(year + 1).toString().slice(-2)}`;
+                registrationBySession[session] = (registrationBySession[session] || 0) + 1;
+            }
+        });
+
+        const sessionData = Object.entries(registrationBySession)
+            .map(([session, count]) => ({ session, count }))
+            .sort((a, b) => a.session.localeCompare(b.session));
         
         return {
             success: true,
@@ -201,6 +216,7 @@ export async function getDashboardSummary(schoolId: string) {
                 totalStudents: studentsSnapshot.data().count,
                 totalStaff: staffSnapshot.data().count,
                 totalClasses: classesSnapshot.data().count,
+                registrations: sessionData,
             }
         };
 
@@ -1269,5 +1285,3 @@ export async function deleteHomework({ id, schoolId }: { id: string; schoolId: s
         return { success: false, error: 'Failed to delete homework.' };
     }
 }
-
-    

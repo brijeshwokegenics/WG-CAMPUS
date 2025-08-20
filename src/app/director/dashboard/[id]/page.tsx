@@ -1,15 +1,16 @@
 
-
 import { getDashboardSummary } from "@/app/actions/academics";
 import { getNotices, getEvents } from "@/app/actions/communication";
 import { getFeeCollectionsSummary } from "@/app/actions/finance";
 import { getExpensesSummary } from "@/app/actions/expenses";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, GraduationCap, Briefcase, BarChart3, Receipt, CircleDollarSign, Megaphone, Calendar, TrendingUp, TrendingDown } from "lucide-react";
+import { Users, GraduationCap, Briefcase, BarChart3, Receipt, CircleDollarSign, Megaphone, Calendar, TrendingUp, TrendingDown, School } from "lucide-react";
 import Link from "next/link";
 import { format, startOfToday } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { StudentRegistrationChart } from "@/components/StudentRegistrationChart";
+
 
 type StatCardProps = {
     title: string;
@@ -65,7 +66,7 @@ export default async function DirectorDashboardPage({ params }: { params: { id: 
       getExpensesSummary(schoolId),
   ]);
 
-  const summary = summaryResult.success ? summaryResult.data : { totalStudents: 0, totalStaff: 0, totalClasses: 0 };
+  const summary = summaryResult.success ? summaryResult.data : { totalStudents: 0, totalStaff: 0, totalClasses: 0, registrations: [] };
   const collections = collectionsResult.success ? collectionsResult.data : { daily: 0, monthly: 0, yearly: 0 };
   const expenses = expensesResult.success ? expensesResult.data : { daily: 0, monthly: 0, yearly: 0 };
 
@@ -159,6 +160,24 @@ export default async function DirectorDashboardPage({ params }: { params: { id: 
             </CardContent>
         </Card>
         
+         {/* Session-wise Registration Chart */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Student Registrations by Session</CardTitle>
+                <CardDescription>Number of new student admissions per academic session.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {summary.registrations && summary.registrations.length > 0 ? (
+                    <StudentRegistrationChart data={summary.registrations} />
+                ) : (
+                    <div className="text-center py-10 text-muted-foreground">
+                        <School className="h-12 w-12 mx-auto mb-2" />
+                        <p>No registration data available to display the chart.</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
                 <CardHeader>
