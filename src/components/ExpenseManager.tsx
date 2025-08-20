@@ -262,7 +262,7 @@ function ExpenseCategoryManager({ schoolId, initialCategories, onUpdate, loading
 }
 
 const CategoryFormSchema = z.object({
-  name: z.string().min(3, "Name is required."),
+  name: z.string().min(3, "Name is required.").trim(),
   description: z.string().optional(),
 });
 type CategoryFormValues = z.infer<typeof CategoryFormSchema>;
