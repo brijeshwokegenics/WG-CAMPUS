@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
@@ -12,39 +10,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Loader2, CalendarRange, FilePenLine, Pencil, Trash2 } from 'lucide-react';
+import { PlusCircle, Loader2, CalendarRange, FilePenLine, Pencil, Trash2, Settings, Edit } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { cn } from '@/lib/utils';
 import { ExamScheduleDialog } from './ExamScheduleDialog';
 import { MarksEntrySheet } from './MarksEntrySheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 type ClassData = { id: string; name: string; sections: string[]; };
 type ExamTerm = { id: string; name: string; session: string; };
 
-const ExamTermFormSchema = z.object({
-    name: z.string().min(3, 'Exam name is required'),
-    session: z.string().min(4, 'Session is required'),
-});
-
-type ExamTermFormValues = z.infer<typeof ExamTermFormSchema>;
-
 export function ExamManager({ schoolId, classes }: { schoolId: string, classes: ClassData[] }) {
     const [terms, setTerms] = useState<ExamTerm[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isFormOpen, setIsFormOpen] = useState(false);
-    const [editingTerm, setEditingTerm] = useState<ExamTerm | null>(null);
-
-    const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
     const [selectedTermForSchedule, setSelectedTermForSchedule] = useState<ExamTerm | null>(null);
-
-    const [isMarksSheetOpen, setIsMarksSheetOpen] = useState(false);
-    const [selectedTermForMarks, setSelectedTermForMarks] = useState<ExamTerm | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
     
-    const form = useForm<ExamTermFormValues>({
-        resolver: zodResolver(ExamTermFormSchema),
-        defaultValues: { name: '', session: '' },
-    });
+    const [selectedTermForMarks, setSelectedTermForMarks] = useState<ExamTerm | null>(null);
+    const [isMarksSheetOpen, setIsMarksSheetOpen] = useState(false);
 
     const fetchTerms = async () => {
         setLoading(true);
@@ -59,6 +42,80 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
         fetchTerms();
     }, [schoolId]);
 
+    const handleOpenScheduleDialog = (term: ExamTerm) => {
+        setSelectedTermForSchedule(term);
+        setIsScheduleDialogOpen(true);
+    };
+
+     const handleOpenMarksSheet = (term: ExamTerm) => {
+        setSelectedTermForMarks(term);
+        setIsMarksSheetOpen(true);
+    };
+
+    return (
+        <Tabs defaultValue="setup">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="setup"><Settings className="mr-2 h-4 w-4"/> Exam Setup</TabsTrigger>
+                <TabsTrigger value="marks"><Edit className="mr-2 h-4 w-4"/> Marks Entry</TabsTrigger>
+            </TabsList>
+            <TabsContent value="setup">
+                <ExamSetup 
+                    schoolId={schoolId}
+                    classes={classes}
+                    terms={terms}
+                    loading={loading}
+                    fetchTerms={fetchTerms}
+                    onManageSchedule={handleOpenScheduleDialog}
+                />
+            </TabsContent>
+            <TabsContent value="marks">
+                 <MarksEntry 
+                    terms={terms}
+                    loading={loading}
+                    onEnterMarks={handleOpenMarksSheet}
+                />
+            </TabsContent>
+
+            {selectedTermForSchedule && (
+                <ExamScheduleDialog
+                    isOpen={isScheduleDialogOpen}
+                    setIsOpen={setIsScheduleDialogOpen}
+                    examTerm={selectedTermForSchedule}
+                    schoolId={schoolId}
+                    classes={classes}
+                />
+            )}
+             {selectedTermForMarks && (
+                <MarksEntrySheet
+                    isOpen={isMarksSheetOpen}
+                    setIsOpen={setIsMarksSheetOpen}
+                    examTerm={selectedTermForMarks}
+                    schoolId={schoolId}
+                    classes={classes}
+                />
+            )}
+        </Tabs>
+    );
+}
+
+const ExamTermFormSchema = z.object({
+    name: z.string().min(3, 'Exam name is required'),
+    session: z.string().min(4, 'Session is required'),
+});
+
+type ExamTermFormValues = z.infer<typeof ExamTermFormSchema>;
+
+
+function ExamSetup({ schoolId, classes, terms, loading, fetchTerms, onManageSchedule }: { schoolId: string, classes: ClassData[], terms: ExamTerm[], loading: boolean, fetchTerms: () => void, onManageSchedule: (term: ExamTerm) => void }) {
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [editingTerm, setEditingTerm] = useState<ExamTerm | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+     const form = useForm<ExamTermFormValues>({
+        resolver: zodResolver(ExamTermFormSchema),
+        defaultValues: { name: '', session: '' },
+    });
+
     const handleFormSuccess = () => {
         setIsFormOpen(false);
         setEditingTerm(null);
@@ -66,17 +123,7 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
         fetchTerms();
     };
 
-    const handleOpenScheduleDialog = (term: ExamTerm) => {
-        setSelectedTermForSchedule(term);
-        setIsScheduleDialogOpen(true);
-    };
-
-    const handleOpenMarksSheet = (term: ExamTerm) => {
-        setSelectedTermForMarks(term);
-        setIsMarksSheetOpen(true);
-    };
-
-    const handleEditClick = (term: ExamTerm) => {
+     const handleEditClick = (term: ExamTerm) => {
         setEditingTerm(term);
         form.reset({
             name: term.name,
@@ -102,92 +149,106 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
         });
         setIsFormOpen(true);
     };
-
-    const handleCancelForm = () => {
+     const handleCancelForm = () => {
         setIsFormOpen(false);
         setEditingTerm(null);
         form.reset();
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Exam Terms</h2>
-                {!isFormOpen && (
-                    <Button onClick={handleAddNewClick}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Create Exam Term
-                    </Button>
-                )}
-            </div>
-
-            {isFormOpen && (
-                <ExamTermForm
-                    schoolId={schoolId}
-                    onSuccess={handleFormSuccess}
-                    onCancel={handleCancelForm}
-                    editingTerm={editingTerm}
-                    form={form}
-                />
-            )}
-
-            {loading ? (
-                <div className="text-center py-4"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
-            ) : terms.length === 0 && !isFormOpen ? (
-                <p className="text-muted-foreground text-center py-8">No exam terms created yet.</p>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {terms.map(term => (
-                        <Card key={term.id}>
-                            <CardHeader>
-                                <CardTitle className="flex justify-between items-start">
-                                    {term.name}
-                                     <div className="flex items-center">
-                                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(term)} disabled={isDeleting}>
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteClick(term)} disabled={isDeleting}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                    </div>
-                                </CardTitle>
-                                <CardDescription>{term.session}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex flex-col space-y-2">
-                                <Button variant="outline" onClick={() => handleOpenScheduleDialog(term)}>
-                                    <CalendarRange className="mr-2 h-4 w-4" /> Manage Schedule
-                                </Button>
-                                <Button variant="outline" onClick={() => handleOpenMarksSheet(term)}>
-                                    <FilePenLine className="mr-2 h-4 w-4" /> Enter Marks
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    ))}
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <CardTitle>Exam Terms & Schedules</CardTitle>
+                    {!isFormOpen && (
+                        <Button onClick={handleAddNewClick}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Create Exam Term
+                        </Button>
+                    )}
                 </div>
-            )}
-
-            {selectedTermForSchedule && (
-                <ExamScheduleDialog
-                    isOpen={isScheduleDialogOpen}
-                    setIsOpen={setIsScheduleDialogOpen}
-                    examTerm={selectedTermForSchedule}
-                    schoolId={schoolId}
-                    classes={classes}
-                />
-            )}
-
-            {selectedTermForMarks && (
-                <MarksEntrySheet
-                    isOpen={isMarksSheetOpen}
-                    setIsOpen={setIsMarksSheetOpen}
-                    examTerm={selectedTermForMarks}
-                    schoolId={schoolId}
-                    classes={classes}
-                />
-            )}
-        </div>
+                 <CardDescription>Create examination terms and define their schedules for each class.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                {isFormOpen && (
+                    <ExamTermForm
+                        schoolId={schoolId}
+                        onSuccess={handleFormSuccess}
+                        onCancel={handleCancelForm}
+                        editingTerm={editingTerm}
+                        form={form}
+                    />
+                )}
+                 {loading ? (
+                    <div className="text-center py-4"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
+                ) : terms.length === 0 && !isFormOpen ? (
+                    <p className="text-muted-foreground text-center py-8">No exam terms created yet.</p>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {terms.map(term => (
+                            <Card key={term.id}>
+                                <CardHeader>
+                                    <CardTitle className="flex justify-between items-start">
+                                        {term.name}
+                                        <div className="flex items-center">
+                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(term)} disabled={isDeleting}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteClick(term)} disabled={isDeleting}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </div>
+                                    </CardTitle>
+                                    <CardDescription>{term.session}</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Button variant="outline" className="w-full" onClick={() => onManageSchedule(term)}>
+                                        <CalendarRange className="mr-2 h-4 w-4" /> Manage Schedule
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }
+
+function MarksEntry({ terms, loading, onEnterMarks }: { terms: ExamTerm[], loading: boolean, onEnterMarks: (term: ExamTerm) => void }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Marks Entry</CardTitle>
+                <CardDescription>Select an examination term to start entering student marks.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 {loading ? (
+                    <div className="text-center py-4"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
+                ) : terms.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No exam terms have been set up yet. Go to the "Exam Setup" tab to create one.</p>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {terms.map(term => (
+                             <Card key={term.id} className="flex flex-col">
+                                <CardHeader>
+                                    <CardTitle>{term.name}</CardTitle>
+                                    <CardDescription>{term.session}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-grow flex items-end">
+                                    <Button className="w-full" onClick={() => onEnterMarks(term)}>
+                                        <FilePenLine className="mr-2 h-4 w-4" /> Enter Marks
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    )
+}
+
 
 // Sub-component for the form to handle create and edit
 function ExamTermForm({
@@ -227,7 +288,7 @@ function ExamTermForm({
     };
 
     return (
-        <Card>
+        <Card className="bg-muted/50">
             <CardHeader>
                 <CardTitle>{editingTerm ? 'Edit Exam Term' : 'Create New Exam Term'}</CardTitle>
                 <CardDescription>{editingTerm ? 'Update the details for this exam term.' : 'Define a new examination term for the school.'}</CardDescription>
