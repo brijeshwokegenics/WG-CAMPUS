@@ -10,21 +10,36 @@ import { startOfToday, endOfToday, startOfMonth, endOfMonth, startOfYear, endOfY
 
 // ========== EXPENSE CATEGORIES ==========
 const ExpenseCategorySchema = z.object({
-  name: z.string().min(3, "Category name is required."),
+  name: z.string().min(3, "Category name is required.").trim(),
   description: z.string().optional(),
   schoolId: z.string(),
 });
 const UpdateExpenseCategorySchema = ExpenseCategorySchema.omit({ schoolId: true });
 
 export async function createExpenseCategory(prevState: any, formData: FormData) {
-  const parsed = ExpenseCategorySchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { success: false, error: 'Invalid data provided.' };
+  const rawData = {
+    name: formData.get('name'),
+    description: formData.get('description'),
+    schoolId: formData.get('schoolId'),
+  };
+  const parsed = ExpenseCategorySchema.safeParse(rawData);
+
+  if (!parsed.success) {
+      return { success: false, error: 'Invalid data provided.' };
+  }
   
   try {
-    const q = query(collection(db, 'expenseCategories'), where('schoolId', '==', parsed.data.schoolId), where('name', '==', parsed.data.name));
-    const existing = await getDocs(q);
-    if (!existing.empty) return { success: false, error: `An expense category named "${parsed.data.name}" already exists.` };
+    // Perform a case-insensitive check for existing categories
+    const categoriesRef = collection(db, 'expenseCategories');
+    const q = query(categoriesRef, where('schoolId', '==', parsed.data.schoolId));
+    const querySnapshot = await getDocs(q);
+    const existingCategories = querySnapshot.docs.map(doc => doc.data().name.toLowerCase());
+
+    if (existingCategories.includes(parsed.data.name.toLowerCase())) {
+        return { success: false, error: `An expense category named "${parsed.data.name}" already exists.` };
+    }
     
+    // If no duplicate found, add the new category
     await addDoc(collection(db, 'expenseCategories'), parsed.data);
     revalidatePath(`/accountant/${parsed.data.schoolId}/expenses`);
     return { success: true, message: 'Category created successfully.' };
