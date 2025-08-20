@@ -14,6 +14,17 @@ type School = any;
 type MarksData = any;
 type Subject = { subjectName: string; maxMarks: number; };
 
+function getGrade(percentage: number): string {
+    if (percentage > 90) return 'A1';
+    if (percentage > 80) return 'A2';
+    if (percentage > 70) return 'B1';
+    if (percentage > 60) return 'B2';
+    if (percentage > 50) return 'C1';
+    if (percentage > 40) return 'C2';
+    if (percentage >= 33) return 'D';
+    return 'E';
+}
+
 function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string, studentId: string, examTermIds: string[] }) {
     const [student, setStudent] = useState<Student>(null);
     const [school, setSchool] = useState<School>(null);
@@ -41,7 +52,6 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
 
                 if (schoolRes.school) setSchool(schoolRes.school);
                 if (termsRes.success) {
-                    // Sort the fetched terms to match the order in examTermIds
                     const sortedTerms = examTermIds.map(id => termsRes.data.find((t: any) => t.id === id)).filter(Boolean);
                     setExamTerms(sortedTerms);
                 }
@@ -93,10 +103,10 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
         return Array.from(subjectSet).sort();
     }, [allSubjects, examTermIds]);
 
-    const { grandTotal, finalResult, grade } = useMemo(() => {
+    const { grandTotal, finalResult, grade, isFail } = useMemo(() => {
         let totalMaxMarks = 0;
         let totalMarksObtained = 0;
-        let isFail = false;
+        let failInSubject = false;
         const PASS_PERCENTAGE = 33;
 
         uniqueSubjects.forEach(subjectName => {
@@ -115,28 +125,21 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
             totalMarksObtained += subjectTotalObtained;
             
             if (subjectTotalMax > 0 && (subjectTotalObtained / subjectTotalMax) * 100 < PASS_PERCENTAGE) {
-                isFail = true;
+                failInSubject = true;
             }
         });
 
-        const percentage = totalMaxMarks > 0 ? (totalMarksObtained / totalMaxMarks) * 100 : 0;
+        const overallPercentage = totalMaxMarks > 0 ? (totalMarksObtained / totalMaxMarks) * 100 : 0;
         
-        let calculatedGrade = 'F';
-        if (percentage >= 90) calculatedGrade = 'A+';
-        else if (percentage >= 80) calculatedGrade = 'A';
-        else if (percentage >= 70) calculatedGrade = 'B';
-        else if (percentage >= 60) calculatedGrade = 'C';
-        else if (percentage >= 50) calculatedGrade = 'D';
-        else if (percentage >= PASS_PERCENTAGE) calculatedGrade = 'E';
-
         return {
             grandTotal: {
                 max: totalMaxMarks,
                 obtained: totalMarksObtained,
-                percentage: percentage.toFixed(2)
+                percentage: overallPercentage.toFixed(2)
             },
-            finalResult: isFail ? 'Fail' : 'Pass',
-            grade: isFail ? 'F' : calculatedGrade,
+            finalResult: failInSubject ? 'NEEDS IMPROVEMENT' : 'PASS',
+            grade: getGrade(overallPercentage),
+            isFail: failInSubject,
         };
 
     }, [uniqueSubjects, allSubjects, allMarks, examTermIds]);
@@ -154,149 +157,169 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
          <>
             <style type="text/css" media="print">
               {`
-                @page { size: A4; margin: 20mm; }
-                body { -webkit-print-color-adjust: exact; }
+                @page { size: A4; margin: 15mm; }
+                body { -webkit-print-color-adjust: exact; font-family: 'Times New Roman', Times, serif; }
+                .report-card { border: 2px solid #000; padding: 16px; }
+                .header-logo { height: 80px; width: 80px; }
+                .header-text { text-align: center; }
+                .header-text h1 { font-size: 24px; font-weight: bold; margin: 0; }
+                .header-text p { font-size: 14px; margin: 0; }
+                .student-photo { height: 100px; width: 80px; border: 1px solid #ccc; object-fit: cover; }
+                th, td { border: 1px solid #000; padding: 4px 6px; font-size: 12px; }
+                .no-border { border: none; }
+                .scholastic-header { background-color: #e0e0e0; font-weight: bold; }
               `}
             </style>
             
             <div className="bg-gray-100 min-h-screen p-4 sm:p-8 flex items-center justify-center">
-                <div className="print-container w-full max-w-4xl bg-white shadow-2xl rounded-lg font-sans">
-                    <div className="p-8 border-4 border-blue-900 rounded-lg min-h-[29.7cm]">
-                        <div className="text-center mb-6 border-b-4 border-double border-blue-900 pb-4">
-                            <h1 className="text-4xl font-bold uppercase text-blue-900 tracking-wider">{school.schoolName}</h1>
-                            <p className="text-sm text-gray-600 mt-1">{school.address}, {school.city}, {school.state} - {school.zipcode}</p>
-                            <p className="text-sm text-gray-600">Phone: {school.phone} | Email: {school.contactEmail}</p>
-                            <h2 className="text-2xl font-semibold mt-4 text-blue-800 bg-blue-100 py-1 rounded-md">ACADEMIC REPORT CARD</h2>
-                        </div>
+                <div className="print-container w-full max-w-4xl bg-white shadow-2xl">
+                    <div className="report-card">
+                        <header className="flex items-center justify-between border-b-2 border-black pb-2">
+                             <img src={school.schoolLogoUrl || 'https://placehold.co/100x100.png'} alt="School Logo" className="header-logo" />
+                             <div className="header-text">
+                                <h1>{school.schoolName}</h1>
+                                <p>{school.address}, {school.city}, {school.state}</p>
+                                <p className="font-bold mt-2 text-lg">REPORT BOOK</p>
+                                <p className="font-semibold">SESSION: {examTerms[0]?.session || ''}</p>
+                             </div>
+                             <img src={student.photoUrl || 'https://placehold.co/80x100.png'} alt="Student Photo" className="student-photo" />
+                        </header>
 
-                        <div className="mb-6 grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                            <p><strong>Student Name:</strong> <span className='font-semibold text-base'>{student.studentName}</span></p>
-                            <p><strong>Admission ID:</strong> {studentId}</p>
-                            <p><strong>Class & Section:</strong> {student.className} - {student.section}</p>
-                            <p><strong>Date of Birth:</strong> {format(student.dob, 'PPP')}</p>
-                            <p><strong>Father's Name:</strong> {student.fatherName}</p>
-                            <p><strong>Session:</strong> {examTerms[0]?.session || ''}</p>
-                        </div>
+                        <section className="mt-4">
+                            <table className="w-full">
+                                <tbody>
+                                    <tr>
+                                        <td className="no-border"><strong>Student's Name:</strong> {student.studentName}</td>
+                                        <td className="no-border"><strong>Class:</strong> {student.className}</td>
+                                        <td className="no-border"><strong>Section:</strong> {student.section}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="no-border"><strong>Father's Name:</strong> {student.fatherName}</td>
+                                        <td className="no-border"><strong>Admission No:</strong> {studentId}</td>
+                                        <td className="no-border"><strong>Roll No:</strong> ______</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="no-border"><strong>Mother's Name:</strong> {student.motherName}</td>
+                                        <td className="no-border"><strong>Date of Birth:</strong> {format(student.dob, 'dd-MM-yyyy')}</td>
+                                        <td className="no-border"><strong>Attendance:</strong> _____ / _____</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </section>
 
-                        <table className="w-full border-collapse border border-gray-400 text-sm">
-                            <thead className="bg-blue-100 text-blue-900">
-                                <tr>
-                                    <th rowSpan={2} className="border border-gray-400 p-2 font-semibold">Subjects</th>
-                                    {examTerms.map(term => (
-                                        <th key={term.id} colSpan={2} className="border border-gray-400 p-2 font-semibold">{term.name}</th>
-                                    ))}
-                                    <th colSpan={3} className="border border-gray-400 p-2 font-semibold bg-blue-200">Grand Total</th>
-                                </tr>
-                                <tr>
-                                    {examTermIds.map(termId => (
-                                        <React.Fragment key={termId}>
-                                            <th className="border border-gray-400 p-2 font-medium">Max</th>
-                                            <th className="border border-gray-400 p-2 font-medium">Obt.</th>
-                                        </React.Fragment>
-                                    ))}
-                                    <th className="border border-gray-400 p-2 font-medium bg-blue-200">Max</th>
-                                    <th className="border border-gray-400 p-2 font-medium bg-blue-200">Obt.</th>
-                                    <th className="border border-gray-400 p-2 font-medium bg-blue-200">Pass/Fail</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            {uniqueSubjects.map(subjectName => {
-                                    let subjectRowMax = 0;
-                                    let subjectRowObtained = 0;
-                                    let subjectPassed = true;
-
-                                    examTermIds.forEach(termId => {
-                                        const subjectInfo = allSubjects[termId]?.find(s => s.subjectName === subjectName);
-                                        const marksInfo = allMarks[termId]?.marks.find((m: any) => m.subjectName === subjectName);
-                                        const max = subjectInfo?.maxMarks || 0;
-                                        const obtained = (marksInfo?.marksObtained !== undefined && marksInfo?.marksObtained !== null) ? marksInfo.marksObtained : 0;
-                                        
-                                        if (max > 0 && (obtained / max) * 100 < 33) {
-                                            subjectPassed = false;
-                                        }
-                                    });
-
+                        <section className="mt-4">
+                            <h2 className="text-center font-bold text-lg mb-2">PART 1: SCHOLASTIC AREAS</h2>
+                            <table className="w-full border-collapse">
+                                <thead className="scholastic-header text-center">
+                                    <tr>
+                                        <th rowSpan={2} className="w-1/4">Subjects</th>
+                                        {examTerms.map(term => <th key={term.id} colSpan={2}>{term.name}</th>)}
+                                        <th colSpan={3}>Final Result</th>
+                                    </tr>
+                                    <tr>
+                                        {examTermIds.map(termId => (
+                                            <React.Fragment key={termId}>
+                                                <th>Marks Obt.</th>
+                                                <th>Max Marks</th>
+                                            </React.Fragment>
+                                        ))}
+                                        <th>Marks Obt.</th>
+                                        <th>Max Marks</th>
+                                        <th>Grade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {uniqueSubjects.map(subjectName => {
+                                    let subjectTotalObtained = 0;
+                                    let subjectTotalMax = 0;
                                     return (
-                                        <tr key={subjectName} className="text-center even:bg-gray-50">
-                                            <td className="border border-gray-400 p-2 text-left font-semibold">{subjectName}</td>
+                                        <tr key={subjectName} className="text-center">
+                                            <td className="text-left font-semibold">{subjectName}</td>
                                             {examTermIds.map(termId => {
                                                 const subjectInfo = allSubjects[termId]?.find(s => s.subjectName === subjectName);
                                                 const marksInfo = allMarks[termId]?.marks.find((m: any) => m.subjectName === subjectName);
+                                                const obtained = (marksInfo?.marksObtained !== undefined && marksInfo?.marksObtained !== null) ? marksInfo.marksObtained : 0;
                                                 const max = subjectInfo?.maxMarks || 0;
-                                                const obtained = (marksInfo?.marksObtained !== undefined && marksInfo?.marksObtained !== null) ? marksInfo.marksObtained : marksInfo;
-                                                
-                                                subjectRowMax += max;
-                                                if (obtained) subjectRowObtained += obtained;
-
+                                                subjectTotalObtained += obtained;
+                                                subjectTotalMax += max;
                                                 return (
                                                     <React.Fragment key={`${termId}-${subjectName}`}>
-                                                        <td className="border border-gray-400 p-2">{max || '-'}</td>
-                                                        <td className={`border border-gray-400 p-2 font-medium ${max > 0 && obtained !== undefined && (obtained/max * 100 < 33) ? 'text-red-600' : ''}`}>
-                                                            {obtained !== undefined ? obtained : '-'}
-                                                        </td>
+                                                        <td>{obtained || '-'}</td>
+                                                        <td>{max || '-'}</td>
                                                     </React.Fragment>
                                                 )
                                             })}
-                                            <td className="border border-gray-400 p-2 font-semibold bg-blue-50">{subjectRowMax}</td>
-                                            <td className="border border-gray-400 p-2 font-semibold bg-blue-50">{subjectRowObtained}</td>
-                                            <td className={`border border-gray-400 p-2 font-semibold bg-blue-50 ${subjectPassed ? 'text-green-600' : 'text-red-600'}`}>
-                                                {subjectPassed ? 'P' : 'F'}
-                                            </td>
+                                            <td className="font-semibold">{subjectTotalObtained}</td>
+                                            <td className="font-semibold">{subjectTotalMax}</td>
+                                            <td className="font-semibold">{getGrade((subjectTotalObtained/subjectTotalMax) * 100)}</td>
                                         </tr>
                                     )
                                 })}
-                                <tr className="font-bold bg-blue-100 text-blue-900 text-center">
-                                    <td className="border border-gray-400 p-2 text-left">Total</td>
-                                    {examTermIds.map(termId => {
-                                        let termMaxTotal = 0;
-                                        let termObtainedTotal = 0;
-                                        uniqueSubjects.forEach(subjectName => {
-                                            const subjectInfo = allSubjects[termId]?.find(s => s.subjectName === subjectName);
-                                            const marksInfo = allMarks[termId]?.marks.find((m: any) => m.subjectName === subjectName);
-                                            termMaxTotal += subjectInfo?.maxMarks || 0;
-                                            termObtainedTotal += (marksInfo?.marksObtained !== undefined && marksInfo?.marksObtained !== null) ? marksInfo.marksObtained : 0;
-                                        });
-                                        return (
-                                            <React.Fragment key={`total-${termId}`}>
-                                                <td className="border border-gray-400 p-2">{termMaxTotal}</td>
-                                                <td className="border border-gray-400 p-2">{termObtainedTotal}</td>
-                                            </React.Fragment>
-                                        )
-                                    })}
-                                    <td className="border border-gray-400 p-2 bg-blue-200">{grandTotal.max}</td>
-                                    <td className="border border-gray-400 p-2 bg-blue-200">{grandTotal.obtained}</td>
-                                    <td className="border border-gray-400 p-2 bg-blue-200"></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                 <tr className="font-bold text-center bg-gray-100">
+                                     <td colSpan={1 + (examTerms.length * 2)}>GRAND TOTAL</td>
+                                     <td>{grandTotal.obtained}</td>
+                                     <td>{grandTotal.max}</td>
+                                     <td>{grade}</td>
+                                 </tr>
+                                </tbody>
+                            </table>
+                        </section>
                         
-                        <div className="mt-6 grid grid-cols-3 gap-4 text-center rounded-lg bg-blue-100 p-4">
+                        <section className="mt-4 grid grid-cols-2 gap-4">
                             <div>
-                                <p className="text-sm font-semibold text-blue-900">Percentage</p>
-                                <p className="font-bold text-xl text-blue-800">{grandTotal.percentage}%</p>
+                                <h2 className="text-center font-bold text-lg mb-2">PART 2: CO-SCHOLASTIC AREAS</h2>
+                                <table className="w-full border-collapse">
+                                    <thead className="scholastic-header text-center">
+                                        <tr><th>Activity</th><th>Grade</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr className="text-center"><td>Work Education</td><td></td></tr>
+                                        <tr className="text-center"><td>Art Education</td><td></td></tr>
+                                        <tr className="text-center"><td>Health & Physical Education</td><td></td></tr>
+                                    </tbody>
+                                </table>
                             </div>
-                            <div>
-                                <p className="text-sm font-semibold text-blue-900">Grade</p>
-                                <p className="font-bold text-xl text-blue-800">{grade}</p>
+                             <div>
+                                <h2 className="text-center font-bold text-lg mb-2">PART 3: DISCIPLINE</h2>
+                                <table className="w-full border-collapse">
+                                    <thead className="scholastic-header text-center">
+                                        <tr><th>Trait</th><th>Grade</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr className="text-center"><td>Discipline</td><td></td></tr>
+                                    </tbody>
+                                </table>
                             </div>
-                            <div>
-                                <p className="text-sm font-semibold text-blue-900">Result</p>
-                                <p className={`font-bold text-xl ${finalResult === 'Pass' ? 'text-green-600' : 'text-red-600'}`}>{finalResult}</p>
-                            </div>
-                        </div>
+                        </section>
+
+                        <section className="mt-4">
+                            <table className="w-full">
+                                <tbody>
+                                    <tr>
+                                        <td className="no-border"><strong>Class Teacher's Remarks:</strong></td>
+                                        <td className="no-border border-b border-black w-full"></td>
+                                    </tr>
+                                    <tr>
+                                        <td className="no-border"><strong>Result:</strong> <span className="font-bold">{finalResult}</span></td>
+                                        <td className="no-border"><strong>Percentage:</strong> <span className="font-bold">{grandTotal.percentage}%</span></td>
+                                    </tr>
+                                     <tr>
+                                        <td colSpan={2} className="no-border"><strong>Promoted to Class:</strong> <span className="font-bold">{isFail ? '-----' : student.className.replace(/\d+/, (n: any) => parseInt(n)+1)}</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </section>
                         
-                        <div className="mt-12 pt-8 flex justify-between items-end text-sm">
-                            <div>
-                                <p className="border-t-2 border-gray-400 pt-1 px-8">Class Teacher's Signature</p>
-                            </div>
-                            <div>
-                                <p className="border-t-2 border-gray-400 pt-1 px-8">Principal's Signature</p>
-                            </div>
-                        </div>
+                        <footer className="mt-12 flex justify-between items-end text-sm">
+                             <div><p>Date: {format(new Date(), 'dd-MM-yyyy')}</p></div>
+                             <div><p className="border-t-2 border-dotted border-black pt-1 px-8">Class Teacher</p></div>
+                             <div><p className="border-t-2 border-dotted border-black pt-1 px-8">Principal</p></div>
+                        </footer>
+
                     </div>
                 </div>
 
-                <div className="fixed bottom-4 right-4 space-x-2">
+                <div className="fixed bottom-4 right-4 space-x-2 print:hidden">
                     <Button onClick={() => window.print()}>Print</Button>
                     <Button variant="outline" onClick={() => window.close()}>Close</Button>
                 </div>
