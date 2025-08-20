@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Banknote, Wallet } from "lucide-react";
+import { Banknote, Receipt, Wallet } from "lucide-react";
 import Link from "next/link";
 
 export default function AccountantDashboardPage({ params }: { params: { schoolId: string } }) {
@@ -28,6 +28,15 @@ export default function AccountantDashboardPage({ params }: { params: { schoolId
                             <Banknote className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent><p className="text-xs text-muted-foreground">Define fee heads and class structures.</p></CardContent>
+                    </Card>
+                </Link>
+                <Link href={`/accountant/${schoolId}/expenses`}>
+                     <Card className="hover:bg-muted/50 transition-colors">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium">Expenses</CardTitle>
+                            <Receipt className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent><p className="text-xs text-muted-foreground">Record and track school expenses.</p></CardContent>
                     </Card>
                 </Link>
                 <Link href={`/accountant/${schoolId}/payroll`}>
