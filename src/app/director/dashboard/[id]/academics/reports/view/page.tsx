@@ -157,75 +157,89 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
          <>
             <style type="text/css" media="print">
               {`
-                @page { size: A4; margin: 15mm; }
-                body { -webkit-print-color-adjust: exact; font-family: 'Times New Roman', Times, serif; }
-                .report-card { border: 2px solid #000; padding: 16px; }
-                .header-logo { height: 80px; width: 80px; }
-                .header-text { text-align: center; }
-                .header-text h1 { font-size: 24px; font-weight: bold; margin: 0; }
-                .header-text p { font-size: 14px; margin: 0; }
-                .student-photo { height: 100px; width: 80px; border: 1px solid #ccc; object-fit: cover; }
-                th, td { border: 1px solid #000; padding: 4px 6px; font-size: 12px; }
-                .no-border { border: none; }
-                .scholastic-header { background-color: #e0e0e0; font-weight: bold; }
+                @page { 
+                    size: A4; 
+                    margin: 15mm; 
+                }
+                body { 
+                    -webkit-print-color-adjust: exact !important; 
+                    print-color-adjust: exact !important;
+                    font-family: 'Times New Roman', Times, serif; 
+                }
+                .report-card-container {
+                    box-shadow: none !important;
+                    border: 2px solid #000 !important;
+                }
+                .print-hidden {
+                    display: none;
+                }
+                .scholastic-header {
+                    background-color: #E5E7EB !important;
+                }
+                th, td {
+                    border: 1px solid #000;
+                }
               `}
             </style>
             
             <div className="bg-gray-100 min-h-screen p-4 sm:p-8 flex items-center justify-center">
-                <div className="print-container w-full max-w-4xl bg-white shadow-2xl">
-                    <div className="report-card">
-                        <header className="flex items-center justify-between border-b-2 border-black pb-2">
-                             <img src={school.schoolLogoUrl || 'https://placehold.co/100x100.png'} alt="School Logo" className="header-logo" />
-                             <div className="header-text">
-                                <h1>{school.schoolName}</h1>
-                                <p>{school.address}, {school.city}, {school.state}</p>
-                                <p className="font-bold mt-2 text-lg">REPORT BOOK</p>
+                <div className="report-card-container w-full max-w-4xl bg-white shadow-2xl border-2 border-black">
+                    <div className="p-6">
+                        <header className="flex items-center justify-between border-b-2 border-black pb-4">
+                             <img src={school.schoolLogoUrl || 'https://placehold.co/100x100.png'} alt="School Logo" className="h-20 w-20" />
+                             <div className="text-center">
+                                <h1 className="text-3xl font-bold uppercase">{school.schoolName}</h1>
+                                <p className="text-sm">{school.address}, {school.city}, {school.state}</p>
+                                <p className="font-bold mt-2 text-xl">REPORT BOOK</p>
                                 <p className="font-semibold">SESSION: {examTerms[0]?.session || ''}</p>
                              </div>
-                             <img src={student.photoUrl || 'https://placehold.co/80x100.png'} alt="Student Photo" className="student-photo" />
+                             <img src={student.photoUrl || 'https://placehold.co/80x100.png'} alt="Student Photo" className="h-24 w-20 border object-cover" />
                         </header>
 
-                        <section className="mt-4">
+                        <section className="mt-4 text-sm">
                             <table className="w-full">
                                 <tbody>
-                                    <tr>
-                                        <td className="no-border"><strong>Student's Name:</strong> {student.studentName}</td>
-                                        <td className="no-border"><strong>Class:</strong> {student.className}</td>
-                                        <td className="no-border"><strong>Section:</strong> {student.section}</td>
+                                    <tr className="border-none">
+                                        <td className="border-none p-1"><strong>Student's Name:</strong></td>
+                                        <td className="border-none p-1 font-semibold">{student.studentName}</td>
+                                        <td className="border-none p-1"><strong>Class:</strong></td>
+                                        <td className="border-none p-1 font-semibold">{student.className} - {student.section}</td>
                                     </tr>
-                                    <tr>
-                                        <td className="no-border"><strong>Father's Name:</strong> {student.fatherName}</td>
-                                        <td className="no-border"><strong>Admission No:</strong> {studentId}</td>
-                                        <td className="no-border"><strong>Roll No:</strong> ______</td>
+                                    <tr className="border-none">
+                                        <td className="border-none p-1"><strong>Father's Name:</strong></td>
+                                        <td className="border-none p-1 font-semibold">{student.fatherName}</td>
+                                        <td className="border-none p-1"><strong>Admission No:</strong></td>
+                                        <td className="border-none p-1 font-semibold">{studentId}</td>
                                     </tr>
-                                    <tr>
-                                        <td className="no-border"><strong>Mother's Name:</strong> {student.motherName}</td>
-                                        <td className="no-border"><strong>Date of Birth:</strong> {format(student.dob, 'dd-MM-yyyy')}</td>
-                                        <td className="no-border"><strong>Attendance:</strong> _____ / _____</td>
+                                    <tr className="border-none">
+                                        <td className="border-none p-1"><strong>Mother's Name:</strong></td>
+                                        <td className="border-none p-1 font-semibold">{student.motherName}</td>
+                                        <td className="border-none p-1"><strong>Date of Birth:</strong></td>
+                                        <td className="border-none p-1 font-semibold">{format(student.dob, 'dd-MM-yyyy')}</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </section>
 
                         <section className="mt-4">
-                            <h2 className="text-center font-bold text-lg mb-2">PART 1: SCHOLASTIC AREAS</h2>
-                            <table className="w-full border-collapse">
+                            <h2 className="text-center font-bold text-lg mb-2 bg-gray-200 py-1">PART 1: SCHOLASTIC AREAS</h2>
+                            <table className="w-full border-collapse text-sm">
                                 <thead className="scholastic-header text-center">
                                     <tr>
-                                        <th rowSpan={2} className="w-1/4">Subjects</th>
-                                        {examTerms.map(term => <th key={term.id} colSpan={2}>{term.name}</th>)}
-                                        <th colSpan={3}>Final Result</th>
+                                        <th rowSpan={2} className="w-1/4 p-2">Subjects</th>
+                                        {examTerms.map(term => <th key={term.id} colSpan={2} className="p-2">{term.name}</th>)}
+                                        <th colSpan={3} className="p-2">Final Result</th>
                                     </tr>
                                     <tr>
                                         {examTermIds.map(termId => (
                                             <React.Fragment key={termId}>
-                                                <th>Marks Obt.</th>
-                                                <th>Max Marks</th>
+                                                <th className="p-1">Marks Obt.</th>
+                                                <th className="p-1">Max Marks</th>
                                             </React.Fragment>
                                         ))}
-                                        <th>Marks Obt.</th>
-                                        <th>Max Marks</th>
-                                        <th>Grade</th>
+                                        <th className="p-1">Marks Obt.</th>
+                                        <th className="p-1">Max Marks</th>
+                                        <th className="p-1">Grade</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -234,7 +248,7 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                                     let subjectTotalMax = 0;
                                     return (
                                         <tr key={subjectName} className="text-center">
-                                            <td className="text-left font-semibold">{subjectName}</td>
+                                            <td className="text-left font-semibold p-1">{subjectName}</td>
                                             {examTermIds.map(termId => {
                                                 const subjectInfo = allSubjects[termId]?.find(s => s.subjectName === subjectName);
                                                 const marksInfo = allMarks[termId]?.marks.find((m: any) => m.subjectName === subjectName);
@@ -244,22 +258,22 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                                                 subjectTotalMax += max;
                                                 return (
                                                     <React.Fragment key={`${termId}-${subjectName}`}>
-                                                        <td>{obtained || '-'}</td>
-                                                        <td>{max || '-'}</td>
+                                                        <td className="p-1">{obtained || '-'}</td>
+                                                        <td className="p-1">{max || '-'}</td>
                                                     </React.Fragment>
                                                 )
                                             })}
-                                            <td className="font-semibold">{subjectTotalObtained}</td>
-                                            <td className="font-semibold">{subjectTotalMax}</td>
-                                            <td className="font-semibold">{getGrade((subjectTotalObtained/subjectTotalMax) * 100)}</td>
+                                            <td className="font-semibold p-1">{subjectTotalObtained}</td>
+                                            <td className="font-semibold p-1">{subjectTotalMax}</td>
+                                            <td className="font-semibold p-1">{getGrade((subjectTotalObtained/subjectTotalMax) * 100)}</td>
                                         </tr>
                                     )
                                 })}
                                  <tr className="font-bold text-center bg-gray-100">
-                                     <td colSpan={1 + (examTerms.length * 2)}>GRAND TOTAL</td>
-                                     <td>{grandTotal.obtained}</td>
-                                     <td>{grandTotal.max}</td>
-                                     <td>{grade}</td>
+                                     <td colSpan={1 + (examTerms.length * 2)} className="p-2">GRAND TOTAL</td>
+                                     <td className="p-2">{grandTotal.obtained}</td>
+                                     <td className="p-2">{grandTotal.max}</td>
+                                     <td className="p-2">{grade}</td>
                                  </tr>
                                 </tbody>
                             </table>
@@ -267,50 +281,50 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                         
                         <section className="mt-4 grid grid-cols-2 gap-4">
                             <div>
-                                <h2 className="text-center font-bold text-lg mb-2">PART 2: CO-SCHOLASTIC AREAS</h2>
-                                <table className="w-full border-collapse">
+                                <h2 className="text-center font-bold text-lg mb-2 bg-gray-200 py-1">PART 2: CO-SCHOLASTIC</h2>
+                                <table className="w-full border-collapse text-sm">
                                     <thead className="scholastic-header text-center">
-                                        <tr><th>Activity</th><th>Grade</th></tr>
+                                        <tr><th className="p-1">Activity</th><th className="p-1">Grade</th></tr>
                                     </thead>
                                     <tbody>
-                                        <tr className="text-center"><td>Work Education</td><td></td></tr>
-                                        <tr className="text-center"><td>Art Education</td><td></td></tr>
-                                        <tr className="text-center"><td>Health & Physical Education</td><td></td></tr>
+                                        <tr className="text-center"><td className="p-1 text-left">Work Education</td><td></td></tr>
+                                        <tr className="text-center"><td className="p-1 text-left">Art Education</td><td></td></tr>
+                                        <tr className="text-center"><td className="p-1 text-left">Health & Physical Education</td><td></td></tr>
                                     </tbody>
                                 </table>
                             </div>
                              <div>
-                                <h2 className="text-center font-bold text-lg mb-2">PART 3: DISCIPLINE</h2>
-                                <table className="w-full border-collapse">
+                                <h2 className="text-center font-bold text-lg mb-2 bg-gray-200 py-1">PART 3: DISCIPLINE</h2>
+                                <table className="w-full border-collapse text-sm">
                                     <thead className="scholastic-header text-center">
-                                        <tr><th>Trait</th><th>Grade</th></tr>
+                                        <tr><th className="p-1">Trait</th><th className="p-1">Grade</th></tr>
                                     </thead>
                                     <tbody>
-                                        <tr className="text-center"><td>Discipline</td><td></td></tr>
+                                        <tr className="text-center"><td className="p-1 text-left">Discipline</td><td></td></tr>
                                     </tbody>
                                 </table>
                             </div>
                         </section>
 
-                        <section className="mt-4">
+                        <section className="mt-4 border-t-2 border-black pt-4 text-sm">
                             <table className="w-full">
                                 <tbody>
-                                    <tr>
-                                        <td className="no-border"><strong>Class Teacher's Remarks:</strong></td>
-                                        <td className="no-border border-b border-black w-full"></td>
+                                    <tr className="border-none">
+                                        <td className="border-none p-1 w-40"><strong>Class Teacher's Remarks:</strong></td>
+                                        <td className="border-none p-1 border-b border-dotted border-black w-full"></td>
                                     </tr>
-                                    <tr>
-                                        <td className="no-border"><strong>Result:</strong> <span className="font-bold">{finalResult}</span></td>
-                                        <td className="no-border"><strong>Percentage:</strong> <span className="font-bold">{grandTotal.percentage}%</span></td>
+                                    <tr className="border-none">
+                                        <td className="border-none p-1"><strong>Result:</strong> <span className="font-bold">{finalResult}</span></td>
+                                        <td className="border-none p-1"><strong>Percentage:</strong> <span className="font-bold">{grandTotal.percentage}%</span></td>
                                     </tr>
-                                     <tr>
-                                        <td colSpan={2} className="no-border"><strong>Promoted to Class:</strong> <span className="font-bold">{isFail ? '-----' : student.className.replace(/\d+/, (n: any) => parseInt(n)+1)}</span></td>
+                                     <tr className="border-none">
+                                        <td colSpan={2} className="border-none p-1"><strong>Promoted to Class:</strong> <span className="font-bold">{isFail ? '-----' : student.className.replace(/\d+/, (n: any) => parseInt(n)+1)}</span></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </section>
                         
-                        <footer className="mt-12 flex justify-between items-end text-sm">
+                        <footer className="mt-16 flex justify-between items-end text-sm">
                              <div><p>Date: {format(new Date(), 'dd-MM-yyyy')}</p></div>
                              <div><p className="border-t-2 border-dotted border-black pt-1 px-8">Class Teacher</p></div>
                              <div><p className="border-t-2 border-dotted border-black pt-1 px-8">Principal</p></div>
@@ -319,7 +333,7 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
                     </div>
                 </div>
 
-                <div className="fixed bottom-4 right-4 space-x-2 print:hidden">
+                <div className="fixed bottom-4 right-4 space-x-2 print-hidden">
                     <Button onClick={() => window.print()}>Print</Button>
                     <Button variant="outline" onClick={() => window.close()}>Close</Button>
                 </div>
