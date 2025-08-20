@@ -39,7 +39,7 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
 
     const [isMarksSheetOpen, setIsMarksSheetOpen] = useState(false);
     const [selectedTermForMarks, setSelectedTermForMarks] = useState<ExamTerm | null>(null);
-    const [isDeleting, startDeleteTransition] = useTransition();
+    const [isDeleting, setIsDeleting] = useState(false);
     
     const form = useForm<ExamTermFormValues>({
         resolver: zodResolver(ExamTermFormSchema),
@@ -85,12 +85,12 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
         setIsFormOpen(true);
     };
     
-    const handleDeleteClick = (term: ExamTerm) => {
+    const handleDeleteClick = async (term: ExamTerm) => {
         if (confirm(`Are you sure you want to delete the exam term "${term.name}"? This action cannot be undone.`)) {
-            startDeleteTransition(async () => {
-                await deleteExamTerm({ examTermId: term.id, schoolId });
-                fetchTerms();
-            });
+            setIsDeleting(true);
+            await deleteExamTerm({ examTermId: term.id, schoolId });
+            await fetchTerms();
+            setIsDeleting(false);
         }
     };
 
@@ -142,7 +142,7 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
                             <CardHeader>
                                 <CardTitle className="flex justify-between items-start">
                                     {term.name}
-                                    <div className="flex items-center">
+                                     <div className="flex items-center">
                                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(term)} disabled={isDeleting}>
                                             <Pencil className="h-4 w-4" />
                                         </Button>
