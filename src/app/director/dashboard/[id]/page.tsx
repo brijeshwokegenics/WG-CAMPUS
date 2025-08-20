@@ -8,7 +8,7 @@ import { getExpensesSummary } from "@/app/actions/expenses";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, GraduationCap, Briefcase, BarChart3, Receipt, CircleDollarSign, Megaphone, Calendar, TrendingUp, TrendingDown } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, startOfToday } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
 type StatCardProps = {
@@ -70,7 +70,7 @@ export default async function DirectorDashboardPage({ params }: { params: { id: 
   const expenses = expensesResult.success ? expensesResult.data : { daily: 0, monthly: 0, yearly: 0 };
 
   const recentNotices = noticesResult.slice(0, 4);
-  const upcomingEvents = eventsResult.filter(e => e.start >= new Date()).sort((a,b) => a.start.getTime() - b.start.getTime()).slice(0, 4);
+  const upcomingEvents = eventsResult.filter(e => e.start >= startOfToday()).sort((a,b) => a.start.getTime() - b.start.getTime()).slice(0, 4);
 
 
   return (
