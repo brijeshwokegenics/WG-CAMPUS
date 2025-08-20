@@ -92,7 +92,6 @@ function ExpenseList({ schoolId, categories, loadingCategories }: { schoolId: st
                             <Select value={filteredCategory} onValueChange={setFilteredCategory}>
                                 <SelectTrigger><SelectValue placeholder="All Categories"/></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">All Categories</SelectItem>
                                     {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
