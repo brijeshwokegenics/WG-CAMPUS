@@ -24,7 +24,7 @@ export function StudentRegistrationChart({ data }: ChartProps) {
           }}
         />
         <Legend />
-        <Bar dataKey="count" name="New Students" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="count" name="New Students" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={40} />
       </BarChart>
     </ResponsiveContainer>
   );
