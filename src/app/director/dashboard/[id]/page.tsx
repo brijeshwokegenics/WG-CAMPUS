@@ -70,7 +70,12 @@ export default async function DirectorDashboardPage({ params }: { params: { id: 
   const expenses = expensesResult.success ? expensesResult.data : { daily: 0, monthly: 0, yearly: 0 };
 
   const recentNotices = noticesResult.slice(0, 4);
-  const upcomingEvents = eventsResult.filter(e => e.start.getTime() >= startOfToday().getTime()).sort((a,b) => a.start.getTime() - b.start.getTime()).slice(0, 4);
+  
+  const today = startOfToday();
+  const upcomingEvents = eventsResult
+    .filter(e => e.end >= today)
+    .sort((a,b) => a.start.getTime() - b.start.getTime())
+    .slice(0, 4);
 
 
   return (
