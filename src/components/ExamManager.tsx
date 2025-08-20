@@ -1,17 +1,17 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { useFormState } from 'react-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createExamTerm, updateExamTerm, getExamTerms } from '@/app/actions/academics';
+import { createExamTerm, updateExamTerm, getExamTerms, deleteExamTerm } from '@/app/actions/academics';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Loader2, CalendarRange, FilePenLine, Pencil } from 'lucide-react';
+import { PlusCircle, Loader2, CalendarRange, FilePenLine, Pencil, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { cn } from '@/lib/utils';
 import { ExamScheduleDialog } from './ExamScheduleDialog';
@@ -38,6 +38,7 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
 
     const [isMarksSheetOpen, setIsMarksSheetOpen] = useState(false);
     const [selectedTermForMarks, setSelectedTermForMarks] = useState<ExamTerm | null>(null);
+    const [isDeleting, startDeleteTransition] = useTransition();
     
     const form = useForm<ExamTermFormValues>({
         resolver: zodResolver(ExamTermFormSchema),
@@ -81,6 +82,15 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
             session: term.session,
         });
         setIsFormOpen(true);
+    };
+    
+    const handleDeleteClick = (term: ExamTerm) => {
+        if (confirm(`Are you sure you want to delete the exam term "${term.name}"? This action cannot be undone.`)) {
+            startDeleteTransition(async () => {
+                await deleteExamTerm({ examTermId: term.id, schoolId });
+                fetchTerms();
+            });
+        }
     };
 
     const handleAddNewClick = () => {
@@ -131,9 +141,14 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
                             <CardHeader>
                                 <CardTitle className="flex justify-between items-start">
                                     {term.name}
-                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(term)}>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
+                                    <div className="flex items-center">
+                                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(term)} disabled={isDeleting}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteClick(term)} disabled={isDeleting}>
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                    </div>
                                 </CardTitle>
                                 <CardDescription>{term.session}</CardDescription>
                             </CardHeader>

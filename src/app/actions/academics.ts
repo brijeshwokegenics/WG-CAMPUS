@@ -942,6 +942,29 @@ export async function updateExamTerm(prevState: any, formData: FormData) {
     }
 }
 
+export async function deleteExamTerm({ examTermId, schoolId }: { examTermId: string; schoolId: string }) {
+    if (!examTermId || !schoolId) {
+        return { success: false, error: 'Exam Term ID and School ID are required.' };
+    }
+
+    try {
+        const termDocRef = doc(db, 'examTerms', examTermId);
+        
+        const termDoc = await getDoc(termDocRef);
+        if (!termDoc.exists() || termDoc.data().schoolId !== schoolId) {
+            return { success: false, error: "Exam term not found or permission denied." };
+        }
+
+        await deleteDoc(termDocRef);
+
+        revalidatePath(`/director/dashboard/${schoolId}/academics/exams`);
+        return { success: true, message: 'Exam term deleted successfully!' };
+    } catch (error) {
+        console.error('Error deleting exam term:', error);
+        return { success: false, error: 'An unexpected error occurred.' };
+    }
+}
+
 export async function updateExamSchedule(prevState: any, formData: FormData) {
     const rawData = {
         schoolId: formData.get('schoolId'),
