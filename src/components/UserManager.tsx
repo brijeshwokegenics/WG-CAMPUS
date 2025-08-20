@@ -1,11 +1,12 @@
 
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState, useTransition, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFormState } from 'react-dom';
 import { z } from 'zod';
+import { useDebouncedCallback } from 'use-debounce';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,20 +69,26 @@ export function UserManager({ schoolId }: { schoolId: string }) {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  const fetchUsers = async () => {
+  const [nameFilter, setNameFilter] = useState('');
+  const [userIdFilter, setUserIdFilter] = useState('');
+
+  const debouncedSetNameFilter = useDebouncedCallback(setNameFilter, 300);
+  const debouncedSetUserIdFilter = useDebouncedCallback(setUserIdFilter, 300);
+
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
-    const result = await getUsersForSchool(schoolId);
+    const result = await getUsersForSchool(schoolId, { name: nameFilter, userId: userIdFilter });
     if (result.success && result.data) {
       setUsers(result.data as User[]);
     } else {
       console.error(result.error);
     }
     setLoading(false);
-  };
+  }, [schoolId, nameFilter, userIdFilter]);
 
   useEffect(() => {
     fetchUsers();
-  }, [schoolId]);
+  }, [fetchUsers]);
 
   const handleFormSuccess = () => {
     setIsAddUserDialogOpen(false);
@@ -110,8 +117,20 @@ export function UserManager({ schoolId }: { schoolId: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button onClick={() => setIsAddUserDialogOpen(true)}>
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div className="flex flex-col md:flex-row gap-2 w-full">
+            <Input 
+                placeholder="Filter by name..." 
+                onChange={(e) => debouncedSetNameFilter(e.target.value)} 
+                className="w-full md:w-auto"
+            />
+            <Input 
+                placeholder="Filter by User ID..." 
+                onChange={(e) => debouncedSetUserIdFilter(e.target.value)} 
+                className="w-full md:w-auto"
+            />
+        </div>
+        <Button onClick={() => setIsAddUserDialogOpen(true)} className="w-full md:w-auto">
           <PlusCircle className="mr-2 h-4 w-4" />
           Add New User
         </Button>
@@ -174,7 +193,7 @@ export function UserManager({ schoolId }: { schoolId: string }) {
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
-                    No users found. Click "Add New User" to get started.
+                    No users found for the current filters.
                   </TableCell>
                 </TableRow>
               )}
