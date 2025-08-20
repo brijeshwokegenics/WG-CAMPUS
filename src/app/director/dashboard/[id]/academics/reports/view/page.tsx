@@ -105,23 +105,25 @@ function ReportCardView({ schoolId, studentId, examTermIds }: { schoolId: string
     }, [allSubjects, examTermIds]);
 
     const finalCoScholasticAndRemarks = useMemo(() => {
-        // Use data from the last exam term in the list
-        const lastTermId = examTermIds[examTermIds.length - 1];
-        if (lastTermId && allMarks[lastTermId]) {
-            const lastTermMarks = allMarks[lastTermId];
+        // Find the final term among the selected ones.
+        const finalTerm = examTerms.find(term => term.isFinalTerm);
+        const termIdForCoScholastic = finalTerm ? finalTerm.id : examTermIds[examTermIds.length - 1];
+        
+        if (termIdForCoScholastic && allMarks[termIdForCoScholastic]) {
+            const finalTermMarks = allMarks[termIdForCoScholastic];
             return {
-                workEducationGrade: lastTermMarks.workEducationGrade || '',
-                artEducationGrade: lastTermMarks.artEducationGrade || '',
-                healthEducationGrade: lastTermMarks.healthEducationGrade || '',
-                disciplineGrade: lastTermMarks.disciplineGrade || '',
-                remarks: lastTermMarks.remarks || '',
+                workEducationGrade: finalTermMarks.workEducationGrade || '',
+                artEducationGrade: finalTermMarks.artEducationGrade || '',
+                healthEducationGrade: finalTermMarks.healthEducationGrade || '',
+                disciplineGrade: finalTermMarks.disciplineGrade || '',
+                remarks: finalTermMarks.remarks || '',
             };
         }
         return {
             workEducationGrade: '', artEducationGrade: '', healthEducationGrade: '',
             disciplineGrade: '', remarks: ''
         };
-    }, [allMarks, examTermIds]);
+    }, [allMarks, examTerms, examTermIds]);
 
     const { grandTotal, finalResult, grade, isFail } = useMemo(() => {
         let totalMaxMarks = 0;

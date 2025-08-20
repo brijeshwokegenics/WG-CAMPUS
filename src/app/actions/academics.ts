@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { z } from 'zod';
@@ -98,11 +97,13 @@ const ExamTermSchema = z.object({
     schoolId: z.string(),
     name: z.string().min(3, "Exam name must be at least 3 characters."),
     session: z.string().min(4, "Session is required, e.g., 2024-2025."),
+    isFinalTerm: z.boolean().default(false),
 });
 
 const UpdateExamTermSchema = z.object({
     name: z.string().min(3, "Exam name must be at least 3 characters."),
     session: z.string().min(4, "Session is required, e.g., 2024-2025."),
+    isFinalTerm: z.boolean().default(false),
 });
 
 const SubjectScheduleSchema = z.object({
@@ -875,11 +876,14 @@ export async function getTimetable({ schoolId, classId, section }: { schoolId: s
 
 
 export async function createExamTerm(prevState: any, formData: FormData) {
-    const parsed = ExamTermSchema.safeParse({
+    const rawData = {
         schoolId: formData.get('schoolId'),
         name: formData.get('name'),
         session: formData.get('session'),
-    });
+        isFinalTerm: formData.get('isFinalTerm') === 'on',
+    };
+
+    const parsed = ExamTermSchema.safeParse(rawData);
 
     if (!parsed.success) {
         return { success: false, error: "Invalid data.", details: parsed.error.flatten() };
@@ -914,11 +918,14 @@ export async function updateExamTerm(prevState: any, formData: FormData) {
     if (!examTermId || !schoolId) {
         return { success: false, error: 'Exam Term ID and School ID are required.' };
     }
-
-    const parsed = UpdateExamTermSchema.safeParse({
+    
+    const rawData = {
         name: formData.get('name'),
         session: formData.get('session'),
-    });
+        isFinalTerm: formData.get('isFinalTerm') === 'on',
+    };
+
+    const parsed = UpdateExamTermSchema.safeParse(rawData);
 
     if (!parsed.success) {
         return { success: false, error: "Invalid data.", details: parsed.error.flatten() };

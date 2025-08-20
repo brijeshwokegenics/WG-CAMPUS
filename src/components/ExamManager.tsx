@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
-import { useForm, UseFormReturn } from 'react-hook-form';
+import { useForm, UseFormReturn, Controller } from 'react-hook-form';
 import { useFormState } from 'react-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,9 +17,10 @@ import { cn } from '@/lib/utils';
 import { ExamScheduleDialog } from './ExamScheduleDialog';
 import { MarksEntrySheet } from './MarksEntrySheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Checkbox } from './ui/checkbox';
 
 type ClassData = { id: string; name: string; sections: string[]; };
-type ExamTerm = { id: string; name: string; session: string; };
+type ExamTerm = { id: string; name: string; session: string; isFinalTerm?: boolean; };
 
 export function ExamManager({ schoolId, classes }: { schoolId: string, classes: ClassData[] }) {
     const [terms, setTerms] = useState<ExamTerm[]>([]);
@@ -101,6 +103,7 @@ export function ExamManager({ schoolId, classes }: { schoolId: string, classes: 
 const ExamTermFormSchema = z.object({
     name: z.string().min(3, 'Exam name is required'),
     session: z.string().min(4, 'Session is required'),
+    isFinalTerm: z.boolean().default(false),
 });
 
 type ExamTermFormValues = z.infer<typeof ExamTermFormSchema>;
@@ -113,7 +116,7 @@ function ExamSetup({ schoolId, classes, terms, loading, fetchTerms, onManageSche
 
      const form = useForm<ExamTermFormValues>({
         resolver: zodResolver(ExamTermFormSchema),
-        defaultValues: { name: '', session: '' },
+        defaultValues: { name: '', session: '', isFinalTerm: false },
     });
 
     const handleFormSuccess = () => {
@@ -128,6 +131,7 @@ function ExamSetup({ schoolId, classes, terms, loading, fetchTerms, onManageSche
         form.reset({
             name: term.name,
             session: term.session,
+            isFinalTerm: term.isFinalTerm || false,
         });
         setIsFormOpen(true);
     };
@@ -146,6 +150,7 @@ function ExamSetup({ schoolId, classes, terms, loading, fetchTerms, onManageSche
         form.reset({
             name: '',
             session: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
+            isFinalTerm: false,
         });
         setIsFormOpen(true);
     };
@@ -186,7 +191,7 @@ function ExamSetup({ schoolId, classes, terms, loading, fetchTerms, onManageSche
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {terms.map(term => (
-                            <Card key={term.id}>
+                            <Card key={term.id} className={cn(term.isFinalTerm && "border-primary")}>
                                 <CardHeader>
                                     <CardTitle className="flex justify-between items-start">
                                         {term.name}
@@ -200,6 +205,7 @@ function ExamSetup({ schoolId, classes, terms, loading, fetchTerms, onManageSche
                                         </div>
                                     </CardTitle>
                                     <CardDescription>{term.session}</CardDescription>
+                                    {term.isFinalTerm && <div className="text-xs font-semibold text-primary pt-1">Final Term</div>}
                                 </CardHeader>
                                 <CardContent>
                                     <Button variant="outline" className="w-full" onClick={() => onManageSchedule(term)}>
@@ -268,7 +274,7 @@ function ExamTermForm({
     const action = editingTerm ? updateExamTerm : createExamTerm;
     const [state, formAction] = useFormState(action, initialState);
     
-    const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
+    const { register, handleSubmit, control, formState: { errors, isSubmitting } } = form;
 
     useEffect(() => {
         if (state.success) {
@@ -284,6 +290,7 @@ function ExamTermForm({
         }
         formData.append('name', data.name);
         formData.append('session', data.session);
+        formData.append('isFinalTerm', data.isFinalTerm ? 'on' : 'off');
         formAction(formData);
     };
 
@@ -311,6 +318,22 @@ function ExamTermForm({
                         <Label htmlFor="session">Session</Label>
                         <Input id="session" {...register('session')} placeholder="e.g., 2024-2025" />
                         {errors.session && <p className="text-sm text-destructive">{errors.session.message}</p>}
+                    </div>
+                     <div className="flex items-center space-x-2">
+                        <Controller
+                            name="isFinalTerm"
+                            control={control}
+                            render={({ field }) => (
+                                <Checkbox
+                                    id="isFinalTerm"
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            )}
+                        />
+                        <Label htmlFor="isFinalTerm" className="font-medium">
+                            Mark as Final Term
+                        </Label>
                     </div>
                     <div className="flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
