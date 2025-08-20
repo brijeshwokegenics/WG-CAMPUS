@@ -11,9 +11,9 @@
     --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
-    --primary: 210 40% 50%; /* Moderate Blue - Adjusted */
+    --primary: 210 40% 50%; /* Default: Moderate Blue */
     --primary-foreground: 210 20% 98%;
-    --secondary: 220 12% 47%; /* Slate Blue (as accent) - #708090 */
+    --secondary: 220 12% 47%; /* Default: Slate Blue */
     --secondary-foreground: 355.7 100% 97.3%;
     --muted: 220 14.3% 95.9%;
     --muted-foreground: 225.5 8.9% 46.1%;
@@ -26,7 +26,7 @@
     --ring: 210 40% 50%;
     --radius: 0.5rem;
   }
-
+ 
   .dark {
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
@@ -47,6 +47,28 @@
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
     --ring: 216 12.2% 83.9%;
+  }
+
+  /* Color Themes */
+  html[data-theme="blue"]:root {
+    --primary: 210 40% 50%; /* #6699cc */
+    --ring: 210 40% 50%;
+  }
+  html[data-theme="green"]:root {
+    --primary: 142.1 76.2% 36.3%; /* #22c55e */
+    --ring: 142.1 76.2% 36.3%;
+  }
+  html[data-theme="orange"]:root {
+    --primary: 24.6 95% 53.1%; /* #f97316 */
+    --ring: 24.6 95% 53.1%;
+  }
+  html[data-theme="violet"]:root {
+    --primary: 262.1 83.3% 57.8%; /* #8b5cf6 */
+    --ring: 262.1 83.3% 57.8%;
+  }
+  html[data-theme="rose"]:root {
+    --primary: 346.8 77.2% 49.8%; /* #f43f5e */
+    --ring: 346.8 77.2% 49.8%;
   }
 }
 

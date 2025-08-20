@@ -2,20 +2,36 @@
 "use client"
 
 import * as React from "react"
-import { Moon, Sun } from "lucide-react"
+import { Moon, Sun, Palette } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useColorTheme } from "@/components/ThemeProvider";
 
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 
+const colorThemes = [
+    { name: 'Blue', color: 'bg-blue-500' },
+    { name: 'Green', color: 'bg-green-500' },
+    { name: 'Orange', color: 'bg-orange-500' },
+    { name: 'Violet', color: 'bg-violet-500' },
+    { name: 'Rose', color: 'bg-rose-500' },
+]
+
 export function ThemeToggle({ isCollapsed }: { isCollapsed?: boolean }) {
-  const { setTheme } = useTheme()
+  const { setTheme: setMode } = useTheme()
+  const { setColorTheme } = useColorTheme();
 
   if (isCollapsed !== undefined) {
     // This is the sidebar toggle
@@ -30,15 +46,18 @@ export function ThemeToggle({ isCollapsed }: { isCollapsed?: boolean }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setTheme("light")}>
-            Light
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("dark")}>
-            Dark
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("system")}>
-            System
-          </DropdownMenuItem>
+          <DropdownMenuLabel>Mode</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => setMode("light")}>Light</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setMode("dark")}>Dark</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setMode("system")}>System</DropdownMenuItem>
+          <DropdownMenuSeparator />
+           <DropdownMenuLabel>Color</DropdownMenuLabel>
+            {colorThemes.map(theme => (
+                <DropdownMenuItem key={theme.name} onClick={() => setColorTheme(theme.name.toLowerCase())}>
+                    <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: `var(--primary)` }} />
+                    {theme.name}
+                </DropdownMenuItem>
+            ))}
         </DropdownMenuContent>
       </DropdownMenu>
     )
@@ -55,15 +74,27 @@ export function ThemeToggle({ isCollapsed }: { isCollapsed?: boolean }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
+        <DropdownMenuLabel>Mode</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => setMode("light")}>Light</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setMode("dark")}>Dark</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setMode("system")}>System</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+                <Palette className="mr-2 h-4 w-4" />
+                <span>Color Theme</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+                <DropdownMenuSubContent>
+                    {colorThemes.map(theme => (
+                        <DropdownMenuItem key={theme.name} onClick={() => setColorTheme(theme.name.toLowerCase())}>
+                            <div className={cn("w-4 h-4 rounded-full mr-2", theme.color)} />
+                            {theme.name}
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+        </DropdownMenuSub>
       </DropdownMenuContent>
     </DropdownMenu>
   )
