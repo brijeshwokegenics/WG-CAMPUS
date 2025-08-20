@@ -61,7 +61,7 @@ export async function createUser(prevState: any, formData: FormData) {
 
 export async function getUsersForSchool(
   schoolId: string,
-  { role, name, userId }: { role?: z.infer<typeof UserRole>; name?: string; userId?: string }
+  filters: { role?: z.infer<typeof UserRole>; name?: string; userId?: string } = {}
 ) {
   if (!schoolId) {
     return { success: false, error: 'School ID is required.' };
@@ -70,10 +70,11 @@ export async function getUsersForSchool(
   try {
     const usersRef = collection(db, 'users');
     const constraints: QueryConstraint[] = [where('schoolId', '==', schoolId)];
-    if (role) {
-      constraints.push(where('role', '==', role));
-    }
 
+    if (filters.role) {
+      constraints.push(where('role', '==', filters.role));
+    }
+    
     const q = query(usersRef, ...constraints);
     const querySnapshot = await getDocs(q);
 
@@ -83,11 +84,11 @@ export async function getUsersForSchool(
     })) as (z.infer<typeof UserSchema> & { id: string })[];
 
     // Apply filters in code since Firestore doesn't support partial text search well
-    if (name) {
-      users = users.filter(user => user.name.toLowerCase().includes(name.toLowerCase()));
+    if (filters.name) {
+      users = users.filter(user => user.name.toLowerCase().includes(filters.name!.toLowerCase()));
     }
-    if (userId) {
-      users = users.filter(user => user.userId.toLowerCase().includes(userId.toLowerCase()));
+    if (filters.userId) {
+      users = users.filter(user => user.userId.toLowerCase().includes(filters.userId!.toLowerCase()));
     }
     
     return { success: true, data: users };

@@ -130,7 +130,7 @@ export function UserManager({ schoolId }: { schoolId: string }) {
                 className="w-full md:w-auto"
             />
         </div>
-        <Button onClick={() => setIsAddUserDialogOpen(true)} className="w-full md:w-auto">
+        <Button onClick={() => setIsAddUserDialogOpen(true)} className="w-full md:w-auto flex-shrink-0">
           <PlusCircle className="mr-2 h-4 w-4" />
           Add New User
         </Button>
