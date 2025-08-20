@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, setDoc, getDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { getStudentById } from './academics';
-import { startOfToday, endOfToday, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+import { startOfToday, endOfToday, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from 'date-fns';
 import { getStudentTransportAssignment } from './transport';
 import { getStudentHostelAssignment } from './hostel';
 
@@ -427,27 +427,40 @@ export async function getFeeCollectionsSummary(schoolId: string) {
 
     try {
         const todayStart = startOfToday();
-        const todayEnd = endOfToday();
         const monthStart = startOfMonth(new Date());
-        const monthEnd = endOfMonth(new Date());
         const yearStart = startOfYear(new Date());
-        const yearEnd = endOfYear(new Date());
 
         const collectionsRef = collection(db, 'feeCollections');
+        const q = query(collectionsRef, where('schoolId', '==', schoolId));
+        const snapshot = await getDocs(q);
         
-        const dailyQuery = query(collectionsRef, where('schoolId', '==', schoolId), where('paymentDate', '>=', todayStart), where('paymentDate', '<=', todayEnd));
-        const monthlyQuery = query(collectionsRef, where('schoolId', '==', schoolId), where('paymentDate', '>=', monthStart), where('paymentDate', '<=', monthEnd));
-        const yearlyQuery = query(collectionsRef, where('schoolId', '==', schoolId), where('paymentDate', '>=', yearStart), where('paymentDate', '<=', yearEnd));
+        const allCollections = snapshot.docs.map(doc => ({
+            ...doc.data(),
+            paymentDate: doc.data().paymentDate.toDate()
+        }));
 
-        const [dailySnapshot, monthlySnapshot, yearlySnapshot] = await Promise.all([
-            getDocs(dailyQuery),
-            getDocs(monthlyQuery),
-            getDocs(yearlyQuery),
-        ]);
+        let dailyTotal = 0;
+        let monthlyTotal = 0;
+        let yearlyTotal = 0;
 
-        const dailyTotal = dailySnapshot.docs.reduce((sum, doc) => sum + doc.data().totalAmount, 0);
-        const monthlyTotal = monthlySnapshot.docs.reduce((sum, doc) => sum + doc.data().totalAmount, 0);
-        const yearlyTotal = yearlySnapshot.docs.reduce((sum, doc) => sum + doc.data().totalAmount, 0);
+        for (const collection of allCollections) {
+            const amount = collection.totalAmount;
+            
+            // Check for this year
+            if (collection.paymentDate.getFullYear() === yearStart.getFullYear()) {
+                yearlyTotal += amount;
+                
+                // Check for this month
+                if (collection.paymentDate.getMonth() === monthStart.getMonth()) {
+                    monthlyTotal += amount;
+                    
+                    // Check for today
+                    if (collection.paymentDate.getDate() === todayStart.getDate()) {
+                        dailyTotal += amount;
+                    }
+                }
+            }
+        }
 
         return {
             success: true,

@@ -129,27 +129,40 @@ export async function getExpensesSummary(schoolId: string) {
 
     try {
         const todayStart = startOfToday();
-        const todayEnd = endOfToday();
         const monthStart = startOfMonth(new Date());
-        const monthEnd = endOfMonth(new Date());
         const yearStart = startOfYear(new Date());
-        const yearEnd = endOfYear(new Date());
 
         const expensesRef = collection(db, 'expenses');
-        
-        const dailyQuery = query(expensesRef, where('schoolId', '==', schoolId), where('date', '>=', todayStart), where('date', '<=', todayEnd));
-        const monthlyQuery = query(expensesRef, where('schoolId', '==', schoolId), where('date', '>=', monthStart), where('date', '<=', monthEnd));
-        const yearlyQuery = query(expensesRef, where('schoolId', '==', schoolId), where('date', '>=', yearStart), where('date', '<=', yearEnd));
+        const q = query(expensesRef, where('schoolId', '==', schoolId));
+        const snapshot = await getDocs(q);
 
-        const [dailySnapshot, monthlySnapshot, yearlySnapshot] = await Promise.all([
-            getDocs(dailyQuery),
-            getDocs(monthlyQuery),
-            getDocs(yearlyQuery),
-        ]);
+        const allExpenses = snapshot.docs.map(doc => ({
+            ...doc.data(),
+            date: doc.data().date.toDate()
+        }));
 
-        const dailyTotal = dailySnapshot.docs.reduce((sum, doc) => sum + doc.data().amount, 0);
-        const monthlyTotal = monthlySnapshot.docs.reduce((sum, doc) => sum + doc.data().amount, 0);
-        const yearlyTotal = yearlySnapshot.docs.reduce((sum, doc) => sum + doc.data().amount, 0);
+        let dailyTotal = 0;
+        let monthlyTotal = 0;
+        let yearlyTotal = 0;
+
+        for (const expense of allExpenses) {
+            const amount = expense.amount;
+            
+            // Check for this year
+            if (expense.date.getFullYear() === yearStart.getFullYear()) {
+                yearlyTotal += amount;
+                
+                // Check for this month
+                if (expense.date.getMonth() === monthStart.getMonth()) {
+                    monthlyTotal += amount;
+                    
+                    // Check for today
+                    if (expense.date.getDate() === todayStart.getDate()) {
+                        dailyTotal += amount;
+                    }
+                }
+            }
+        }
 
         return {
             success: true,
