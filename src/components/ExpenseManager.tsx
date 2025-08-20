@@ -76,11 +76,16 @@ function ExpenseList({ schoolId, categories, loadingCategories }: { schoolId: st
     }, [fetchExpenses]);
 
     const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || 'N/A';
+    
+    const handleSuccess = () => {
+        // Clear filter to ensure new item is visible, then refetch
+        setFilteredCategory('');
+    }
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
-                <AddExpenseForm schoolId={schoolId} categories={categories} onSuccess={fetchExpenses} />
+                <AddExpenseForm schoolId={schoolId} categories={categories} onSuccess={handleSuccess} />
             </div>
             <div className="lg:col-span-2">
                  <Card>
@@ -90,7 +95,9 @@ function ExpenseList({ schoolId, categories, loadingCategories }: { schoolId: st
                          <div className="pt-2">
                             <Label>Filter by Category</Label>
                             <Select value={filteredCategory} onValueChange={setFilteredCategory}>
-                                <SelectTrigger><SelectValue placeholder="All Categories"/></SelectTrigger>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="All Categories"/>
+                                </SelectTrigger>
                                 <SelectContent>
                                     {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                                 </SelectContent>
@@ -145,14 +152,26 @@ function AddExpenseForm({ schoolId, categories, onSuccess }: { schoolId: string,
             onSuccess();
         }
     }, [state.success, reset, onSuccess]);
+    
+     const onFormSubmit = (data: AddExpenseFormValues) => {
+        const formData = new FormData();
+        formData.append('schoolId', schoolId);
+        formData.append('date', data.date.toISOString());
+        Object.entries(data).forEach(([key, value]) => {
+            if(key !== 'date') {
+                 formData.append(key, String(value));
+            }
+        });
+        formAction(formData);
+    };
 
     return (
         <Card>
             <CardHeader><CardTitle>Add New Expense</CardTitle></CardHeader>
             <CardContent>
-                <form onSubmit={handleSubmit(data => formAction(data as any))} className="space-y-4">
+                <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
                     {state.error && <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert>}
-                    {state.success && <Alert className="border-green-500 text-green-700"><AlertDescription>{state.message}</AlertDescription></Alert>}
+                    {state.success && state.message && <Alert className="border-green-500 text-green-700"><AlertDescription>{state.message}</AlertDescription></Alert>}
                     <div className="space-y-2">
                         <Label>Category</Label>
                         <Controller name="expenseCategoryId" control={control} render={({ field }) => (
