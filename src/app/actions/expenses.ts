@@ -33,9 +33,9 @@ export async function createExpenseCategory(prevState: any, formData: FormData) 
     const categoriesRef = collection(db, 'expenseCategories');
     const q = query(categoriesRef, where('schoolId', '==', parsed.data.schoolId));
     const querySnapshot = await getDocs(q);
-    const existingCategories = querySnapshot.docs.map(doc => doc.data().name.toLowerCase());
+    const existingCategories = querySnapshot.docs.map(doc => doc.data().name.toLowerCase().trim());
 
-    if (existingCategories.includes(parsed.data.name.toLowerCase())) {
+    if (existingCategories.includes(parsed.data.name.toLowerCase().trim())) {
         return { success: false, error: `An expense category named "${parsed.data.name}" already exists.` };
     }
     
@@ -50,9 +50,13 @@ export async function createExpenseCategory(prevState: any, formData: FormData) 
 
 export async function getExpenseCategories(schoolId: string) {
   try {
-    const q = query(collection(db, 'expenseCategories'), where('schoolId', '==', schoolId), orderBy('name'));
+    const q = query(collection(db, 'expenseCategories'), where('schoolId', '==', schoolId));
     const snapshot = await getDocs(q);
-    const categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as { name: string } }));
+    
+    // Sort in code instead of query to avoid composite index requirement
+    categories.sort((a, b) => a.name.localeCompare(b.name));
+
     return { success: true, data: categories };
   } catch (e) {
     return { success: false, error: 'Failed to fetch categories.' };
