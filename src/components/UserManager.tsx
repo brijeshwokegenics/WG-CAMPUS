@@ -59,7 +59,7 @@ type AddUserFormValues = z.infer<typeof AddUserFormSchema>;
 type UpdateUserFormValues = z.infer<typeof UpdateUserFormSchema>;
 
 
-export function UserManager({ schoolId }: { schoolId: string }) {
+export function UserManager({ schoolId, roleFilter }: { schoolId: string, roleFilter?: z.infer<typeof UserRole> }) {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
@@ -77,14 +77,14 @@ export function UserManager({ schoolId }: { schoolId: string }) {
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
-    const result = await getUsersForSchool(schoolId, { name: nameFilter, userId: userIdFilter });
+    const result = await getUsersForSchool(schoolId, { name: nameFilter, userId: userIdFilter, role: roleFilter });
     if (result.success && result.data) {
       setUsers(result.data as User[]);
     } else {
       console.error(result.error);
     }
     setLoading(false);
-  }, [schoolId, nameFilter, userIdFilter]);
+  }, [schoolId, nameFilter, userIdFilter, roleFilter]);
 
   useEffect(() => {
     fetchUsers();
@@ -202,8 +202,8 @@ export function UserManager({ schoolId }: { schoolId: string }) {
         </CardContent>
       </Card>
       
-      {isAddUserDialogOpen && <AddUserDialog isOpen={isAddUserDialogOpen} setIsOpen={setIsAddUserDialogOpen} schoolId={schoolId} onSuccess={handleFormSuccess} />}
-      {isEditUserDialogOpen && editingUser && <EditUserDialog isOpen={isEditUserDialogOpen} setIsOpen={setIsEditUserDialogOpen} schoolId={schoolId} user={editingUser} onSuccess={handleFormSuccess} />}
+      {isAddUserDialogOpen && <AddUserDialog isOpen={isAddUserDialogOpen} setIsOpen={setIsAddUserDialogOpen} schoolId={schoolId} onSuccess={handleFormSuccess} roleFilter={roleFilter} />}
+      {isEditUserDialogOpen && editingUser && <EditUserDialog isOpen={isEditUserDialogOpen} setIsOpen={setIsEditUserDialogOpen} schoolId={schoolId} user={editingUser} onSuccess={handleFormSuccess} roleFilter={roleFilter}/>}
       {isPasswordDialogOpen && editingUser && <UpdatePasswordDialog isOpen={isPasswordDialogOpen} setIsOpen={setIsPasswordDialogOpen} schoolId={schoolId} user={editingUser} />}
 
     </div>
@@ -212,9 +212,12 @@ export function UserManager({ schoolId }: { schoolId: string }) {
 
 
 // Add User Dialog
-function AddUserDialog({ isOpen, setIsOpen, schoolId, onSuccess }: { isOpen: boolean, setIsOpen: (val: boolean) => void, schoolId: string, onSuccess: () => void}) {
+function AddUserDialog({ isOpen, setIsOpen, schoolId, onSuccess, roleFilter }: { isOpen: boolean, setIsOpen: (val: boolean) => void, schoolId: string, onSuccess: () => void, roleFilter?: z.infer<typeof UserRole>}) {
     const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<AddUserFormValues>({
         resolver: zodResolver(AddUserFormSchema),
+        defaultValues: {
+            role: roleFilter
+        }
     });
     const [state, formAction] = useFormState(createUser, { success: false, error: null, details: null });
 
@@ -266,7 +269,7 @@ function AddUserDialog({ isOpen, setIsOpen, schoolId, onSuccess }: { isOpen: boo
                     <div className="space-y-2">
                         <Label htmlFor="role">Role</Label>
                         <Controller name="role" control={control} render={({ field }) => (
-                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                             <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!roleFilter}>
                                 <SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Principal">Principal</SelectItem>
@@ -314,7 +317,7 @@ function AddUserDialog({ isOpen, setIsOpen, schoolId, onSuccess }: { isOpen: boo
 }
 
 // Edit User Dialog
-function EditUserDialog({ isOpen, setIsOpen, schoolId, user, onSuccess }: { isOpen: boolean, setIsOpen: (val: boolean) => void, schoolId: string, user: User, onSuccess: () => void}) {
+function EditUserDialog({ isOpen, setIsOpen, schoolId, user, onSuccess, roleFilter }: { isOpen: boolean, setIsOpen: (val: boolean) => void, schoolId: string, user: User, onSuccess: () => void, roleFilter?: z.infer<typeof UserRole>}) {
     const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<UpdateUserFormValues>({
         resolver: zodResolver(UpdateUserFormSchema),
         defaultValues: {
@@ -378,7 +381,7 @@ function EditUserDialog({ isOpen, setIsOpen, schoolId, user, onSuccess }: { isOp
                         <div className="space-y-2">
                             <Label htmlFor="role_edit">Role</Label>
                             <Controller name="role" control={control} render={({ field }) => (
-                                <Select onValueChange={field.onChange} value={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={!!roleFilter}>
                                     <SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Principal">Principal</SelectItem>
@@ -473,3 +476,5 @@ function UpdatePasswordDialog({ isOpen, setIsOpen, schoolId, user }: { isOpen: b
         </Dialog>
     )
 }
+
+    

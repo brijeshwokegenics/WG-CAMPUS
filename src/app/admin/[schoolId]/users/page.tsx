@@ -21,9 +21,11 @@ export default function UserManagementPage({ params }: { params: { schoolId: str
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <UserManager schoolId={schoolId} />
+            <UserManager schoolId={schoolId} roleFilter="Parent" />
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    

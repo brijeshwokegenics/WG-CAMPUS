@@ -14,11 +14,11 @@ type ClassData = { id: string; name: string; sections: string[]; };
 type Student = { id: string; studentName: string; fatherName: string; };
 type ExamTerm = { id: string; name: string; session: string; };
 
-export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId: string; classes: ClassData[]; examTerms: ExamTerm[] }) {
-    const [selectedClassId, setSelectedClassId] = useState('');
-    const [selectedSection, setSelectedSection] = useState('');
-    const [students, setStudents] = useState<Student[]>([]);
-    const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+export function ReportCardGenerator({ schoolId, classes, examTerms, initialStudent }: { schoolId: string; classes: ClassData[]; examTerms: ExamTerm[], initialStudent?: Student }) {
+    const [selectedClassId, setSelectedClassId] = useState(initialStudent?.classId || '');
+    const [selectedSection, setSelectedSection] = useState(initialStudent?.section || '');
+    const [students, setStudents] = useState<Student[]>(initialStudent ? [initialStudent] : []);
+    const [selectedStudent, setSelectedStudent] = useState<Student | null>(initialStudent || null);
     const [selectedExamTerms, setSelectedExamTerms] = useState<ExamTerm[]>([]);
     const [loadingStudents, setLoadingStudents] = useState(false);
 
@@ -26,18 +26,18 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
 
     useEffect(() => {
         async function fetchStudents() {
-            if (selectedClassId && selectedSection) {
+            if (selectedClassId && selectedSection && !initialStudent) {
                 setLoadingStudents(true);
                 const studentResult = await getStudentsForSchool({ schoolId, classId: selectedClassId, section: selectedSection, rowsPerPage: 1000 });
                 setStudents(studentResult.students || []);
                 setSelectedStudent(null); 
                 setLoadingStudents(false);
-            } else {
+            } else if (!initialStudent) {
                 setStudents([]);
             }
         }
         fetchStudents();
-    }, [schoolId, selectedClassId, selectedSection]);
+    }, [schoolId, selectedClassId, selectedSection, initialStudent]);
     
     useEffect(() => {
         // Reset selected terms when student changes
@@ -90,71 +90,37 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
 
     return (
         <div className="space-y-6">
-            {/* Step 1: Select Class and Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                    <Label>Select Class</Label>
-                    <Select value={selectedClassId} onValueChange={v => { setSelectedClassId(v); setSelectedSection(''); }}>
-                        <SelectTrigger><SelectValue placeholder="Select a class" /></SelectTrigger>
-                        <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                    </Select>
+            {!initialStudent && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label>Select Class</Label>
+                        <Select value={selectedClassId} onValueChange={v => { setSelectedClassId(v); setSelectedSection(''); }}>
+                            <SelectTrigger><SelectValue placeholder="Select a class" /></SelectTrigger>
+                            <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Select Section</Label>
+                        <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedClassId}>
+                            <SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger>
+                            <SelectContent>{selectedClass?.sections.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                        </Select>
+                    </div>
                 </div>
-                <div className="space-y-2">
-                    <Label>Select Section</Label>
-                    <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedClassId}>
-                        <SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger>
-                        <SelectContent>{selectedClass?.sections.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                    </Select>
-                </div>
-            </div>
+            )}
 
             {loadingStudents ? (
                 <div className="text-center py-4"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
             ) : students.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    {/* Step 2: Select Student */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Select a Student</CardTitle>
-                             <CardDescription>Click 'Select' to choose a student for the report.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             <div className="max-h-96 overflow-y-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Student Name</TableHead>
-                                            <TableHead>Father's Name</TableHead>
-                                            <TableHead className="text-right">Action</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {students.map(student => (
-                                            <TableRow 
-                                                key={student.id} 
-                                                className={selectedStudent?.id === student.id ? 'bg-muted' : ''}
-                                            >
-                                                <TableCell className="font-medium">{student.studentName}</TableCell>
-                                                <TableCell>{student.fatherName}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button 
-                                                        size="sm" 
-                                                        variant={selectedStudent?.id === student.id ? 'default' : 'outline'}
-                                                        onClick={() => setSelectedStudent(student)}
-                                                    >
-                                                        Select
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                             </div>
-                        </CardContent>
-                    </Card>
+                    {!initialStudent && (
+                        <Card>
+                            <CardHeader><CardTitle>Select a Student</CardTitle></CardHeader>
+                            <CardContent><div className="max-h-96 overflow-y-auto"><Table><TableHeader><TableRow><TableHead>Student Name</TableHead><TableHead>Action</TableHead></TableRow></TableHeader><TableBody>{students.map(student => (<TableRow key={student.id} className={selectedStudent?.id === student.id ? 'bg-muted' : ''}><TableCell>{student.studentName}</TableCell><TableCell><Button size="sm" variant={selectedStudent?.id === student.id ? 'default' : 'outline'} onClick={() => setSelectedStudent(student)}>Select</Button></TableCell></TableRow>))}</TableBody></Table></div></CardContent>
+                        </Card>
+                    )}
 
-                    {/* Step 3: Select Exams and Generate */}
-                    <Card>
+                    <Card className={initialStudent ? "md:col-span-2" : ""}>
                          <CardHeader>
                             <CardTitle>Build Report for {selectedStudent ? selectedStudent.studentName : '...'}</CardTitle>
                             <CardDescription>Add exams and set their order for the report card.</CardDescription>
@@ -215,3 +181,5 @@ export function ReportCardGenerator({ schoolId, classes, examTerms }: { schoolId
         </div>
     );
 }
+
+    
