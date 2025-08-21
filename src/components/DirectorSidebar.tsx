@@ -100,6 +100,13 @@ const getNavItems = (schoolId: string) => {
           { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar`, icon: <Calendar className="h-4 w-4" /> },
           { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging`, icon: <MessageSquare className="h-4 w-4" /> },
         ],
+      },
+      {
+        section: "Parent Portal",
+        icon: <PersonStanding className="h-5 w-5" />,
+        items: [
+            { title: "Parent Dashboard", href: `/director/dashboard/${schoolId}/parent/dashboard`, icon: <LayoutDashboard className="h-4 w-4" /> },
+        ]
       }
     ];
 }
@@ -113,7 +120,7 @@ type SidebarProps = {
 
 export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'HR': true, 'Administration': true, 'Communication': true, 'Finance': true, 'Library': true, 'My Child': true});
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'HR': true, 'Administration': true, 'Communication': true, 'Finance': true, 'Library': true, 'My Child': true, 'Parent Portal': true});
   
   const navItems = getNavItems(schoolId);
 

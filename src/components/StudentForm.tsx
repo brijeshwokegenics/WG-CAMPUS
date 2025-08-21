@@ -73,9 +73,9 @@ export function StudentForm({ schoolId, studentData, classes }: { schoolId: stri
 
   useEffect(() => {
       async function fetchParents() {
-          const res = await getUsersForSchool(schoolId, 'Parent');
+          const res = await getUsersForSchool(schoolId, {role: 'Parent'});
           if (res.success) {
-              setParentUsers(res.data || []);
+              setParentUsers(res.data as ParentUser[] || []);
           }
       }
       fetchParents();
