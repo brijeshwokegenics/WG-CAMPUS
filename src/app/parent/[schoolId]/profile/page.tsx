@@ -1,11 +1,14 @@
 
-import { getStudentById } from "@/app/actions/academics";
+
+import { getStudentsByParentId } from "@/app/actions/academics";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 
 function ProfileDetail({ label, value }: { label: string, value: string | undefined | null }) {
@@ -18,18 +21,10 @@ function ProfileDetail({ label, value }: { label: string, value: string | undefi
     );
 }
 
-async function ProfileContent({ schoolId }: { schoolId: string }) {
-    // This is a placeholder. In a real app, you would get the logged-in parent's ID,
-    // find their linked student, and then fetch that student's data.
-    // For this prototype, we'll just fetch a student directly. A developer will need to implement the real logic.
-    const studentId = "STUDENT_ID_PLACEHOLDER"; // DEVELOPER NOTE: Replace with logic to find linked student.
+async function ProfileContent({ schoolId, parentId }: { schoolId: string, parentId: string }) {
+    const studentRes = await getStudentsByParentId(schoolId, parentId);
     
-    // In a real implementation, you'd find the student via the parentId on the student record.
-    // For now, we can't do this, so the page will show a placeholder or the first student.
-    const student = null;
-
-
-    if (!student) {
+    if (!studentRes.success || !studentRes.data || studentRes.data.length === 0) {
         return (
             <Card>
                 <CardHeader>
@@ -44,6 +39,9 @@ async function ProfileContent({ schoolId }: { schoolId: string }) {
             </Card>
         )
     }
+    
+    // For simplicity, this view shows the first child found. A real app might have a child switcher.
+    const student = studentRes.data[0];
 
     return (
         <Card>
@@ -58,7 +56,7 @@ async function ProfileContent({ schoolId }: { schoolId: string }) {
                         <CardDescription className="text-base text-muted-foreground">
                             Class {student.className} - Section {student.section}
                         </CardDescription>
-                            <p className="text-sm text-muted-foreground pt-2">Admission ID: {studentId}</p>
+                            <p className="text-sm text-muted-foreground pt-2">Admission ID: {student.id}</p>
                     </div>
                 </div>
             </CardHeader>
@@ -102,6 +100,26 @@ function ProfileSkeleton() {
 
 export default async function ParentProfilePage({ params }: { params: { schoolId: string } }) {
     const schoolId = params.schoolId;
+
+    // DEVELOPER NOTE: This logic is a stand-in for real session management.
+    // In a production app, you would get the logged-in user's ID from a secure session/cookie.
+    // Here, we simulate this by trying to find a parent user. This is NOT secure for production.
+    const parentMobile = "PARENT_MOBILE_PLACEHOLDER"; // This would come from the user's session
+    
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('schoolId', '==', schoolId), where('role', '==', 'Parent'));
+    const parentSnapshot = await getDocs(q);
+    const parent = parentSnapshot.docs.length > 0 ? { id: parentSnapshot.docs[0].id, ...parentSnapshot.docs[0].data()} : null;
+
+    if (!parent) {
+         return (
+            <Card>
+                <CardHeader><CardTitle>Parent Account Not Found</CardTitle></CardHeader>
+                <CardContent><p>Could not retrieve parent details. Please contact administration.</p></CardContent>
+            </Card>
+        )
+    }
+
     return (
         <div className="space-y-6">
              <Link href={`/parent/${schoolId}/dashboard`} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary">
@@ -109,7 +127,7 @@ export default async function ParentProfilePage({ params }: { params: { schoolId
                 Back to Parent Dashboard
             </Link>
             <Suspense fallback={<ProfileSkeleton />}>
-                <ProfileContent schoolId={schoolId} />
+                <ProfileContent schoolId={schoolId} parentId={parent.id} />
             </Suspense>
         </div>
     );

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { z } from 'zod';
@@ -1283,5 +1284,39 @@ export async function deleteHomework({ id, schoolId }: { id: string; schoolId: s
     } catch (error) {
         console.error('Error deleting homework:', error);
         return { success: false, error: 'Failed to delete homework.' };
+    }
+}
+
+export async function getStudentsByParentId(schoolId: string, parentId: string) {
+    if (!schoolId || !parentId) {
+        return { success: false, error: "School ID and Parent ID are required." };
+    }
+    try {
+        const studentsRef = collection(db, 'students');
+        const q = query(studentsRef, where('schoolId', '==', schoolId), where('parentId', '==', parentId));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            return { success: true, data: [] };
+        }
+
+        const classIds = [...new Set(querySnapshot.docs.map(doc => doc.data().classId))];
+        const classMap = await getDocsInBatches(classIds, 'classes');
+        
+        const students = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                ...data,
+                id: doc.id,
+                className: classMap.get(data.classId)?.name || 'N/A',
+                admissionDate: data.admissionDate.toDate(),
+                dob: data.dob.toDate(),
+            };
+        });
+
+        return { success: true, data: students };
+    } catch (error) {
+        console.error("Error fetching students by parent ID:", error);
+        return { success: false, error: "Failed to fetch students." };
     }
 }
