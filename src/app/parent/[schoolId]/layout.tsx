@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Bell, User, LogOut } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ChildSwitcher } from '@/components/ChildSwitcher';
 
 
 export default function ParentDashboardLayout({
@@ -38,6 +39,8 @@ export default function ParentDashboardLayout({
             <div className="md:hidden">
               <MobileSidebar schoolId={params.schoolId} />
             </div>
+            
+            <ChildSwitcher schoolId={params.schoolId} />
 
             {/* Header Right Side */}
             <div className="flex w-full items-center justify-end gap-4">

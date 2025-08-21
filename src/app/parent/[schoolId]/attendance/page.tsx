@@ -1,21 +1,19 @@
 
 import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, ArrowLeft } from 'lucide-react';
-import { getStudentsByParentId, getMonthlyAttendance } from '@/app/actions/academics';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { Loader2, ArrowLeft, UserSquare } from 'lucide-react';
+import { getStudentById, getMonthlyAttendance } from '@/app/actions/academics';
 import { getDaysInMonth, format, startOfMonth } from 'date-fns';
 import Link from 'next/link';
 
 
-async function AttendanceContent({ schoolId, parentId }: { schoolId: string, parentId: string }) {
-    const studentRes = await getStudentsByParentId(schoolId, parentId);
+async function AttendanceContent({ schoolId, studentId }: { schoolId: string, studentId: string }) {
+    const studentRes = await getStudentById(studentId, schoolId);
 
-    if (!studentRes.success || !studentRes.data || studentRes.data.length === 0) {
-        return <p className="text-muted-foreground">No student linked to this account.</p>;
+    if (!studentRes.success || !studentRes.data) {
+        return <p className="text-muted-foreground">Could not load student data.</p>;
     }
-    const student = studentRes.data[0];
+    const student = studentRes.data;
 
     const currentMonthDate = new Date();
     const month = format(currentMonthDate, 'yyyy-MM');
@@ -75,24 +73,28 @@ async function AttendanceContent({ schoolId, parentId }: { schoolId: string, par
     );
 }
 
-export default async function ParentAttendancePage({ params }: { params: { schoolId: string } }) {
+export default async function ParentAttendancePage({ params, searchParams }: { params: { schoolId: string }, searchParams: { studentId?: string } }) {
     const schoolId = params.schoolId;
+    const studentId = searchParams.studentId;
 
-    const parentSnapshot = await getDocs(query(collection(db, 'users'), where('schoolId', '==', schoolId), where('role', '==', 'Parent')));
-    const parent = parentSnapshot.docs.length > 0 ? { id: parentSnapshot.docs[0].id } : null;
-
-    if (!parent) {
-        return <p>Parent account not found.</p>;
-    }
+    if (!studentId) {
+        return (
+            <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-64">
+               <UserSquare className="h-12 w-12 text-muted-foreground" />
+               <p className="mt-4 font-semibold">Please select a child</p>
+               <p className="text-sm text-muted-foreground">Use the dropdown in the header to view their attendance.</p>
+           </div>
+       )
+   }
 
     return (
         <div className="space-y-6">
-            <Link href={`/parent/${schoolId}/dashboard`} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary">
+            <Link href={`/parent/${schoolId}/dashboard?studentId=${studentId}`} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Dashboard
             </Link>
             <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
-                <AttendanceContent schoolId={schoolId} parentId={parent.id} />
+                <AttendanceContent schoolId={schoolId} studentId={studentId} />
             </Suspense>
         </div>
     );

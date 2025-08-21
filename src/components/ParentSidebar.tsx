@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   School,
   LayoutDashboard,
@@ -15,6 +15,7 @@ import {
   Wallet,
   FileText,
   Book,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -28,6 +29,7 @@ const getNavItems = (schoolId: string) => {
         { title: "Fees", href: `/parent/${schoolId}/fees`, icon: <Wallet className="h-5 w-5" /> },
         { title: "Report Cards", href: `/parent/${schoolId}/reports`, icon: <FileText className="h-5 w-5" /> },
         { title: "E-learning", href: `/parent/${schoolId}/elearning`, icon: <Book className="h-5 w-5" /> },
+        { title: "Notices", href: `/parent/${schoolId}/notices`, icon: <ClipboardList className="h-5 w-5" /> },
         { title: "School Calendar", href: `/parent/${schoolId}/calendar`, icon: <Calendar className="h-5 w-5" /> },
     ];
 };
@@ -40,28 +42,39 @@ type SidebarProps = {
 
 export function ParentSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const studentId = searchParams.get('studentId');
+
   const navItems = getNavItems(schoolId);
 
-  const NavLink = ({ item }: { item: any; }) => (
-    <TooltipProvider delayDuration={0}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-              pathname === item.href && "bg-muted text-primary",
-              isCollapsed && "justify-center"
-            )}
-          >
-            {item.icon}
-            <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>{item.title}</span>
-          </Link>
-        </TooltipTrigger>
-        {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
-      </Tooltip>
-    </TooltipProvider>
-  );
+  const NavLink = ({ item }: { item: any; }) => {
+    const hrefWithStudent = studentId ? `${item.href}?studentId=${studentId}` : item.href;
+    const isActive = pathname === item.href;
+
+    return (
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href={hrefWithStudent}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                  isActive && "bg-muted text-primary",
+                  isCollapsed && "justify-center"
+                )}
+              >
+                {item.icon}
+                <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>{item.title}</span>
+              </Link>
+            </TooltipTrigger>
+            {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
+          </Tooltip>
+        </TooltipProvider>
+    );
+  }
+
+  const dashboardLink = studentId ? `/parent/${schoolId}/dashboard?studentId=${studentId}` : `/parent/${schoolId}/dashboard`;
+
 
   return (
     <div className={cn(
@@ -69,7 +82,7 @@ export function ParentSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarP
         isCollapsed ? 'w-[72px]' : 'w-64'
       )}>
       <div className={cn("flex h-16 items-center border-b", isCollapsed ? "justify-center px-2" : "justify-between px-4")}>
-        <Link href={`/parent/${schoolId}/dashboard`} className="flex items-center gap-2 font-semibold">
+        <Link href={dashboardLink} className="flex items-center gap-2 font-semibold">
           <School className="h-6 w-6 text-primary" />
           <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>WG Campus</span>
         </Link>

@@ -1,22 +1,20 @@
 
 import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Book, FileText, Download } from 'lucide-react';
-import { getStudentsByParentId, getStudyMaterials, getHomework } from '@/app/actions/academics';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { Loader2, ArrowLeft, Book, FileText, Download, UserSquare } from 'lucide-react';
+import { getStudentById, getStudyMaterials, getHomework } from '@/app/actions/academics';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 
-async function ElearningContent({ schoolId, parentId }: { schoolId: string, parentId: string }) {
-    const studentRes = await getStudentsByParentId(schoolId, parentId);
-    if (!studentRes.success || !studentRes.data || studentRes.data.length === 0) {
-        return <p>No student linked to this account.</p>;
+async function ElearningContent({ schoolId, studentId }: { schoolId: string, studentId: string }) {
+    const studentRes = await getStudentById(studentId, schoolId);
+    if (!studentRes.success || !studentRes.data) {
+        return <p>Could not load student data.</p>;
     }
-    const student = studentRes.data[0];
+    const student = studentRes.data;
 
     const [materialsRes, homeworkRes] = await Promise.all([
         getStudyMaterials({ schoolId, classId: student.classId, section: student.section }),
@@ -87,23 +85,28 @@ function ContentTable({ content, isHomework }: { content: any[], isHomework: boo
     );
 }
 
-export default async function ParentElearningPage({ params }: { params: { schoolId: string } }) {
+export default async function ParentElearningPage({ params, searchParams }: { params: { schoolId: string }, searchParams: { studentId?: string } }) {
     const schoolId = params.schoolId;
-    const parentSnapshot = await getDocs(query(collection(db, 'users'), where('schoolId', '==', schoolId), where('role', '==', 'Parent')));
-    const parent = parentSnapshot.docs.length > 0 ? { id: parentSnapshot.docs[0].id } : null;
+    const studentId = searchParams.studentId;
 
-    if (!parent) return <p>Parent account not found.</p>;
+    if (!studentId) {
+        return (
+             <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-64">
+                <UserSquare className="h-12 w-12 text-muted-foreground" />
+                <p className="mt-4 font-semibold">Please select a child</p>
+                <p className="text-sm text-muted-foreground">Use the dropdown in the header to view their e-learning content.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-6">
-            <Link href={`/parent/${schoolId}/dashboard`} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary">
+            <Link href={`/parent/${schoolId}/dashboard?studentId=${studentId}`} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
             </Link>
             <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
-                <ElearningContent schoolId={schoolId} parentId={parent.id} />
+                <ElearningContent schoolId={schoolId} studentId={studentId} />
             </Suspense>
         </div>
     );
 }
-
-    

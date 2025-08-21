@@ -1,11 +1,9 @@
 
 import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Wallet, Receipt } from 'lucide-react';
-import { getStudentsByParentId } from '@/app/actions/academics';
+import { Loader2, ArrowLeft, Wallet, Receipt, UserSquare } from 'lucide-react';
+import { getStudentById } from '@/app/actions/academics';
 import { getStudentFeeDetails } from '@/app/actions/finance';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
 import Link from 'next/link';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,12 +11,12 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 
-async function FeesContent({ schoolId, parentId }: { schoolId: string, parentId: string }) {
-    const studentRes = await getStudentsByParentId(schoolId, parentId);
-    if (!studentRes.success || !studentRes.data || studentRes.data.length === 0) {
-        return <p>No student linked to this account.</p>;
+async function FeesContent({ schoolId, studentId }: { schoolId: string, studentId: string }) {
+    const studentRes = await getStudentById(studentId, schoolId);
+    if (!studentRes.success || !studentRes.data) {
+        return <p>Could not load student data.</p>;
     }
-    const student = studentRes.data[0];
+    const student = studentRes.data;
     
     const detailsRes = await getStudentFeeDetails(schoolId, student.id);
     if (!detailsRes.success || !detailsRes.data) {
@@ -89,23 +87,28 @@ async function FeesContent({ schoolId, parentId }: { schoolId: string, parentId:
     );
 }
 
-export default async function ParentFeesPage({ params }: { params: { schoolId: string } }) {
+export default async function ParentFeesPage({ params, searchParams }: { params: { schoolId: string }, searchParams: { studentId?: string } }) {
     const schoolId = params.schoolId;
-    const parentSnapshot = await getDocs(query(collection(db, 'users'), where('schoolId', '==', schoolId), where('role', '==', 'Parent')));
-    const parent = parentSnapshot.docs.length > 0 ? { id: parentSnapshot.docs[0].id } : null;
-
-    if (!parent) return <p>Parent account not found.</p>;
+    const studentId = searchParams.studentId;
+    
+    if (!studentId) {
+        return (
+             <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-64">
+                <UserSquare className="h-12 w-12 text-muted-foreground" />
+                <p className="mt-4 font-semibold">Please select a child</p>
+                <p className="text-sm text-muted-foreground">Use the dropdown in the header to view their fee details.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-6">
-             <Link href={`/parent/${schoolId}/dashboard`} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary">
+             <Link href={`/parent/${schoolId}/dashboard?studentId=${studentId}`} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
             </Link>
             <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
-                <FeesContent schoolId={schoolId} parentId={parent.id} />
+                <FeesContent schoolId={schoolId} studentId={studentId} />
             </Suspense>
         </div>
     );
 }
-
-    

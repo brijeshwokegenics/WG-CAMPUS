@@ -1,10 +1,10 @@
 
 
-import { getStudentsByParentId } from "@/app/actions/academics";
+import { getStudentsByParentId, getStudentById } from "@/app/actions/academics";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, UserSquare } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -21,34 +21,30 @@ function ProfileDetail({ label, value }: { label: string, value: string | undefi
     );
 }
 
-async function ProfileContent({ schoolId, parentId }: { schoolId: string, parentId: string }) {
-    const studentRes = await getStudentsByParentId(schoolId, parentId);
+async function ProfileContent({ schoolId, studentId }: { schoolId: string, studentId: string }) {
+    const studentRes = await getStudentById(studentId, schoolId);
     
-    if (!studentRes.success || !studentRes.data || studentRes.data.length === 0) {
+    if (!studentRes.success || !studentRes.data) {
         return (
             <Card>
                 <CardHeader>
                     <CardTitle>Child Profile Not Found</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground">Could not find a student record linked to this parent account.</p>
-                    <p className="text-xs mt-2">
-                        Note to Admin: Please link a student to this parent account from the Student Management section.
-                    </p>
+                    <p className="text-muted-foreground">Could not find a student record with the selected ID.</p>
                 </CardContent>
             </Card>
         )
     }
     
-    // For simplicity, this view shows the first child found. A real app might have a child switcher.
-    const student = studentRes.data[0];
+    const student = studentRes.data;
 
     return (
         <Card>
             <CardHeader>
                 <div className="flex items-start space-x-6">
                     <Avatar className="h-24 w-24 border">
-                        <AvatarImage src={student.photoUrl || "https://placehold.co/100x100.png"} alt={student.studentName} />
+                        <AvatarImage src={student.photoUrl || "https://placehold.co/100x100.png"} alt={student.studentName} data-ai-hint="student photo" />
                         <AvatarFallback>{student.studentName.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">
@@ -98,25 +94,17 @@ function ProfileSkeleton() {
     )
 }
 
-export default async function ParentProfilePage({ params }: { params: { schoolId: string } }) {
+export default async function ParentProfilePage({ params, searchParams }: { params: { schoolId: string }, searchParams: { studentId?: string } }) {
     const schoolId = params.schoolId;
+    const studentId = searchParams.studentId;
 
-    // DEVELOPER NOTE: This logic is a stand-in for real session management.
-    // In a production app, you would get the logged-in user's ID from a secure session/cookie.
-    // Here, we simulate this by trying to find a parent user. This is NOT secure for production.
-    const parentMobile = "PARENT_MOBILE_PLACEHOLDER"; // This would come from the user's session
-    
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('schoolId', '==', schoolId), where('role', '==', 'Parent'));
-    const parentSnapshot = await getDocs(q);
-    const parent = parentSnapshot.docs.length > 0 ? { id: parentSnapshot.docs[0].id, ...parentSnapshot.docs[0].data()} : null;
-
-    if (!parent) {
+    if (!studentId) {
          return (
-            <Card>
-                <CardHeader><CardTitle>Parent Account Not Found</CardTitle></CardHeader>
-                <CardContent><p>Could not retrieve parent details. Please contact administration.</p></CardContent>
-            </Card>
+             <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-64">
+                <UserSquare className="h-12 w-12 text-muted-foreground" />
+                <p className="mt-4 font-semibold">Please select a child</p>
+                <p className="text-sm text-muted-foreground">Use the dropdown in the header to switch between your children's profiles.</p>
+            </div>
         )
     }
 
@@ -127,7 +115,7 @@ export default async function ParentProfilePage({ params }: { params: { schoolId
                 Back to Parent Dashboard
             </Link>
             <Suspense fallback={<ProfileSkeleton />}>
-                <ProfileContent schoolId={schoolId} parentId={parent.id} />
+                <ProfileContent schoolId={schoolId} studentId={studentId} />
             </Suspense>
         </div>
     );
