@@ -43,9 +43,9 @@ async function Notices({ schoolId, students }: { schoolId: string, students: any
                                 </div>
                                 <div>
                                     <p className="font-semibold">{notice.title}</p>
-                                    <p className="text-xs text-muted-foreground">
+                                    <div className="text-xs text-muted-foreground">
                                         Posted on {format(new Date(notice.postedAt), 'dd MMM, yyyy')} for <Badge variant="secondary">{notice.audience.join(', ')}</Badge>
-                                    </p>
+                                    </div>
                                 </div>
                             </li>
                         ))}
@@ -154,4 +154,3 @@ export default async function ParentDashboardPage({ params, searchParams }: { pa
         </div>
     );
 }
-
