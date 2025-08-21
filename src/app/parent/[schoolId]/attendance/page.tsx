@@ -5,7 +5,7 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import { getStudentsByParentId, getMonthlyAttendance } from '@/app/actions/academics';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { getDaysInMonth, format } from 'date-fns';
+import { getDaysInMonth, format, startOfMonth } from 'date-fns';
 import Link from 'next/link';
 
 
@@ -17,15 +17,18 @@ async function AttendanceContent({ schoolId, parentId }: { schoolId: string, par
     }
     const student = studentRes.data[0];
 
-    const month = format(new Date(), 'yyyy-MM');
+    const currentMonthDate = new Date();
+    const month = format(currentMonthDate, 'yyyy-MM');
     const attendanceRes = await getMonthlyAttendance({ schoolId, classId: student.classId, section: student.section, month });
     const attendanceData = attendanceRes.success ? attendanceRes.data?.attendance : [];
-
-    const daysInMonth = getDaysInMonth(new Date(`${month}-01T12:00:00Z`));
+    
+    const monthStart = startOfMonth(currentMonthDate);
+    const daysInMonth = getDaysInMonth(currentMonthDate);
     const calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
     const getStatusForDay = (day: number) => {
-        const dateStr = format(new Date(new Date(`${month}-${day}T12:00:00Z`)), 'yyyy-MM-dd');
+        const fullDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), day);
+        const dateStr = format(fullDate, 'yyyy-MM-dd');
         const record = attendanceData?.find((att: any) => att.date === dateStr);
         return record?.attendance?.[student.id] || null;
     };
@@ -94,5 +97,3 @@ export default async function ParentAttendancePage({ params }: { params: { schoo
         </div>
     );
 }
-
-    
