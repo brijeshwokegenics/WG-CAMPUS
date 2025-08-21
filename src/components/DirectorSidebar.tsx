@@ -101,13 +101,6 @@ const getNavItems = (schoolId: string) => {
           { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging`, icon: <MessageSquare className="h-4 w-4" /> },
         ],
       },
-      {
-        section: "Parent Portal",
-        icon: <PersonStanding className="h-5 w-5" />,
-        items: [
-            { title: "Parent Dashboard", href: `/director/dashboard/${schoolId}/parent/dashboard`, icon: <LayoutDashboard className="h-4 w-4" /> },
-        ]
-      }
     ];
 }
 
