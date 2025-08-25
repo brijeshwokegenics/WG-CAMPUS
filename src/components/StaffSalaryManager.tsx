@@ -37,7 +37,7 @@ const SalarySchema = z.object({
 });
 
 
-type User = { id: string; name: string; userId: string; email: string | null };
+type User = { id: string; name: string; userId: string; email: string | null; role: string };
 type SalaryData = z.infer<typeof SalarySchema>;
 
 export function StaffSalaryManager({ schoolId }: { schoolId: string }) {
@@ -54,7 +54,8 @@ export function StaffSalaryManager({ schoolId }: { schoolId: string }) {
             ]);
             
             if (usersRes.success && usersRes.data) {
-                setStaff(usersRes.data as User[]);
+                const filteredStaff = usersRes.data.filter((user: User) => user.role !== 'Parent');
+                setStaff(filteredStaff as User[]);
             }
             if (salariesRes.success && salariesRes.data) {
                 const salariesMap: Record<string, SalaryData> = {};
