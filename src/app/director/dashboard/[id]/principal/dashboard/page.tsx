@@ -2,6 +2,7 @@
 import { getDailyAttendanceSummary, getDashboardSummary } from "@/app/actions/academics";
 import { getEvents, getNotices } from "@/app/actions/communication";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, startOfToday } from "date-fns";
 import { Briefcase, Calendar, ClipboardList, Megaphone, UserCheck, UserX } from "lucide-react";
