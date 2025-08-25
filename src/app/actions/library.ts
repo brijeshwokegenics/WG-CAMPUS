@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, getDoc, runTransaction, serverTimestamp, increment, orderBy, documentId, Query } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, getDoc, runTransaction, serverTimestamp, increment, orderBy, documentId, Query, getCountFromServer } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { addDays } from 'date-fns';
 
@@ -340,4 +340,40 @@ export async function getFullIssueHistory(schoolId: string) {
             returnDate: issue.returnDate?.toDate(),
         }
     });
+}
+
+
+export async function getLibraryDashboardSummary(schoolId: string) {
+    if (!schoolId) {
+        return { success: false, error: 'School ID is required.' };
+    }
+
+    try {
+        const booksQuery = query(collection(db, 'libraryBooks'), where('schoolId', '==', schoolId));
+        const issuedQuery = query(collection(db, 'libraryIssues'), where('schoolId', '==', schoolId), where('status', '==', 'issued'));
+        const overdueQuery = query(collection(db, 'libraryIssues'), where('schoolId', '==', schoolId), where('status', '==', 'issued'), where('dueDate', '<', new Date()));
+
+        const [booksSnapshot, issuedSnapshot, overdueSnapshot] = await Promise.all([
+            getDocs(booksQuery),
+            getCountFromServer(issuedQuery),
+            getCountFromServer(overdueQuery),
+        ]);
+
+        const totalBooks = booksSnapshot.docs.reduce((acc, doc) => acc + doc.data().quantity, 0);
+        const totalIssued = issuedSnapshot.data().count;
+        const totalOverdue = overdueSnapshot.data().count;
+
+        return {
+            success: true,
+            data: {
+                totalBooks,
+                totalIssued,
+                totalOverdue,
+            }
+        };
+
+    } catch (error) {
+        console.error("Error fetching library dashboard summary:", error);
+        return { success: false, error: "Failed to fetch library dashboard summary." };
+    }
 }
