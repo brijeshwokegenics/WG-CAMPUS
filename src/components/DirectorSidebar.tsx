@@ -44,7 +44,9 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
-const getNavItems = (schoolId: string) => {
+const getNavItems = (schoolId: string, pathname: string) => {
+    
+    const isPrincipalPath = pathname.includes('/principal/');
     
     return [
       {
@@ -78,7 +80,10 @@ const getNavItems = (schoolId: string) => {
         section: "Administration",
         icon: <Building className="h-5 w-5" />,
         items: [
-          { title: "Admin Dashboard", href: `/director/dashboard/${schoolId}/admin/dashboard`, icon: <LayoutDashboard className="h-4 w-4" />},
+          ...(isPrincipalPath ? 
+              [] :
+              [{ title: "Admin Dashboard", href: `/director/dashboard/${schoolId}/admin/dashboard`, icon: <LayoutDashboard className="h-4 w-4" />}]
+          ),
           { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users`, icon: <UserCog className="h-4 w-4" /> },
           { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure`, icon: <Banknote className="h-4 w-4" /> },
           { title: "Fees Management", href: `/director/dashboard/${schoolId}/admin/fees`, icon: <Wallet className="h-4 w-4" /> },
@@ -88,8 +93,13 @@ const getNavItems = (schoolId: string) => {
           { title: "Library", href: `/director/dashboard/${schoolId}/admin/library`, icon: <Library className="h-4 w-4" /> },
           { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel`, icon: <Hotel className="h-4 w-4" /> },
           { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass`, icon: <Ticket className="h-4 w-4" /> },
-          { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info`, icon: <Info className="h-4 w-4" /> },
-          { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations`, icon: <Webhook className="h-4 w-4" /> }
+          ...(isPrincipalPath ? 
+              [{ title: "School Info", href: `/director/dashboard/${schoolId}/principal/school-info`, icon: <Info className="h-4 w-4" /> }] :
+              [
+                  { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info`, icon: <Info className="h-4 w-4" /> },
+                  { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations`, icon: <Webhook className="h-4 w-4" /> }
+              ]
+          ),
         ],
       },
       {
@@ -115,7 +125,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
   const pathname = usePathname();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'HR': true, 'Administration': true, 'Communication': true, 'Finance': true, 'Library': true, 'My Child': true, 'Parent Portal': true});
   
-  const navItems = getNavItems(schoolId);
+  const navItems = getNavItems(schoolId, pathname);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -143,7 +153,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
     </TooltipProvider>
   );
 
-  const dashboardLink = `/director/dashboard/${schoolId}`;
+  const dashboardLink = pathname.includes('/principal/') ? `/director/dashboard/${schoolId}/principal/dashboard` : `/director/dashboard/${schoolId}`;
 
 
   return (
