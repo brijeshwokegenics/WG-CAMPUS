@@ -1,7 +1,7 @@
 
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Users, ClipboardList, Calendar, Megaphone, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { User, Users, ClipboardList, Calendar, Megaphone, CheckCircle, XCircle, AlertTriangle, Building } from "lucide-react";
 import Link from "next/link";
 import { getDailyAttendanceSummary } from "@/app/actions/academics";
 import { getNotices, getEvents } from "@/app/actions/communication";
@@ -65,6 +65,41 @@ export default async function PrincipalDashboardPage({ params }: { params: { id:
                                 <p className="font-bold text-primary">Manage Attendance</p>
                                 <Users className="h-6 w-6 text-primary"/>
                             </div>
+                        </CardContent>
+                    </Card>
+                </Link>
+            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Link href={`/director/dashboard/${schoolId}/academics/students`}>
+                    <Card className="hover:bg-muted/50 transition-colors h-full">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium">Student Management</CardTitle>
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-xs text-muted-foreground">Search, view, and manage student profiles.</p>
+                        </CardContent>
+                    </Card>
+                </Link>
+                <Link href={`/director/dashboard/${schoolId}/hr/directory`}>
+                     <Card className="hover:bg-muted/50 transition-colors h-full">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium">Staff Management</CardTitle>
+                            <User className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-xs text-muted-foreground">View staff directory and manage roles.</p>
+                        </CardContent>
+                    </Card>
+                </Link>
+                <Link href={`/director/dashboard/${schoolId}/principal/school-info`}>
+                     <Card className="hover:bg-muted/50 transition-colors h-full">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium">School Information</CardTitle>
+                            <Building className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-xs text-muted-foreground">View general school details and profile.</p>
                         </CardContent>
                     </Card>
                 </Link>

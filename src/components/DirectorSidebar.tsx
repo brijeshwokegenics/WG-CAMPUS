@@ -45,7 +45,10 @@ import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 
-const getNavItems = (schoolId: string) => {
+const getNavItems = (schoolId: string, pathname: string) => {
+    
+    const isPrincipalPath = pathname.includes('/principal/');
+    
     return [
       {
         section: "Academics",
@@ -88,7 +91,7 @@ const getNavItems = (schoolId: string) => {
           { title: "Library", href: `/director/dashboard/${schoolId}/admin/library`, icon: <Library className="h-4 w-4" /> },
           { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel`, icon: <Hotel className="h-4 w-4" /> },
           { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass`, icon: <Ticket className="h-4 w-4" /> },
-          { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info`, icon: <Info className="h-4 w-4" /> },
+          { title: "School Info", href: isPrincipalPath ? `/director/dashboard/${schoolId}/principal/school-info` : `/director/dashboard/${schoolId}/admin/info`, icon: <Info className="h-4 w-4" /> },
           { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations`, icon: <Webhook className="h-4 w-4" /> },
         ],
       },
@@ -115,7 +118,7 @@ export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideba
   const pathname = usePathname();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'HR': true, 'Administration': true, 'Communication': true, 'Finance': true, 'Library': true, 'My Child': true, 'Parent Portal': true});
   
-  const navItems = getNavItems(schoolId);
+  const navItems = getNavItems(schoolId, pathname);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
