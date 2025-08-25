@@ -1,223 +1,161 @@
-"use client";
 
-import React, { useState, useMemo } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  School,
-  LayoutDashboard,
-  Building,
-  LogOut,
-  PanelLeftClose,
-  PanelRightClose,
-  ChevronDown,
-  Users,
-  Book,
-  ClipboardList,
-  Calendar,
-  Bus,
-  Library,
-  GraduationCap,
-  Briefcase,
-  Wallet,
-  UserCheck,
-  FileText,
-  MessageSquare,
-  Hotel,
-  Ticket,
-  Info,
-  Banknote,
-  Presentation,
-  UserCog,
-  Warehouse,
-  FolderKanban,
-  PersonStanding,
-  BookUser,
-  Printer,
-  Webhook,
-  BookCheck,
-  Receipt,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { getDailyAttendanceSummary, getDashboardSummary } from "@/app/actions/academics";
+import { getEvents, getNotices } from "@/app/actions/communication";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { format, startOfToday } from "date-fns";
+import { Briefcase, Calendar, ClipboardList, Megaphone, UserCheck, UserX, GraduationCap, Users } from "lucide-react";
+import Link from "next/link";
 
 
-const getNavItems = (schoolId: string, pathname: string) => {
-    
-    const isPrincipalPath = pathname.includes('/principal/');
-    
-    return [
-      {
-        section: "Academics",
-        icon: <GraduationCap className="h-5 w-5" />,
-        items: [
-          { title: "Classes & Sections", href: `/director/dashboard/${schoolId}/academics/classes`, icon: <Presentation className="h-4 w-4" /> },
-          { title: "Admissions", href: `/director/dashboard/${schoolId}/academics/admissions`, icon: <UserCheck className="h-4 w-4" /> },
-          { title: "Students", href: `/director/dashboard/${schoolId}/academics/students`, icon: <Users className="h-4 w-4" /> },
-          { title: "Promote Students", href: `/director/dashboard/${schoolId}/academics/promote`, icon: <FolderKanban className="h-4 w-4" /> },
-          { title: "Print Center", href: `/director/dashboard/${schoolId}/academics/print`, icon: <Printer className="h-4 w-4" /> },
-          { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
-          { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable`, icon: <Calendar className="h-4 w-4" /> },
-          { title: "Exams", href: `/director/dashboard/${schoolId}/academics/exams`, icon: <FileText className="h-4 w-4" /> },
-          { title: "Reports", href: `/director/dashboard/${schoolId}/academics/reports`, icon: <FileText className="h-4 w-4" /> },
-          { title: "E-learning", href: `/director/dashboard/${schoolId}/academics/elearning`, icon: <Book className="h-4 w-4" /> },
-        ],
-      },
-      {
-        section: "HR",
-        icon: <Briefcase className="h-5 w-5" />,
-        items: [
-          { title: "HR Dashboard", href: `/director/dashboard/${schoolId}/hr/dashboard`, icon: <LayoutDashboard className="h-4 w-4" />},
-          { title: "Staff Directory", href: `/director/dashboard/${schoolId}/hr/directory`, icon: <BookUser className="h-4 w-4" /> },
-          { title: "Staff Attendance", href: `/director/dashboard/${schoolId}/hr/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
-          { title: "Staff Salary", href: `/director/dashboard/${schoolId}/hr/salary`, icon: <Banknote className="h-4 w-4" /> },
-          { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-4 w-4" /> },
-        ],
-      },
-      {
-        section: "Administration",
-        icon: <Building className="h-5 w-5" />,
-        items: [
-          ...(isPrincipalPath ? 
-              [] :
-              [{ title: "Admin Dashboard", href: `/director/dashboard/${schoolId}/admin/dashboard`, icon: <LayoutDashboard className="h-4 w-4" />}]
-          ),
-          { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users`, icon: <UserCog className="h-4 w-4" /> },
-          { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure`, icon: <Banknote className="h-4 w-4" /> },
-          { title: "Fees Management", href: `/director/dashboard/${schoolId}/admin/fees`, icon: <Wallet className="h-4 w-4" /> },
-          { title: "Expense Management", href: `/director/dashboard/${schoolId}/admin/expenses`, icon: <Receipt className="h-4 w-4" /> },
-          { title: "Inventory", href: `/director/dashboard/${schoolId}/admin/inventory`, icon: <Warehouse className="h-4 w-4" /> },
-          { title: "Transport", href: `/director/dashboard/${schoolId}/admin/transport`, icon: <Bus className="h-4 w-4" /> },
-          { title: "Library", href: `/director/dashboard/${schoolId}/admin/library`, icon: <Library className="h-4 w-4" /> },
-          { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel`, icon: <Hotel className="h-4 w-4" /> },
-          { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass`, icon: <Ticket className="h-4 w-4" /> },
-          ...(isPrincipalPath ? 
-              [{ title: "School Info", href: `/director/dashboard/${schoolId}/principal/school-info`, icon: <Info className="h-4 w-4" /> }] :
-              [
-                  { title: "School Info", href: `/director/dashboard/${schoolId}/admin/info`, icon: <Info className="h-4 w-4" /> },
-                  { title: "Integrations", href: `/director/dashboard/${schoolId}/admin/integrations`, icon: <Webhook className="h-4 w-4" /> }
-              ]
-          ),
-        ],
-      },
-      {
-        section: "Communication",
-        icon: <MessageSquare className="h-5 w-5" />,
-        items: [
-          { title: "Notices", href: `/director/dashboard/${schoolId}/communication/notices`, icon: <ClipboardList className="h-4 w-4" /> },
-          { title: "Calendar", href: `/director/dashboard/${schoolId}/communication/calendar`, icon: <Calendar className="h-4 w-4" /> },
-          { title: "Messaging", href: `/director/dashboard/${schoolId}/communication/messaging`, icon: <MessageSquare className="h-4 w-4" /> },
-        ],
-      },
-    ];
+type StatCardProps = {
+    title: string;
+    value: string | number;
+    icon: React.ReactNode;
 }
 
+function StatCard({ title, value, icon}: StatCardProps) {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                {icon}
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+            </CardContent>
+        </Card>
+    );
+}
 
-type SidebarProps = {
-  schoolId: string;
-  isCollapsed: boolean;
-  toggleSidebar: () => void;
-};
+export default async function PrincipalDashboardPage({ params }: { params: { schoolId: string }}) {
+  const schoolId = params.schoolId;
+  const [summaryResult, noticesResult, eventsResult, studentAttendanceResult] = await Promise.all([
+      getDashboardSummary(schoolId),
+      getNotices(schoolId),
+      getEvents(schoolId),
+      getDailyAttendanceSummary(schoolId),
+  ]);
 
-export function DirectorSidebar({ schoolId, isCollapsed, toggleSidebar }: SidebarProps) {
-  const pathname = usePathname();
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'HR': true, 'Administration': true, 'Communication': true, 'Finance': true, 'Library': true, 'My Child': true, 'Parent Portal': true});
+  const summary = summaryResult.success ? summaryResult.data : { totalStudents: 0, totalStaff: 0 };
+  const studentAttendance = studentAttendanceResult.success ? studentAttendanceResult.data : { Present: 0, Absent: 0 };
   
-  const navItems = getNavItems(schoolId, pathname);
-
-  const toggleSection = (section: string) => {
-    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-
-  const NavLink = ({ item, isSubItem = false }: { item: any; isSubItem?: boolean }) => (
-    <TooltipProvider delayDuration={0}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-              pathname === item.href && "bg-muted text-primary",
-              isCollapsed && "justify-center",
-              isSubItem && "text-sm"
-            )}
-          >
-            {item.icon}
-            <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>{item.title}</span>
-          </Link>
-        </TooltipTrigger>
-        {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
-      </Tooltip>
-    </TooltipProvider>
-  );
-
-  const dashboardLink = pathname.includes('/principal/') ? `/director/dashboard/${schoolId}/principal/dashboard` : `/director/dashboard/${schoolId}`;
-
+  const recentNotices = noticesResult.slice(0, 4);
+  const today = startOfToday();
+  const upcomingEvents = eventsResult
+    .filter(e => e.end >= today)
+    .sort((a,b) => a.start.getTime() - b.start.getTime())
+    .slice(0, 4);
 
   return (
-    <div className={cn(
-        "hidden md:flex flex-col bg-card border-r transition-all duration-300 h-screen sticky top-0",
-        isCollapsed ? 'w-[72px]' : 'w-64'
-      )}>
-      <div className={cn("flex h-16 items-center border-b", isCollapsed ? "justify-center px-2" : "justify-between px-4")}>
-        <Link href={dashboardLink} className="flex items-center gap-2 font-semibold">
-          <School className="h-6 w-6 text-primary" />
-          <span className={cn("origin-left duration-200", isCollapsed && "hidden")}>WG Campus</span>
-        </Link>
-        <Button variant="ghost" size="icon" className="w-8 h-8" onClick={toggleSidebar}>
-          {isCollapsed ? <PanelRightClose className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
-          <span className="sr-only">Toggle sidebar</span>
-        </Button>
-      </div>
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <nav className="px-2 py-4 space-y-2">
-            <NavLink item={{ title: "Dashboard", href: dashboardLink, icon: <LayoutDashboard className="h-5 w-5" /> }} />
-            
-            {navItems.map((section) => (
-            <div key={section.section}>
-                {isCollapsed ? (
-                    <TooltipProvider delayDuration={0}>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="w-full flex justify-center items-center"
-                                 onClick={() => !isCollapsed && toggleSection(section.section)}
-                            >
-                                {section.icon}
-                                <span className="sr-only">{section.section}</span>
-                            </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right">{section.section}</TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                ) : (
-                <Button
-                    variant="ghost"
-                    className="w-full justify-between items-center px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
-                    onClick={() => toggleSection(section.section)}
-                >
-                    <div className="flex items-center gap-3">
-                        {section.icon}
-                        <span>{section.section}</span>
-                    </div>
-                    <ChevronDown className={cn("h-5 w-5 transition-transform", openSections[section.section] ? 'rotate-180' : '')} />
-                </Button>
-                )}
+    <div className="space-y-6">
+        <header className="mb-4">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Principal's Dashboard</h1>
+            <p className="text-muted-foreground">Welcome! Here's a snapshot of today's school activity.</p>
+        </header>
 
-                {!isCollapsed && openSections[section.section] && (
-                <div className="pl-4 mt-1 space-y-1 border-l-2 border-muted ml-4">
-                    {section.items.map((item) => (
-                        <NavLink key={item.href} item={item} isSubItem={true} />
-                    ))}
-                </div>
-                )}
-            </div>
-            ))}
-        </nav>
-      </div>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard title="Total Students" value={summary.totalStudents} icon={<Users className="h-4 w-4 text-muted-foreground"/>} />
+            <StatCard title="Total Staff" value={summary.totalStaff} icon={<Briefcase className="h-4 w-4 text-muted-foreground"/>} />
+            <StatCard title="Students Present" value={studentAttendance.Present} icon={<UserCheck className="h-4 w-4 text-muted-foreground"/>} />
+            <StatCard title="Students Absent" value={studentAttendance.Absent} icon={<UserX className="h-4 w-4 text-muted-foreground"/>} />
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Quick Actions */}
+            <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-4">
+                    <Link href={`/director/dashboard/${schoolId}/academics/attendance`}>
+                        <Button variant="outline" className="w-full h-20 flex-col gap-1">
+                           <ClipboardList className="h-6 w-6"/>
+                           <span>Student Attendance</span>
+                        </Button>
+                    </Link>
+                    <Link href={`/director/dashboard/${schoolId}/hr/attendance`}>
+                        <Button variant="outline" className="w-full h-20 flex-col gap-1">
+                            <ClipboardList className="h-6 w-6"/>
+                            <span>Staff Attendance</span>
+                        </Button>
+                    </Link>
+                    <Link href={`/director/dashboard/${schoolId}/communication/notices`}>
+                        <Button variant="outline" className="w-full h-20 flex-col gap-1">
+                            <Megaphone className="h-6 w-6"/>
+                            <span>Post a Notice</span>
+                        </Button>
+                    </Link>
+                     <Link href={`/director/dashboard/${schoolId}/communication/calendar`}>
+                        <Button variant="outline" className="w-full h-20 flex-col gap-1">
+                           <Calendar className="h-6 w-6"/>
+                           <span>Manage Events</span>
+                        </Button>
+                    </Link>
+                </CardContent>
+            </Card>
+
+             {/* Upcoming Events */}
+            <Card className="lg:col-span-2">
+                <CardHeader>
+                    <CardTitle>Upcoming Events & Notices</CardTitle>
+                    <CardDescription>Upcoming holidays, exams, and recent announcements.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                       <h4 className="font-semibold mb-2">Events</h4>
+                        {upcomingEvents.length > 0 ? (
+                        <ul className="space-y-4">
+                            {upcomingEvents.map(event => (
+                                <li key={event.id} className="flex items-start gap-4">
+                                    <div className="flex flex-col items-center bg-muted p-2 rounded-md">
+                                        <span className="text-xs font-bold text-primary">{format(new Date(event.start), 'MMM')}</span>
+                                        <span className="text-lg font-bold">{format(new Date(event.start), 'dd')}</span>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-sm">{event.title}</p>
+                                        <Badge variant="outline">{event.type}</Badge>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                        ) : (
+                                <div className="m-auto text-center text-muted-foreground text-sm py-4">
+                                    <Calendar className="h-8 w-8 mx-auto mb-2"/>
+                                    <p>No upcoming events</p>
+                                </div>
+                        )}
+                   </div>
+                   <div>
+                         <h4 className="font-semibold mb-2">Notices</h4>
+                        {recentNotices.length > 0 ? (
+                        <ul className="space-y-4">
+                            {recentNotices.map(notice => (
+                                <li key={notice.id} className="flex items-start gap-4">
+                                    <div className="bg-muted p-2 rounded-full mt-1">
+                                        <Megaphone className="h-5 w-5 text-primary"/>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-sm">{notice.title}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            For {notice.audience.join(', ')}
+                                        </p>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                        ) : (
+                                <div className="m-auto text-center text-muted-foreground text-sm py-4">
+                                    <Megaphone className="h-8 w-8 mx-auto mb-2"/>
+                                    <p>No recent notices</p>
+                                </div>
+                        )}
+                   </div>
+                </CardContent>
+            </Card>
+        </div>
     </div>
   );
 }

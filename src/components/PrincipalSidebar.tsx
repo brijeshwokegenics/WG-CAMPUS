@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -43,9 +44,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
-const getNavItems = (schoolId: string, pathname: string) => {
-    
-    const isPrincipalPath = pathname.includes('/principal/');
+const getNavItems = (schoolId: string) => {
     
     return [
       {
@@ -56,7 +55,6 @@ const getNavItems = (schoolId: string, pathname: string) => {
           { title: "Admissions", href: `/director/dashboard/${schoolId}/academics/admissions`, icon: <UserCheck className="h-4 w-4" /> },
           { title: "Students", href: `/director/dashboard/${schoolId}/academics/students`, icon: <Users className="h-4 w-4" /> },
           { title: "Promote Students", href: `/director/dashboard/${schoolId}/academics/promote`, icon: <FolderKanban className="h-4 w-4" /> },
-          { title: "Print Center", href: `/director/dashboard/${schoolId}/academics/print`, icon: <Printer className="h-4 w-4" /> },
           { title: "Attendance", href: `/director/dashboard/${schoolId}/academics/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
           { title: "Timetable", href: `/director/dashboard/${schoolId}/academics/timetable`, icon: <Calendar className="h-4 w-4" /> },
           { title: "Exams", href: `/director/dashboard/${schoolId}/academics/exams`, icon: <FileText className="h-4 w-4" /> },
@@ -68,11 +66,8 @@ const getNavItems = (schoolId: string, pathname: string) => {
         section: "HR",
         icon: <Briefcase className="h-5 w-5" />,
         items: [
-          { title: "HR Dashboard", href: `/director/dashboard/${schoolId}/hr/dashboard`, icon: <LayoutDashboard className="h-4 w-4" />},
           { title: "Staff Directory", href: `/director/dashboard/${schoolId}/hr/directory`, icon: <BookUser className="h-4 w-4" /> },
           { title: "Staff Attendance", href: `/director/dashboard/${schoolId}/hr/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
-          { title: "Staff Salary", href: `/director/dashboard/${schoolId}/hr/salary`, icon: <Banknote className="h-4 w-4" /> },
-          { title: "Payroll", href: `/director/dashboard/${schoolId}/hr/payroll`, icon: <Wallet className="h-4 w-4" /> },
         ],
       },
       {
@@ -80,15 +75,6 @@ const getNavItems = (schoolId: string, pathname: string) => {
         icon: <Building className="h-5 w-5" />,
         items: [
           { title: "School Info", href: `/principal/${schoolId}/school-info`, icon: <Info className="h-4 w-4" /> },
-          { title: "User Management", href: `/director/dashboard/${schoolId}/admin/users`, icon: <UserCog className="h-4 w-4" /> },
-          { title: "Fee Structure", href: `/director/dashboard/${schoolId}/admin/fee-structure`, icon: <Banknote className="h-4 w-4" /> },
-          { title: "Fees Management", href: `/director/dashboard/${schoolId}/admin/fees`, icon: <Wallet className="h-4 w-4" /> },
-          { title: "Expense Management", href: `/director/dashboard/${schoolId}/admin/expenses`, icon: <Receipt className="h-4 w-4" /> },
-          { title: "Inventory", href: `/director/dashboard/${schoolId}/admin/inventory`, icon: <Warehouse className="h-4 w-4" /> },
-          { title: "Transport", href: `/director/dashboard/${schoolId}/admin/transport`, icon: <Bus className="h-4 w-4" /> },
-          { title: "Library", href: `/director/dashboard/${schoolId}/admin/library`, icon: <Library className="h-4 w-4" /> },
-          { title: "Hostel", href: `/director/dashboard/${schoolId}/admin/hostel`, icon: <Hotel className="h-4 w-4" /> },
-          { title: "Gate Pass", href: `/director/dashboard/${schoolId}/admin/gate-pass`, icon: <Ticket className="h-4 w-4" /> },
         ],
       },
       {
@@ -114,7 +100,7 @@ export function PrincipalSidebar({ schoolId, isCollapsed, toggleSidebar }: Sideb
   const pathname = usePathname();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({'Academics': true, 'HR': true, 'Administration': true, 'Communication': true });
   
-  const navItems = getNavItems(schoolId, pathname);
+  const navItems = getNavItems(schoolId);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
