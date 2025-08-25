@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { DirectorSidebar } from '@/components/DirectorSidebar';
+import { PrincipalSidebar } from '@/components/PrincipalSidebar';
 import { MobileSidebar } from '@/components/MobileSidebar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -12,12 +12,12 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
-export default function DirectorDashboardLayout({
+export default function PrincipalDashboardLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { id: string };
+  params: { schoolId: string };
 }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -27,8 +27,8 @@ export default function DirectorDashboardLayout({
   
   return (
     <div className="flex min-h-screen">
-      <DirectorSidebar 
-        schoolId={params.id}
+      <PrincipalSidebar 
+        schoolId={params.schoolId}
         isCollapsed={isSidebarCollapsed}
         toggleSidebar={toggleSidebar}
       />
@@ -36,7 +36,7 @@ export default function DirectorDashboardLayout({
         <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
             {/* Mobile Sidebar Toggle */}
             <div className="md:hidden">
-              <MobileSidebar schoolId={params.id} />
+              <MobileSidebar schoolId={params.schoolId} />
             </div>
 
             {/* Header Right Side */}
@@ -50,8 +50,8 @@ export default function DirectorDashboardLayout({
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full">
                     <Avatar className="h-8 w-8">
-                       <AvatarImage src="https://placehold.co/40x40.png" alt="@director" data-ai-hint="user avatar" />
-                       <AvatarFallback>D</AvatarFallback>
+                       <AvatarImage src="https://placehold.co/40x40.png" alt="@principal" data-ai-hint="user avatar" />
+                       <AvatarFallback>P</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>

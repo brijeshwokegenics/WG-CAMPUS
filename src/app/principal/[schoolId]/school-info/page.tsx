@@ -1,4 +1,5 @@
 
+
 import { getSchool } from "@/app/actions/school";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,8 +19,8 @@ function InfoDetail({ label, value }: { label: string, value: string | undefined
     );
 }
 
-export default async function SchoolInfoViewPage({ params }: { params: { id: string } }) {
-    const schoolId = params.id;
+export default async function SchoolInfoViewPage({ params }: { params: { schoolId: string } }) {
+    const schoolId = params.schoolId;
     const { school, error } = await getSchool(schoolId);
 
     if (error || !school) {
@@ -28,7 +29,7 @@ export default async function SchoolInfoViewPage({ params }: { params: { id: str
 
     return (
         <div className="space-y-6">
-            <Link href={`/director/dashboard/${schoolId}/principal/dashboard`} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary">
+            <Link href={`/principal/${schoolId}/dashboard`} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Dashboard
             </Link>
@@ -68,4 +69,3 @@ export default async function SchoolInfoViewPage({ params }: { params: { id: str
         </div>
     );
 }
-

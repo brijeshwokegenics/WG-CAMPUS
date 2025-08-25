@@ -1,7 +1,7 @@
 
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Users, ClipboardList, Calendar, Megaphone, CheckCircle, XCircle, AlertTriangle, Building } from "lucide-react";
+import { User, Users, ClipboardList, Calendar, Megaphone, CheckCircle, XCircle, AlertTriangle, Building, Book, FileText, Presentation } from "lucide-react";
 import Link from "next/link";
 import { getDailyAttendanceSummary } from "@/app/actions/academics";
 import { getNotices, getEvents } from "@/app/actions/communication";
@@ -29,8 +29,8 @@ function StatCard({ title, value, icon }: StatCardProps) {
 }
 
 
-export default async function PrincipalDashboardPage({ params }: { params: { id: string } }) {
-    const schoolId = params.id;
+export default async function PrincipalDashboardPage({ params }: { params: { schoolId: string } }) {
+    const schoolId = params.schoolId;
 
     const [attendanceResult, noticesResult, eventsResult] = await Promise.all([
         getDailyAttendanceSummary(schoolId),
@@ -69,7 +69,7 @@ export default async function PrincipalDashboardPage({ params }: { params: { id:
                     </Card>
                 </Link>
             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Link href={`/director/dashboard/${schoolId}/academics/students`}>
                     <Card className="hover:bg-muted/50 transition-colors h-full">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -92,7 +92,7 @@ export default async function PrincipalDashboardPage({ params }: { params: { id:
                         </CardContent>
                     </Card>
                 </Link>
-                <Link href={`/director/dashboard/${schoolId}/principal/school-info`}>
+                <Link href={`/principal/${schoolId}/school-info`}>
                      <Card className="hover:bg-muted/50 transition-colors h-full">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium">School Information</CardTitle>
@@ -100,6 +100,17 @@ export default async function PrincipalDashboardPage({ params }: { params: { id:
                         </CardHeader>
                         <CardContent>
                             <p className="text-xs text-muted-foreground">View general school details and profile.</p>
+                        </CardContent>
+                    </Card>
+                </Link>
+                 <Link href={`/director/dashboard/${schoolId}/academics/classes`}>
+                     <Card className="hover:bg-muted/50 transition-colors h-full">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium">Classes & Sections</CardTitle>
+                            <Presentation className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-xs text-muted-foreground">View and manage classes.</p>
                         </CardContent>
                     </Card>
                 </Link>
