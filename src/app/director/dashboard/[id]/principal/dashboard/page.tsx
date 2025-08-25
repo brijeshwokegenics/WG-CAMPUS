@@ -1,80 +1,128 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, UserCog, Users, ClipboardList, Calendar, Book, FileText, Presentation } from "lucide-react";
-import Link from "next/link";
 
-export default function PrincipalDashboardPage({ params }: { params: { id: string } }) {
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { User, Users, ClipboardList, Calendar, Megaphone, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { getDailyAttendanceSummary } from "@/app/actions/academics";
+import { getNotices, getEvents } from "@/app/actions/communication";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+
+type StatCardProps = {
+    title: string;
+    value: string | number;
+    icon: React.ReactNode;
+}
+
+function StatCard({ title, value, icon }: StatCardProps) {
+    return (
+        <Card className="flex flex-col">
+            <CardHeader className="flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                {icon}
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+            </CardContent>
+        </Card>
+    );
+}
+
+
+export default async function PrincipalDashboardPage({ params }: { params: { id: string } }) {
     const schoolId = params.id;
+
+    const [attendanceResult, noticesResult, eventsResult] = await Promise.all([
+        getDailyAttendanceSummary(schoolId),
+        getNotices(schoolId),
+        getEvents(schoolId)
+    ]);
+    
+    const attendance = attendanceResult.success ? attendanceResult.data : { 'Present': 0, 'Absent': 0, 'Late': 0, 'Half Day': 0 };
+    const recentNotices = noticesResult.slice(0, 4);
+    const upcomingEvents = eventsResult
+        .filter(e => e.start >= new Date())
+        .sort((a,b) => a.start.getTime() - b.start.getTime())
+        .slice(0, 4);
+
+    const totalStudentsAttended = attendance.Present + attendance.Late + attendance['Half Day'];
+
     return (
         <div className="space-y-6">
             <header className="mb-4">
                 <h1 className="text-3xl font-bold tracking-tight text-foreground">Principal's Dashboard</h1>
-                <p className="text-muted-foreground">Welcome! Manage school staff and academic operations.</p>
+                <p className="text-muted-foreground">Welcome! Here's a snapshot of today's school activities.</p>
             </header>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                 <Link href={`/director/dashboard/${schoolId}/admin/users`}>
-                    <Card className="hover:bg-muted/50 transition-colors">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Staff Management</CardTitle>
-                            <UserCog className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent><p className="text-xs text-muted-foreground">Create and manage staff accounts.</p></CardContent>
-                    </Card>
-                </Link>
-                <Link href={`/director/dashboard/${schoolId}/academics/students`}>
-                    <Card className="hover:bg-muted/50 transition-colors">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Student Management</CardTitle>
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent><p className="text-xs text-muted-foreground">View and manage student records.</p></CardContent>
-                    </Card>
-                </Link>
-                 <Link href={`/director/dashboard/${schoolId}/academics/classes`}>
-                    <Card className="hover:bg-muted/50 transition-colors">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Classes & Sections</CardTitle>
-                            <Presentation className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent><p className="text-xs text-muted-foreground">Manage academic classes.</p></CardContent>
-                    </Card>
-                </Link>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <StatCard title="Students Present" value={totalStudentsAttended} icon={<CheckCircle className="h-4 w-4 text-muted-foreground"/>}/>
+                <StatCard title="Students Absent" value={attendance.Absent} icon={<XCircle className="h-4 w-4 text-muted-foreground"/>}/>
+                <StatCard title="Staff on Leave" value="2" icon={<AlertTriangle className="h-4 w-4 text-muted-foreground"/>}/>
                  <Link href={`/director/dashboard/${schoolId}/academics/attendance`}>
-                    <Card className="hover:bg-muted/50 transition-colors">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Attendance</CardTitle>
-                            <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent><p className="text-xs text-muted-foreground">Monitor student attendance.</p></CardContent>
+                    <Card className="hover:bg-muted/50 transition-colors h-full flex flex-col justify-center">
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <p className="font-bold text-primary">Manage Attendance</p>
+                                <Users className="h-6 w-6 text-primary"/>
+                            </div>
+                        </CardContent>
                     </Card>
                 </Link>
-                 <Link href={`/director/dashboard/${schoolId}/academics/timetable`}>
-                    <Card className="hover:bg-muted/50 transition-colors">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Timetable</CardTitle>
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent><p className="text-xs text-muted-foreground">Oversee class schedules.</p></CardContent>
-                    </Card>
-                </Link>
-                 <Link href={`/director/dashboard/${schoolId}/academics/exams`}>
-                    <Card className="hover:bg-muted/50 transition-colors">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Exams</CardTitle>
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent><p className="text-xs text-muted-foreground">Manage exam schedules & marks.</p></CardContent>
-                    </Card>
-                </Link>
-                <Link href={`/director/dashboard/${schoolId}/academics/elearning`}>
-                    <Card className="hover:bg-muted/50 transition-colors">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">E-learning</CardTitle>
-                            <Book className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent><p className="text-xs text-muted-foreground">Manage online learning content.</p></CardContent>
-                    </Card>
-                </Link>
+            </div>
+            
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Recent Notices</CardTitle>
+                        <CardDescription>Latest announcements for staff and students.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                       {recentNotices.length > 0 ? (
+                           recentNotices.map(notice => (
+                               <div key={notice.id} className="flex items-start gap-3">
+                                   <Megaphone className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                   <div>
+                                       <p className="font-semibold">{notice.title}</p>
+                                       <p className="text-xs text-muted-foreground">
+                                           For: {notice.audience.join(', ')} | Posted: {format(new Date(notice.postedAt), 'dd MMM, yyyy')}
+                                       </p>
+                                   </div>
+                               </div>
+                           ))
+                       ) : (
+                            <p className="text-sm text-center text-muted-foreground py-8">No recent notices found.</p>
+                       )}
+                       <Link href={`/director/dashboard/${schoolId}/communication/notices`} className="text-sm font-medium text-primary hover:underline pt-4 block text-right">
+                           View All Notices &rarr;
+                       </Link>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Upcoming Events</CardTitle>
+                        <CardDescription>Upcoming holidays, exams, and school events.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                       {upcomingEvents.length > 0 ? (
+                           upcomingEvents.map(event => (
+                                <div key={event.id} className="flex items-start gap-3">
+                                   <Calendar className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                   <div>
+                                       <p className="font-semibold">{event.title} <Badge variant="outline" className="ml-2">{event.type}</Badge></p>
+                                       <p className="text-xs text-muted-foreground">
+                                          Date: {format(new Date(event.start), 'dd MMM, yyyy')}
+                                       </p>
+                                   </div>
+                               </div>
+                           ))
+                       ) : (
+                             <p className="text-sm text-center text-muted-foreground py-8">No upcoming events.</p>
+                       )}
+                        <Link href={`/director/dashboard/${schoolId}/communication/calendar`} className="text-sm font-medium text-primary hover:underline pt-4 block text-right">
+                           View Full Calendar &rarr;
+                       </Link>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

@@ -227,6 +227,38 @@ export async function getDashboardSummary(schoolId: string) {
     }
 }
 
+export async function getDailyAttendanceSummary(schoolId: string) {
+    if (!schoolId) return { success: false, error: 'School ID is required.' };
+
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const attendanceRef = collection(db, 'attendance');
+    const q = query(attendanceRef, where('schoolId', '==', schoolId), where('date', '==', todayStr));
+
+    try {
+        const snapshot = await getDocs(q);
+        const summary = {
+            'Present': 0,
+            'Absent': 0,
+            'Late': 0,
+            'Half Day': 0,
+        };
+
+        snapshot.forEach(doc => {
+            const attendanceData = doc.data().attendance;
+            for (const studentId in attendanceData) {
+                const status = attendanceData[studentId] as keyof typeof summary;
+                if (summary.hasOwnProperty(status)) {
+                    summary[status]++;
+                }
+            }
+        });
+        return { success: true, data: summary };
+    } catch (error) {
+        console.error("Error fetching daily attendance summary:", error);
+        return { success: false, error: 'Failed to fetch summary.' };
+    }
+}
+
 export async function getClassesForSchool(schoolId: string) {
   if (!schoolId) {
     return { success: false, error: 'School ID is required.' };
