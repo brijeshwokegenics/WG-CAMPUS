@@ -70,7 +70,7 @@ const getNavItems = (schoolId: string) => {
           { title: "Staff Attendance", href: `/principal/${schoolId}/hr/attendance`, icon: <ClipboardList className="h-4 w-4" /> },
         ],
       },
-      {
+       {
         section: "Administration",
         icon: <Building className="h-5 w-5" />,
         items: [
