@@ -2,8 +2,8 @@
 import { StaffSalaryManager } from "@/components/StaffSalaryManager";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function StaffSalaryPage({ params }: { params: { id: string } }) {
-  const schoolId = params.id;
+export default function StaffSalaryPage({ params }: { params: { schoolId: string } }) {
+  const schoolId = params.schoolId;
   return (
     <div className="space-y-6">
       <div>

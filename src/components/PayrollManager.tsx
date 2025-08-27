@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { usePathname } from 'next/navigation';
 
 
 type PayrollRecord = { id: string; month: string; generatedOn: string; payrollData: any[] };
@@ -135,9 +136,11 @@ export function PayrollManager({ schoolId }: { schoolId: string }) {
 }
 
 function ViewPayslipDialog({ record, schoolId }: { record: PayrollRecord, schoolId: string }) {
+    const pathname = usePathname();
+    const currentRole = pathname.split('/')[1]; // e.g., 'director', 'hr'
 
     const handlePrint = (userId: string) => {
-        const printUrl = `/director/dashboard/${schoolId}/hr/payroll/print?month=${record.month}&userId=${userId}`;
+        const printUrl = `/${currentRole}/${schoolId}/payroll/print?month=${record.month}&userId=${userId}`;
         window.open(printUrl, '_blank');
     };
 

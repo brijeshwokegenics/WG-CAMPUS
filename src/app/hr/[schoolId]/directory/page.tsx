@@ -85,8 +85,8 @@ function StaffListSkeleton() {
     )
 }
 
-export default async function StaffDirectoryPage({ params }: { params: { id: string } }) {
-  const schoolId = params.id;
+export default async function StaffDirectoryPage({ params }: { params: { schoolId: string } }) {
+  const schoolId = params.schoolId;
 
   return (
     <div className="space-y-6">

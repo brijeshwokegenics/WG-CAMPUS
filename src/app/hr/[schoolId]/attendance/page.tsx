@@ -2,8 +2,8 @@
 import { StaffAttendanceManager } from "@/components/StaffAttendanceManager";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default async function StaffAttendancePage({ params }: { params: { id: string } }) {
-  const schoolId = params.id;
+export default async function StaffAttendancePage({ params }: { params: { schoolId: string } }) {
+  const schoolId = params.schoolId;
 
   return (
     <div className="space-y-6">

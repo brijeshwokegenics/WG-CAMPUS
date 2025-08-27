@@ -3,8 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BookUser, ClipboardList, Wallet } from "lucide-react";
 import Link from "next/link";
 
-export default function HRDashboardPage({ params }: { params: { id: string } }) {
-    const schoolId = params.id;
+export default function HRDashboardPage({ params }: { params: { schoolId: string } }) {
+    const schoolId = params.schoolId;
     return (
         <div className="space-y-6">
             <header className="mb-4">
@@ -12,7 +12,7 @@ export default function HRDashboardPage({ params }: { params: { id: string } }) 
                 <p className="text-muted-foreground">Welcome! Manage staff attendance and payroll.</p>
             </header>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <Link href={`/director/dashboard/${schoolId}/hr/directory`}>
+                <Link href={`/hr/${schoolId}/directory`}>
                      <Card className="hover:bg-muted/50 transition-colors">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium">Staff Directory</CardTitle>
@@ -21,7 +21,7 @@ export default function HRDashboardPage({ params }: { params: { id: string } }) 
                         <CardContent><p className="text-xs text-muted-foreground">View all school staff members.</p></CardContent>
                     </Card>
                 </Link>
-                <Link href={`/director/dashboard/${schoolId}/hr/attendance`}>
+                <Link href={`/hr/${schoolId}/attendance`}>
                      <Card className="hover:bg-muted/50 transition-colors">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium">Staff Attendance</CardTitle>
@@ -30,7 +30,7 @@ export default function HRDashboardPage({ params }: { params: { id: string } }) 
                         <CardContent><p className="text-xs text-muted-foreground">Manage daily staff attendance.</p></CardContent>
                     </Card>
                 </Link>
-                 <Link href={`/director/dashboard/${schoolId}/hr/salary`}>
+                 <Link href={`/hr/${schoolId}/salary`}>
                      <Card className="hover:bg-muted/50 transition-colors">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium">Salary Setup</CardTitle>
@@ -39,7 +39,7 @@ export default function HRDashboardPage({ params }: { params: { id: string } }) 
                         <CardContent><p className="text-xs text-muted-foreground">Set up salary structures for staff.</p></CardContent>
                     </Card>
                 </Link>
-                <Link href={`/director/dashboard/${schoolId}/hr/payroll`}>
+                <Link href={`/hr/${schoolId}/payroll`}>
                      <Card className="hover:bg-muted/50 transition-colors">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium">Payroll</CardTitle>

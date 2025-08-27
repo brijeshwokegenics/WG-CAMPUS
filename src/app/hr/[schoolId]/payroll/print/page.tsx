@@ -174,11 +174,10 @@ function PayslipView({ schoolId, month, userId }: { schoolId: string, month: str
     );
 }
 
-export default function PayslipPrintPage({ params }: { params: { id: string } }) {
-    const schoolId = params.id;
-    const searchParams = useSearchParams();
-    const month = searchParams.get('month');
-    const userId = searchParams.get('userId');
+export default function PayslipPrintPage({ params, searchParams }: { params: { schoolId: string }, searchParams: { month?: string, userId?: string } }) {
+    const schoolId = params.schoolId;
+    const month = searchParams.month;
+    const userId = searchParams.userId;
 
     if (!month || !userId) {
         return (

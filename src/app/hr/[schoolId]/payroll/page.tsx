@@ -8,7 +8,7 @@ function PayrollSkeleton() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Generate &amp; View Payroll</CardTitle>
+                <CardTitle>Generate & View Payroll</CardTitle>
                 <CardDescription>Select a month to run payroll, or view previously generated records.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -25,8 +25,8 @@ function PayrollSkeleton() {
     )
 }
 
-export default function PayrollPage({ params }: { params: { id:string } }) {
-  const schoolId = params.id;
+export default function PayrollPage({ params }: { params: { schoolId:string } }) {
+  const schoolId = params.schoolId;
   return (
     <div className="space-y-6">
       <div>
