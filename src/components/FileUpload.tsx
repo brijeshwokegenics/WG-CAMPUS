@@ -65,7 +65,7 @@ export const FileUpload = forwardRef<HTMLInputElement, FileUploadProps>(
       <div className="space-y-2">
         <Label htmlFor={props.id}>{label}</Label>
         {uploadedUrl && !uploading ? (
-            <div className="flex items-center justify-between p-2 border rounded-md bg-muted/50">
+            <div className="flex items-center justify-between p-6 border rounded-md bg-muted/50">
                 <div className='flex items-center gap-2'>
                     <FileIcon className='h-5 w-5 text-muted-foreground' />
                     <a href={uploadedUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline truncate max-w-[150px]">
@@ -85,7 +85,7 @@ export const FileUpload = forwardRef<HTMLInputElement, FileUploadProps>(
                     ref={ref}
                     disabled={uploading}
                     className={cn(
-                        "file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90",
+                        "file:mr-4 p-16 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90",
                         "cursor-pointer"
                     )}
                     {...props}

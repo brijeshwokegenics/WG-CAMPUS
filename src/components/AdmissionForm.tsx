@@ -350,7 +350,7 @@ export function AdmissionForm({ schoolId }: { schoolId: string }) {
         </fieldset>
 
          {/* Document Uploads */}
-        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-3">
+        <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-2">
             <legend className="-ml-1 px-1 text-sm font-medium">Upload Documents</legend>
              <FileUpload
                 id="photoUrl"
