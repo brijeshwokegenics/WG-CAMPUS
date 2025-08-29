@@ -2,8 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { getIntegrationSettings } from './integrations';
 
 // ========== SMS Integration ==========
 
@@ -29,21 +28,22 @@ export async function sendSms(params: z.infer<typeof SmsSchema>) {
     const { to, message, schoolId } = validated.data;
     
     // --- DEVELOPER ACTION REQUIRED ---
-    // 1. Securely retrieve the school's SMS provider credentials (API Key, Auth Token, Sender Number).
-    //    These should be stored in a secret manager, NOT in the database.
-    //    You would fetch them here based on the `schoolId`.
-    /*
-    const smsConfig = await getSmsConfigurationFromServer(schoolId);
-    if (!smsConfig) {
+    // 1. Fetch the school's SMS provider credentials.
+    const settingsRes = await getIntegrationSettings(schoolId);
+    if (!settingsRes.success || !settingsRes.data?.sms) {
         return { success: false, error: "SMS integration is not configured for this school." };
     }
-    const { accountSid, authToken, fromNumber, providerApiEndpoint } = smsConfig;
-    */
-    const providerApiEndpoint = 'YOUR_SMS_PROVIDER_REST_API_ENDPOINT'; // e.g., 'https://api.twilio.com/2010-04-01/Accounts/YOUR_SID/Messages.json'
+    const { smsSid, smsToken, smsNumber, smsProvider } = settingsRes.data.sms;
 
-
+    // A real implementation would use these credentials.
+    // For example:
+    // const accountSid = smsSid;
+    // const authToken = smsToken;
+    // const fromNumber = smsNumber;
+    // const providerApiEndpoint = `https://api.yourprovider.com/....`;
+    
     // 2. Use the provider's REST API. Below is a hypothetical example using fetch.
-    console.log(`[SIMULATION] Sending SMS to ${to}: "${message}"`);
+    console.log(`[SIMULATION] Sending SMS via ${smsProvider} to ${to}: "${message}"`);
     /*
     try {
         const response = await fetch(providerApiEndpoint, {
@@ -90,32 +90,27 @@ export async function sendWhatsapp(params: z.infer<typeof WhatsappSchema>) {
     const { to, templateName, templateVariables, schoolId } = validated.data;
     
     // --- DEVELOPER ACTION REQUIRED ---
-    // 1. Securely retrieve the school's WhatsApp provider credentials.
-    /*
-    const whatsappConfig = await getWhatsappConfigurationFromServer(schoolId);
-    if (!whatsappConfig) {
+    // 1. Fetch the school's WhatsApp provider credentials.
+    const settingsRes = await getIntegrationSettings(schoolId);
+    if (!settingsRes.success || !settingsRes.data?.whatsapp) {
         return { success: false, error: "WhatsApp integration is not configured." };
     }
-    const { apiKey, apiSecret, fromNumber, providerApiEndpoint } = whatsappConfig;
-    */
-    const providerApiEndpoint = 'YOUR_WHATSAPP_PROVIDER_REST_API_ENDPOINT';
+    const { whatsappApiKey, whatsappAuthToken, whatsappNumber, whatsappProvider } = settingsRes.data.whatsapp;
 
     // 2. Construct the payload according to your provider's API documentation.
     const payload = {
-        // This is a hypothetical payload structure. Adjust for your provider.
         to: to,
-        from: 'whatsapp:' + 'YOUR_SENDER_NUMBER',
+        from: 'whatsapp:' + whatsappNumber,
         template: templateName,
-        // ... other parameters like language, variables, etc.
     };
 
-    console.log(`[SIMULATION] Sending WhatsApp message to ${to} with template ${templateName}`);
+    console.log(`[SIMULATION] Sending WhatsApp via ${whatsappProvider} to ${to} with template ${templateName}`);
     /*
     try {
-        const response = await fetch(providerApiEndpoint, {
+        const response = await fetch('YOUR_WHATSAPP_API_ENDPOINT', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${apiKey}`,
+                'Authorization': `Bearer ${whatsappApiKey}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(payload),
@@ -155,32 +150,28 @@ export async function sendEmail(params: z.infer<typeof EmailSchema>) {
     const { to, subject, htmlBody, schoolId } = validated.data;
 
     // --- DEVELOPER ACTION REQUIRED ---
-    // 1. Securely retrieve the school's Email provider credentials (e.g., SendGrid API Key).
-    /*
-    const emailConfig = await getEmailConfigurationFromServer(schoolId);
-    if (!emailConfig) {
+    // 1. Fetch the school's Email provider credentials.
+    const settingsRes = await getIntegrationSettings(schoolId);
+     if (!settingsRes.success || !settingsRes.data?.email) {
         return { success: false, error: "Email integration is not configured." };
     }
-    const { apiKey, fromEmail, fromName, providerApiEndpoint } = emailConfig;
-    */
-    const providerApiEndpoint = 'YOUR_EMAIL_PROVIDER_REST_API_ENDPOINT'; // e.g., 'https://api.sendgrid.com/v3/mail/send'
+    const { smtpHost, smtpUser, smtpPass, fromEmail } = settingsRes.data.email;
 
     // 2. Construct the payload for the email provider's API.
     const payload = {
-        // This is a hypothetical payload for a SendGrid-like API.
         personalizations: [{ to: [{ email: to }] }],
-        from: { email: 'SENDER_EMAIL_CONFIGURED_IN_SETTINGS' , name: 'SCHOOL_NAME' },
+        from: { email: fromEmail || 'noreply@example.com', name: 'WG Campus' },
         subject: subject,
         content: [{ type: 'text/html', value: htmlBody }],
     };
 
-    console.log(`[SIMULATION] Sending Email to ${to} with subject "${subject}"`);
+    console.log(`[SIMULATION] Sending Email via ${smtpHost} to ${to} with subject "${subject}"`);
     /*
     try {
-        const response = await fetch(providerApiEndpoint, {
+        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${apiKey}`,
+                'Authorization': `Bearer ${smtpPass}`, // Assuming password is the API key
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(payload),
