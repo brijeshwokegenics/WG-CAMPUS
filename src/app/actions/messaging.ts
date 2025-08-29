@@ -197,4 +197,3 @@ export async function sendEmail(params: z.infer<typeof EmailSchema>) {
 
     return { success: true, message: `Email sent to ${to} (simulation).` };
 }
-
